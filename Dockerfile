@@ -2,6 +2,8 @@ FROM golang:1.21 as build
 
 ENV CGO_ENABLED=0
 
+WORKDIR /gobuild
+
 COPY go.mod go.sum ./
 RUN go mod download
 
