@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -mod=readonly ./internal/..
+RUN go build -mod=readonly ./internal/...
 RUN go build -mod=readonly -v -o /taf-server ./cmd/server
 
 FROM gcr.io/distroless/static-debian11
