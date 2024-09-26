@@ -34,13 +34,6 @@ func TestJwtSymmetric(t *testing.T) {
 	//t.Fail()
 }
 
-// Define a custom claim struct to include additional information
-type CustomClaims struct {
-	*jwt.RegisteredClaims
-	Name string `json:"name"`
-	Role string `json:"role"`
-}
-
 func TestJwtAsymmetric(t *testing.T) {
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 	publicKey := privateKey.PublicKey
@@ -48,12 +41,12 @@ func TestJwtAsymmetric(t *testing.T) {
 	t.Log("Keypair generated")
 
 	// Create a new JWT token
-	claims := &CustomClaims{
+	claims := &Entity{
 		RegisteredClaims: &jwt.RegisteredClaims{
 			Issuer: "your-issuer",
 		},
-		Name: "John Doe",
-		Role: "admin",
+		CommonName: "John Doe",
+		PublicKey:  publicKey.N.String(),
 	}
 
 	t.Log(claims)
@@ -76,10 +69,36 @@ func TestJwtAsymmetric(t *testing.T) {
 		t.Error(err)
 	}
 
-	if claims, ok := parsedToken.Claims.(*CustomClaims); ok && parsedToken.Valid {
-		t.Logf("Name: %s", claims.Name)
-		t.Logf("Role: %s", claims.Role)
+	if claims, ok := parsedToken.Claims.(*Entity); ok && parsedToken.Valid {
+		t.Logf("Name: %s", claims.CommonName)
+		t.Logf("Key: %s", claims.PublicKey)
 	} else {
 		t.Fail()
+	}
+	t.Fail()
+}
+
+func TestAssertionClaims(t *testing.T) {
+	IntiKeyPair()
+
+	entity1 := &Entity{
+		CommonName: "John Smith",
+		PublicKey:  PublicKey.N.String(),
+	}
+
+	token, err := CreateJwt(entity1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Log(token)
+
+	entity2, err := ParseEntityJwt(token)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if entity2.CommonName != entity1.CommonName {
+		t.Errorf("Common name does not match: '%s' != '%s'", entity2.CommonName, entity1.CommonName)
 	}
 }

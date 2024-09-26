@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"silvatek.uk/trustedassertions/internal/assertions"
+
 	"github.com/gorilla/mux"
 )
 
@@ -14,6 +16,8 @@ func main() {
 	log.Print("Starting TrustedAssertions server...")
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
+
+	assertions.IntiKeyPair()
 
 	srv := &http.Server{
 		Handler:      r,
