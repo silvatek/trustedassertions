@@ -1,30 +1,20 @@
 package assertions
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-type HashUri string
-type Statement string
+type Statement struct {
+	*jwt.RegisteredClaims
+	Content string `json:content`
+}
 
 type Entity struct {
-	publicKey  string
-	commonName string
+	*jwt.RegisteredClaims
+	PublicKey  string `json:"key"`
+	CommonName string `json:"name"`
 }
 
 type Assertion struct {
-}
-
-var statements map[HashUri]Statement
-var entities map[HashUri]Entity
-var assertions map[HashUri]Assertion
-
-func makeUri(text string) HashUri {
-	var hash = sha256.Sum256([]byte(text))
-	return HashUri("hash://sha256/" + hex.EncodeToString(hash[:]))
-}
-
-func statementUri(statement Statement) HashUri {
-	return makeUri(string(statement))
+	*jwt.RegisteredClaims
 }
