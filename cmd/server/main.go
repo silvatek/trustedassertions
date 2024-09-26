@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -8,16 +9,28 @@ import (
 	"time"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/datastore"
 
 	"github.com/gorilla/mux"
 )
 
+var entityKey string
+
 func main() {
 	log.Print("Starting TrustedAssertions server...")
+
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
+	r.HandleFunc("/api/v1/entity", EntityHandler)
 
-	assertions.IntiKeyPair()
+	assertions.InitKeyPair()
+	datastore.InitInMemoryDataStore()
+
+	entity := &assertions.Entity{
+		CommonName: "John Smith",
+		PublicKey:  assertions.PublicKey.N.String(),
+	}
+	entityKey = datastore.DataStore.StoreClaims(entity)
 
 	srv := &http.Server{
 		Handler:      r,
@@ -31,7 +44,17 @@ func main() {
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Welcome to TrustedAssertions")
+	fmt.Fprint(w, "Welcome to TrustedAssertions\n")
+}
+
+func EntityHandler(w http.ResponseWriter, r *http.Request) {
+	entity, _ := datastore.DataStore.FetchEntity(entityKey)
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	e := json.NewEncoder(w)
+	e.SetIndent("", "  ")
+	e.Encode(entity)
 }
 
 func listenAddress() string {

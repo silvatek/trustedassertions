@@ -43,7 +43,7 @@ func (a *Assertion) Kind() string {
 	return "Assertion"
 }
 
-func IntiKeyPair() {
+func InitKeyPair() {
 	PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
 	PublicKey = PrivateKey.PublicKey
 }

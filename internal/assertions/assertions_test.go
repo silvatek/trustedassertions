@@ -30,8 +30,6 @@ func TestJwtSymmetric(t *testing.T) {
 
 	t.Logf("Token header: %v", parsedToken.Header)
 	t.Logf("Token Claims: %v", parsedToken.Claims)
-
-	//t.Fail()
 }
 
 func TestJwtAsymmetric(t *testing.T) {
@@ -75,11 +73,10 @@ func TestJwtAsymmetric(t *testing.T) {
 	} else {
 		t.Fail()
 	}
-	t.Fail()
 }
 
 func TestAssertionClaims(t *testing.T) {
-	IntiKeyPair()
+	InitKeyPair()
 
 	entity1 := &Entity{
 		CommonName: "John Smith",
