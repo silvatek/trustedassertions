@@ -42,6 +42,12 @@ func (ds *InMemoryDataStore) FetchEntity(key string) assertions.Entity {
 	return assertions.ParseCertificate(content)
 }
 
+func (ds *InMemoryDataStore) FetchAssertion(key string) assertions.Assertion {
+	content := ds.data[key]
+	assertion, _ := assertions.ParseAssertionJwt(content)
+	return assertion
+}
+
 // func (ds *InMemoryDataStore) FetchEntity(key string) (assertions.Entity, error) {
 // 	value, err := ds.Fetch(key)
 // 	if err != nil {

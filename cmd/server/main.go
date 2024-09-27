@@ -16,6 +16,7 @@ import (
 // var entityKey string
 var statementUri string
 var entityUri string
+var assertionUri string
 
 func main() {
 	log.Print("Starting TrustedAssertions server...")
@@ -24,20 +25,14 @@ func main() {
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/api/v1/statements/{key}", StatementHandler)
 	r.HandleFunc("/api/v1/entities/{key}", EntityHandler)
+	r.HandleFunc("/api/v1/assertions/{key}", AssertionHandler)
 
 	assertions.InitKeyPair()
 	datastore.InitInMemoryDataStore()
 
-	log.Print(assertions.Base64Private())
+	//log.Print(assertions.Base64Private())
 
-	statement := assertions.NewStatement("The world is flat")
-	statementUri = statement.Uri()
-	datastore.DataStore.Store(&statement)
-
-	entity := assertions.NewEntity("Fred Bloggs")
-	entityUri = entity.Uri()
-	entity.MakeCertificate()
-	datastore.DataStore.Store(&entity)
+	setupTestData()
 
 	srv := &http.Server{
 		Handler:      r,
@@ -47,6 +42,21 @@ func main() {
 	}
 
 	log.Fatal(srv.ListenAndServe())
+}
+
+func setupTestData() {
+	statement := assertions.NewStatement("The world is flat")
+	statementUri = statement.Uri()
+	datastore.DataStore.Store(&statement)
+
+	entity := assertions.NewEntity("Fred Bloggs")
+	entityUri = entity.Uri()
+	entity.MakeCertificate()
+	datastore.DataStore.Store(&entity)
+
+	assertion := assertions.NewAssertion("simple")
+	assertionUri = assertion.Uri()
+	datastore.DataStore.Store(&assertion)
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +78,14 @@ func EntityHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
 	w.Write([]byte(entity.Certificate))
+}
+
+func AssertionHandler(w http.ResponseWriter, r *http.Request) {
+	assertion := datastore.DataStore.FetchAssertion(assertionUri)
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/jwt")
+	w.Write([]byte(assertion.Content()))
 }
 
 func listenAddress() string {
