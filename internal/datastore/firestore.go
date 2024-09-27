@@ -32,7 +32,7 @@ func (fs *FireStore) Name() string {
 
 func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 	client, err := firestore.NewClientWithDatabase(ctx, fs.projectId, fs.databaseName)
-	if err == nil {
+	if err != nil {
 		log.Printf("Error connecting to database: %v", err)
 	} else {
 		log.Printf("Connected to Firestore database: %v", client)
@@ -43,7 +43,9 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 func (fs *FireStore) Store(value assertions.Referenceable) {
 	ctx := context.TODO()
 	log.Printf("Writing to datastore: %s", value.Uri())
-	result, err := fs.client(ctx).Collection(MainCollection).Doc(value.Uri()).Set(ctx, value.Content())
+	data := make(map[string]string)
+	data["content"] = value.Content()
+	result, err := fs.client(ctx).Collection(MainCollection).Doc(value.Uri()).Set(ctx, data)
 	if err != nil {
 		log.Printf("Error writing value: %v", err)
 	} else {
