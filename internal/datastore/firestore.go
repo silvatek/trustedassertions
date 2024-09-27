@@ -15,6 +15,8 @@ type FireStore struct {
 	databaseName string
 }
 
+const MainCollection = "Primary"
+
 func InitFireStore() {
 	datastore := &FireStore{
 		projectId:    os.Getenv("GCLOUD_PROJECT"),
@@ -39,6 +41,14 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 }
 
 func (fs *FireStore) Store(value assertions.Referenceable) {
+	ctx := context.TODO()
+	log.Printf("Writing to datastore: %s", value.Uri())
+	result, err := fs.client(ctx).Collection(MainCollection).Doc(value.Uri()).Set(ctx, value.Content())
+	if err != nil {
+		log.Printf("Error writing value: %v", err)
+	} else {
+		log.Printf("Written: %v", result)
+	}
 }
 
 func (fs *FireStore) FetchStatement(key string) assertions.Statement {
