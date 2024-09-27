@@ -17,10 +17,12 @@ import (
 func main() {
 	log.Print("Starting TrustedAssertions server...")
 
+	log.Printf("FireStore DB name: %s", os.Getenv("FIRESTORE_DB_NAME"))
+
 	r := setupHandlers()
 
 	assertions.InitKeyPair()
-	datastore.InitInMemoryDataStore()
+	initDataStore()
 
 	setupTestData()
 
@@ -47,12 +49,20 @@ func setupHandlers() *mux.Router {
 	return r
 }
 
+func initDataStore() {
+	if os.Getenv("FIRESTORE_DB_NAME") != "" {
+		datastore.InitFireStore()
+	} else {
+		datastore.InitInMemoryDataStore()
+	}
+}
+
 func setupTestData() {
 	log.Printf("Loading test data into %s", datastore.ActiveDataStore.Name())
 	statement := assertions.NewStatement("The world is flat")
 	datastore.ActiveDataStore.Store(&statement)
 
-	entity := assertions.NewEntity("Fred Bloggs", *big.NewInt(12345678))
+	entity := assertions.NewEntity("Fred Bloggs", *big.NewInt(2337203685477580792))
 	entity.MakeCertificate()
 	datastore.ActiveDataStore.Store(&entity)
 
