@@ -12,7 +12,7 @@ import (
 )
 
 func TestEntityUri(t *testing.T) {
-	entity := NewEntity("Tester")
+	entity := NewEntity("Tester", *big.NewInt(0))
 	entity.AssignSerialNum()
 	uri := entity.Uri()
 	if uri == "" {

@@ -16,12 +16,17 @@ type Entity struct {
 	Certificate string `json:"cert"`
 }
 
-func NewEntity(commonName string) Entity {
+func NewEntity(commonName string, serialNum big.Int) Entity {
+	return Entity{CommonName: commonName, SerialNum: serialNum}
+}
+
+func randomSerialNum() big.Int {
 	max := new(big.Int)
 	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
 
 	serNum, _ := rand.Int(rand.Reader, max)
-	return Entity{CommonName: commonName, SerialNum: *serNum}
+
+	return *serNum
 }
 
 func (e *Entity) Uri() string {
@@ -32,12 +37,7 @@ func (e *Entity) Uri() string {
 }
 
 func (e *Entity) AssignSerialNum() {
-	max := new(big.Int)
-	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
-
-	serNum, _ := rand.Int(rand.Reader, max)
-
-	e.SerialNum = *serNum
+	e.SerialNum = randomSerialNum()
 }
 
 func (e *Entity) HasSerialNum() bool {
@@ -73,7 +73,7 @@ func (e *Entity) MakeCertificate() {
 }
 
 func ParseCertificate(content string) Entity {
-	entity := NewEntity("{unknown}")
+	entity := NewEntity("{unknown}", *big.NewInt(0))
 
 	entity.Certificate = content
 

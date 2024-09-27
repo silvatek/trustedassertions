@@ -3,6 +3,7 @@ package main
 import (
 	"html/template"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"time"
@@ -34,8 +35,6 @@ func main() {
 	assertions.InitKeyPair()
 	datastore.InitInMemoryDataStore()
 
-	//log.Print(assertions.Base64Private())
-
 	setupTestData()
 
 	srv := &http.Server{
@@ -53,10 +52,11 @@ func setupTestData() {
 	statementUri = statement.Uri()
 	datastore.DataStore.Store(&statement)
 
-	entity := assertions.NewEntity("Fred Bloggs")
+	entity := assertions.NewEntity("Fred Bloggs", *big.NewInt(12345678))
 	entityUri = entity.Uri()
 	entity.MakeCertificate()
 	datastore.DataStore.Store(&entity)
+	log.Printf("Entity URI: %s", entityUri)
 
 	assertion := assertions.NewAssertion("simple")
 	assertionUri = assertion.Uri()
@@ -85,7 +85,10 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func StatementHandler(w http.ResponseWriter, r *http.Request) {
-	statement := datastore.DataStore.FetchStatement(statementUri)
+	key := mux.Vars(r)["key"]
+	log.Printf("Statement key: %s", key)
+
+	statement := datastore.DataStore.FetchStatement("hash://sha256/" + key)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
@@ -93,6 +96,9 @@ func StatementHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func EntityHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
+	entityUri := "cert://x509/" + key
+	log.Printf("Entity URI: %s", entityUri)
 	entity := datastore.DataStore.FetchEntity(entityUri)
 
 	w.WriteHeader(http.StatusOK)
@@ -101,7 +107,8 @@ func EntityHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AssertionHandler(w http.ResponseWriter, r *http.Request) {
-	assertion := datastore.DataStore.FetchAssertion(assertionUri)
+	key := mux.Vars(r)["key"]
+	assertion := datastore.DataStore.FetchAssertion("sig://jwt/" + key)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/jwt")
