@@ -14,9 +14,9 @@ func TestStoreFetchStatement(t *testing.T) {
 	uri := statement1.Uri()
 	t.Log(uri)
 
-	DataStore.Store(&statement1)
+	ActiveDataStore.Store(&statement1)
 
-	statement2 := DataStore.FetchStatement(uri)
+	statement2 := ActiveDataStore.FetchStatement(uri)
 
 	if statement2.Content() != statement1.Content() {
 		t.Errorf("Mismatched content: %s", statement2.Content())

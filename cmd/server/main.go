@@ -14,23 +14,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// var entityKey string
-var statementUri string
-var entityUri string
-var assertionUri string
-
 func main() {
 	log.Print("Starting TrustedAssertions server...")
 
-	r := mux.NewRouter()
-	r.HandleFunc("/", HomeHandler)
-	r.HandleFunc("/api/v1/statements/{key}", StatementHandler)
-	r.HandleFunc("/api/v1/entities/{key}", EntityHandler)
-	r.HandleFunc("/api/v1/assertions/{key}", AssertionHandler)
-
-	staticDir := http.Dir("./web/static")
-	fs := http.FileServer(staticDir)
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+	r := setupHandlers()
 
 	assertions.InitKeyPair()
 	datastore.InitInMemoryDataStore()
@@ -47,20 +34,30 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
+func setupHandlers() *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc("/", HomeHandler)
+	r.HandleFunc("/api/v1/statements/{key}", StatementHandler)
+	r.HandleFunc("/api/v1/entities/{key}", EntityHandler)
+	r.HandleFunc("/api/v1/assertions/{key}", AssertionHandler)
+
+	staticDir := http.Dir("./web/static")
+	fs := http.FileServer(staticDir)
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+	return r
+}
+
 func setupTestData() {
+	log.Printf("Loading test data into %s", datastore.ActiveDataStore.Name())
 	statement := assertions.NewStatement("The world is flat")
-	statementUri = statement.Uri()
-	datastore.DataStore.Store(&statement)
+	datastore.ActiveDataStore.Store(&statement)
 
 	entity := assertions.NewEntity("Fred Bloggs", *big.NewInt(12345678))
-	entityUri = entity.Uri()
 	entity.MakeCertificate()
-	datastore.DataStore.Store(&entity)
-	log.Printf("Entity URI: %s", entityUri)
+	datastore.ActiveDataStore.Store(&entity)
 
 	assertion := assertions.NewAssertion("simple")
-	assertionUri = assertion.Uri()
-	datastore.DataStore.Store(&assertion)
+	datastore.ActiveDataStore.Store(&assertion)
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +85,7 @@ func StatementHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	log.Printf("Statement key: %s", key)
 
-	statement := datastore.DataStore.FetchStatement("hash://sha256/" + key)
+	statement := datastore.ActiveDataStore.FetchStatement("hash://sha256/" + key)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
@@ -99,7 +96,7 @@ func EntityHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	entityUri := "cert://x509/" + key
 	log.Printf("Entity URI: %s", entityUri)
-	entity := datastore.DataStore.FetchEntity(entityUri)
+	entity := datastore.ActiveDataStore.FetchEntity(entityUri)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
@@ -108,7 +105,7 @@ func EntityHandler(w http.ResponseWriter, r *http.Request) {
 
 func AssertionHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	assertion := datastore.DataStore.FetchAssertion("sig://jwt/" + key)
+	assertion := datastore.ActiveDataStore.FetchAssertion("sig://jwt/" + key)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/jwt")

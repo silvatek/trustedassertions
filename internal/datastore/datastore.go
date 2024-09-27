@@ -4,11 +4,13 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 )
 
-// type DataStore interface {
-// 	Store(key string, value string)
-// 	Fetch(key string) (string, error)
-// 	FetchEntity(key string) (assertions.Entity, error)
-// }
+type DataStore interface {
+	Name() string
+	Store(value assertions.Referenceable)
+	FetchStatement(key string) assertions.Statement
+	FetchEntity(key string) assertions.Entity
+	FetchAssertion(key string) assertions.Assertion
+}
 
 type KeyNotFoundError struct {
 }
@@ -21,11 +23,16 @@ type InMemoryDataStore struct {
 	data map[string]string
 }
 
-var DataStore InMemoryDataStore
+var ActiveDataStore DataStore
 
 func InitInMemoryDataStore() {
-	DataStore = InMemoryDataStore{}
-	DataStore.data = make(map[string]string)
+	datastore := InMemoryDataStore{}
+	datastore.data = make(map[string]string)
+	ActiveDataStore = &datastore
+}
+
+func (ds *InMemoryDataStore) Name() string {
+	return "InMemoryDataStore"
 }
 
 func (ds *InMemoryDataStore) Store(value assertions.Referenceable) {
@@ -47,13 +54,3 @@ func (ds *InMemoryDataStore) FetchAssertion(key string) assertions.Assertion {
 	assertion, _ := assertions.ParseAssertionJwt(content)
 	return assertion
 }
-
-// func (ds *InMemoryDataStore) FetchEntity(key string) (assertions.Entity, error) {
-// 	value, err := ds.Fetch(key)
-// 	if err != nil {
-// 		return assertions.Entity{}, err
-// 	}
-// 	token := key + "." + value
-// 	entity, err := assertions.ParseEntityJwt(token)
-// 	return entity, err
-// }
