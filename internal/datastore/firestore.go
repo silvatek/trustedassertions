@@ -41,11 +41,18 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 }
 
 func (fs *FireStore) Store(value assertions.Referenceable) {
-	ctx := context.TODO()
 	log.Printf("Writing to datastore: %s", value.Uri())
+
 	data := make(map[string]string)
+	data["uri"] = value.Uri()
 	data["content"] = value.Content()
-	result, err := fs.client(ctx).Collection(MainCollection).Doc(value.Uri()).Set(ctx, data)
+
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	result, err := client.Collection(MainCollection).NewDoc().Set(ctx, data)
+
 	if err != nil {
 		log.Printf("Error writing value: %v", err)
 	} else {
