@@ -105,7 +105,7 @@ func (fs *FireStore) FetchEntity(key string) assertions.Entity {
 	if err != nil {
 		return assertions.NewEntity("{bad record}", *big.NewInt(0))
 	} else {
-		return assertions.NewEntity(record.Content, *big.NewInt(0))
+		return assertions.ParseCertificate(record.Content)
 	}
 }
 
@@ -114,7 +114,12 @@ func (fs *FireStore) FetchAssertion(key string) assertions.Assertion {
 
 	if err != nil {
 		return assertions.NewAssertion("{bad record}")
-	} else {
-		return assertions.NewAssertion(record.Content)
 	}
+
+	assertion, err := assertions.ParseAssertionJwt(record.Content)
+	if err != nil {
+		log.Printf("Error parsing JWT: %v", err)
+		return assertions.NewAssertion("{bad record}")
+	}
+	return assertion
 }
