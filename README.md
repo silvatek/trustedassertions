@@ -10,6 +10,8 @@ The core data model consists of three main data types:-
 
 In addition to these primary data types, there is also the `Reference` which is a combination of a target, a source and a reference type. References are identified from within assertions and stored separately as a form of index.
 
+For servers that will be creating new Entities or Assertions, it will also be necessary to store (or at least have access to) the private keys for the signing entities.
+
 ### Statement URI
 See https://github.com/hash-uri/hash-uri
 

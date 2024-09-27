@@ -23,16 +23,113 @@ type AssertionClaims interface {
 	Kind() string
 }
 
-type Statement struct {
-	*jwt.RegisteredClaims
-	Content string `json:"content"`
+type Referenceable interface {
+	Uri() string
+	Type() string
+	Content() string
 }
 
+//============================================//
+
+type Statement struct {
+	uri     string
+	content string
+}
+
+func NewStatement(content string) Statement {
+	return Statement{content: content}
+}
+
+func (s *Statement) Uri() string {
+	if s.uri == "" {
+		hash := sha256.New()
+		hash.Write([]byte(s.content))
+		return fmt.Sprintf("hash://sha256/%x", hash.Sum(nil))
+	}
+	return s.uri
+}
+
+func (s *Statement) Type() string {
+	return "Statement"
+}
+
+func (s *Statement) Content() string {
+	return s.content
+}
+
+//============================================//
+
 type Entity struct {
-	*jwt.RegisteredClaims
+	SerialNum   big.Int
 	CommonName  string `json:"name"`
 	Certificate string `json:"cert"`
 }
+
+func NewEntity(commonName string) Entity {
+	max := new(big.Int)
+	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
+
+	serNum, _ := rand.Int(rand.Reader, max)
+	return Entity{CommonName: commonName, SerialNum: *serNum}
+}
+
+func (e *Entity) Uri() string {
+	if !e.HasSerialNum() {
+		e.AssignSerialNum()
+	}
+	return fmt.Sprintf("cert://x509/%s", e.SerialNum.String())
+}
+
+func (e *Entity) AssignSerialNum() {
+	max := new(big.Int)
+	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
+
+	serNum, _ := rand.Int(rand.Reader, max)
+
+	e.SerialNum = *serNum
+}
+
+func (e *Entity) HasSerialNum() bool {
+	return e.SerialNum.Int64() != 0
+}
+
+func (e *Entity) Type() string {
+	return "Entity"
+}
+
+func (e *Entity) Content() string {
+	return e.Certificate
+}
+
+func (e *Entity) MakeCertificate() {
+	if !e.HasSerialNum() {
+		e.AssignSerialNum()
+	}
+
+	template := x509.Certificate{
+		SerialNumber:          &e.SerialNum,
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
+		Subject:               pkix.Name{Organization: []string{e.CommonName}},
+		SignatureAlgorithm:    x509.SHA256WithRSA,
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Hour * 24 * 365 * 2),
+		BasicConstraintsValid: true,
+	}
+	cert, _ := x509.CreateCertificate(rand.Reader, &template, &template, &PublicKey, PrivateKey)
+	b := pem.Block{Type: "CERTIFICATE", Bytes: cert}
+	e.Certificate = string(pem.EncodeToMemory(&b))
+}
+
+func ParseCertificate(content string) Entity {
+	entity := NewEntity("{unknown}")
+
+	entity.Certificate = content
+
+	return entity
+}
+
+//============================================//
 
 type Assertion struct {
 	*jwt.RegisteredClaims
@@ -76,21 +173,25 @@ func verificationKey(token *jwt.Token) (interface{}, error) {
 	return &PublicKey, nil
 }
 
-func ParseEntityJwt(token string) (Entity, error) {
-	entity := Entity{
-		RegisteredClaims: &jwt.RegisteredClaims{},
-	}
-	_, err := jwt.ParseWithClaims(token, &entity, verificationKey)
-	return entity, err
-}
+// func ParseEntityJwt(token string) (Entity, error) {
+// 	entity := Entity{
+// 		RegisteredClaims: &jwt.RegisteredClaims{},
+// 	}
+// 	_, err := jwt.ParseWithClaims(token, &entity, verificationKey)
+// 	return entity, err
+// }
 
 func MakeEntityCertificate(entity *Entity) {
-	max := new(big.Int)
-	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
+	// max := new(big.Int)
+	// max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
 
-	serNum, _ := rand.Int(rand.Reader, max)
+	// serNum, _ := rand.Int(rand.Reader, max)
+	if !entity.HasSerialNum() {
+		entity.AssignSerialNum()
+	}
+
 	template := x509.Certificate{
-		SerialNumber:          serNum,
+		SerialNumber:          &entity.SerialNum,
 		IsCA:                  true,
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
 		Subject:               pkix.Name{Organization: []string{entity.CommonName}},
@@ -105,10 +206,4 @@ func MakeEntityCertificate(entity *Entity) {
 	}
 	b := pem.Block{Type: "CERTIFICATE", Bytes: cert}
 	entity.Certificate = string(pem.EncodeToMemory(&b))
-}
-
-func StatementUri(statement string) string {
-	hash := sha256.New()
-	hash.Write([]byte(statement))
-	return fmt.Sprintf("hash://sha256/%x", hash.Sum(nil))
 }

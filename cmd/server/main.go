@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,23 +13,29 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var entityKey string
+// var entityKey string
+var statementUri string
+var entityUri string
 
 func main() {
 	log.Print("Starting TrustedAssertions server...")
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
-	r.HandleFunc("/api/v1/entities/{key}/certificate", CertHandler)
+	r.HandleFunc("/api/v1/statements/{key}", StatementHandler)
 	r.HandleFunc("/api/v1/entities/{key}", EntityHandler)
 
 	assertions.InitKeyPair()
 	datastore.InitInMemoryDataStore()
 
-	entity := &assertions.Entity{
-		CommonName: "John Smith",
-	}
-	entityKey = datastore.DataStore.StoreClaims(entity)
+	statement := assertions.NewStatement("The world is flat")
+	statementUri = statement.Uri()
+	datastore.DataStore.Store(&statement)
+
+	entity := assertions.NewEntity("Fred Bloggs")
+	entityUri = entity.Uri()
+	entity.MakeCertificate()
+	datastore.DataStore.Store(&entity)
 
 	srv := &http.Server{
 		Handler:      r,
@@ -47,19 +52,16 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Welcome to TrustedAssertions\n")
 }
 
-func EntityHandler(w http.ResponseWriter, r *http.Request) {
-	entity, _ := datastore.DataStore.FetchEntity(entityKey)
+func StatementHandler(w http.ResponseWriter, r *http.Request) {
+	statement := datastore.DataStore.FetchStatement(statementUri)
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	e := json.NewEncoder(w)
-	e.SetIndent("", "  ")
-	e.Encode(entity)
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte([]byte(statement.Content())))
 }
 
-func CertHandler(w http.ResponseWriter, r *http.Request) {
-	entity, _ := datastore.DataStore.FetchEntity(entityKey)
-	assertions.MakeEntityCertificate(&entity)
+func EntityHandler(w http.ResponseWriter, r *http.Request) {
+	entity := datastore.DataStore.FetchEntity(entityUri)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")

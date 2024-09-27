@@ -2,7 +2,6 @@ package assertions
 
 import (
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/base64"
@@ -38,68 +37,80 @@ func TestJwtSymmetric(t *testing.T) {
 	t.Logf("Token Claims: %v", parsedToken.Claims)
 }
 
-func TestJwtAsymmetric(t *testing.T) {
-	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
-	publicKey := privateKey.PublicKey
+// func TestJwtAsymmetric(t *testing.T) {
+// 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+// 	publicKey := privateKey.PublicKey
 
-	t.Log("Keypair generated")
+// 	t.Log("Keypair generated")
 
-	// Create a new JWT token
-	claims := &Entity{
-		RegisteredClaims: &jwt.RegisteredClaims{
-			Issuer: "your-issuer",
-		},
-		CommonName: "John Doe",
+// 	// Create a new JWT token
+// 	claims := &Entity{
+// 		RegisteredClaims: &jwt.RegisteredClaims{
+// 			Issuer: "your-issuer",
+// 		},
+// 		CommonName: "John Doe",
+// 	}
+
+// 	t.Log(claims)
+
+// 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+
+// 	// Sign the token with the private key
+// 	signedToken, err := token.SignedString(privateKey)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+
+// 	t.Logf("Signed Token: %v", signedToken)
+
+// 	// Parse the token with the public key
+// 	parsedToken, err := jwt.ParseWithClaims(signedToken, claims, func(token *jwt.Token) (interface{}, error) {
+// 		return &publicKey, nil
+// 	})
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+
+// 	if claims, ok := parsedToken.Claims.(*Entity); ok && parsedToken.Valid {
+// 		t.Logf("Name: %s", claims.CommonName)
+// 	} else {
+// 		t.Fail()
+// 	}
+// }
+
+// func TestAssertionClaims(t *testing.T) {
+// 	InitKeyPair()
+
+// 	entity1 := &Entity{
+// 		CommonName: "John Smith",
+// 	}
+
+// 	token, err := CreateJwt(entity1)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+
+// 	t.Error(token)
+
+// 	entity2, err := ParseEntityJwt(token)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+
+// 	if entity2.CommonName != entity1.CommonName {
+// 		t.Errorf("Common name does not match: '%s' != '%s'", entity2.CommonName, entity1.CommonName)
+// 	}
+// }
+
+func TestEntityUri(t *testing.T) {
+	entity := NewEntity("Tester")
+	entity.AssignSerialNum()
+	uri := entity.Uri()
+	if uri == "" {
+		t.Error("Empty entity URI")
 	}
-
-	t.Log(claims)
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-	// Sign the token with the private key
-	signedToken, err := token.SignedString(privateKey)
-	if err != nil {
-		t.Error(err)
-	}
-
-	t.Logf("Signed Token: %v", signedToken)
-
-	// Parse the token with the public key
-	parsedToken, err := jwt.ParseWithClaims(signedToken, claims, func(token *jwt.Token) (interface{}, error) {
-		return &publicKey, nil
-	})
-	if err != nil {
-		t.Error(err)
-	}
-
-	if claims, ok := parsedToken.Claims.(*Entity); ok && parsedToken.Valid {
-		t.Logf("Name: %s", claims.CommonName)
-	} else {
-		t.Fail()
-	}
-}
-
-func TestAssertionClaims(t *testing.T) {
-	InitKeyPair()
-
-	entity1 := &Entity{
-		CommonName: "John Smith",
-	}
-
-	token, err := CreateJwt(entity1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	t.Error(token)
-
-	entity2, err := ParseEntityJwt(token)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if entity2.CommonName != entity1.CommonName {
-		t.Errorf("Common name does not match: '%s' != '%s'", entity2.CommonName, entity1.CommonName)
+	if !strings.HasPrefix(uri, "cert://x509/") {
+		t.Errorf("Entity URI does not have correct prefix: %s", uri)
 	}
 }
 
@@ -139,23 +150,23 @@ func TestEntityCertificate(t *testing.T) {
 		CommonName: "John Smith",
 	}
 
-	MakeEntityCertificate(entity)
+	entity.MakeCertificate()
 
 	if entity.Certificate == "" {
 		t.Error(entity)
 	}
-
 }
 
-func TestStatementHash(t *testing.T) {
+func TestStatementUri(t *testing.T) {
 	verifyStatementUri("", t)
 	verifyStatementUri("T", t)
 	verifyStatementUri("The world is flat", t)
 }
 
-func verifyStatementUri(statement string, t *testing.T) {
-	uri := StatementUri(statement)
-	if !strings.HasPrefix(uri, "ash://sha256/") {
+func verifyStatementUri(content string, t *testing.T) {
+	statement := Statement{content: content}
+	uri := statement.Uri()
+	if !strings.HasPrefix(uri, "hash://sha256/") {
 		t.Errorf("Statement URI does not have correct prefix: %s", uri)
 	}
 	if len(uri) != 78 {
