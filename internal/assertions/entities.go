@@ -6,6 +6,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math/big"
 	"time"
 )
@@ -61,7 +62,7 @@ func (e *Entity) MakeCertificate() {
 		SerialNumber:          &e.SerialNum,
 		IsCA:                  true,
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
-		Subject:               pkix.Name{Organization: []string{e.CommonName}},
+		Subject:               pkix.Name{CommonName: e.CommonName},
 		SignatureAlgorithm:    x509.SHA256WithRSA,
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().Add(time.Hour * 24 * 365 * 2),
@@ -76,6 +77,18 @@ func ParseCertificate(content string) Entity {
 	entity := NewEntity("{unknown}", *big.NewInt(0))
 
 	entity.Certificate = content
+
+	p, _ := pem.Decode([]byte(content))
+
+	cert, err := x509.ParseCertificate(p.Bytes)
+	if err != nil {
+		log.Print(err)
+	} else {
+		entity.SerialNum = *cert.SerialNumber
+		entity.CommonName = cert.Subject.CommonName
+		log.Printf("Entity serial number: %d", entity.SerialNum.Int64())
+		log.Printf("Entity name: %s", entity.CommonName)
+	}
 
 	return entity
 }
