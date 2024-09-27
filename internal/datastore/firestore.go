@@ -68,8 +68,8 @@ func safeKey(uri string) string {
 }
 
 type DbRecord struct {
-	uri     string
-	content string
+	Uri     string `json:"uri"`
+	Content string `json:"content"`
 }
 
 func (fs *FireStore) fetch(key string) (*DbRecord, error) {
@@ -77,13 +77,14 @@ func (fs *FireStore) fetch(key string) (*DbRecord, error) {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	data, err := client.Collection(MainCollection).Doc(safeKey(key)).Get(ctx)
+	doc, err := client.Collection(MainCollection).Doc(safeKey(key)).Get(ctx)
 	if err != nil {
 		log.Printf("Error reading value: %v", err)
 		return nil, err
 	} else {
 		record := DbRecord{}
-		data.DataTo(&record)
+		doc.DataTo(&record)
+		log.Printf("Found content: %s", record.Content)
 		return &record, nil
 	}
 }
@@ -92,25 +93,28 @@ func (fs *FireStore) FetchStatement(key string) assertions.Statement {
 	record, err := fs.fetch(key)
 
 	if err != nil {
-		return assertions.NewStatement("")
+		return assertions.NewStatement("{bad record}")
 	} else {
-		return assertions.NewStatement(record.content)
+		return assertions.NewStatement(record.Content)
 	}
 }
 
 func (fs *FireStore) FetchEntity(key string) assertions.Entity {
-	log.Printf("Fetch entity %s", key)
-	ctx := context.TODO()
-	doc := fs.client(ctx).Collection("Test1").Doc("zLvK61myGkmekzGwsO7Z")
-	data, err := doc.Get(context.TODO())
+	record, err := fs.fetch(key)
+
 	if err != nil {
-		log.Printf("Error getting doc: %v", err)
+		return assertions.NewEntity("{bad record}", *big.NewInt(0))
 	} else {
-		log.Printf("Retrieved doc: %v", data.Data())
+		return assertions.NewEntity(record.Content, *big.NewInt(0))
 	}
-	return assertions.NewEntity("{empty}", *big.NewInt(0))
 }
 
 func (fs *FireStore) FetchAssertion(key string) assertions.Assertion {
-	return assertions.NewAssertion("{empty}")
+	record, err := fs.fetch(key)
+
+	if err != nil {
+		return assertions.NewAssertion("{bad record}")
+	} else {
+		return assertions.NewAssertion(record.Content)
+	}
 }
