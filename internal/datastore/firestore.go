@@ -84,7 +84,6 @@ func (fs *FireStore) fetch(key string) (*DbRecord, error) {
 	} else {
 		record := DbRecord{}
 		doc.DataTo(&record)
-		log.Printf("Found content: %s", record.Content)
 		return &record, nil
 	}
 }

@@ -17,13 +17,10 @@ import (
 func main() {
 	log.Print("Starting TrustedAssertions server...")
 
-	log.Printf("FireStore DB name: %s", os.Getenv("FIRESTORE_DB_NAME"))
-
 	r := setupHandlers()
 
 	assertions.InitKeyPair()
 	initDataStore()
-
 	setupTestData()
 
 	srv := &http.Server{
@@ -58,6 +55,10 @@ func initDataStore() {
 }
 
 func setupTestData() {
+	if datastore.ActiveDataStore.Name() != "InMemoryDataStore" {
+		return
+	}
+
 	log.Printf("Loading test data into %s", datastore.ActiveDataStore.Name())
 	statement := assertions.NewStatement("The world is flat")
 	datastore.ActiveDataStore.Store(&statement)
@@ -88,7 +89,6 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
-
 }
 
 func StatementHandler(w http.ResponseWriter, r *http.Request) {
