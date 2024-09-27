@@ -12,7 +12,6 @@ func TestPutGetEntity(t *testing.T) {
 
 	entity1 := &assertions.Entity{
 		CommonName: "John Smith",
-		PublicKey:  assertions.PublicKey.N.String(),
 	}
 
 	ds := DataStore

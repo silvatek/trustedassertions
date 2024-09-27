@@ -21,14 +21,14 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
-	r.HandleFunc("/api/v1/entity", EntityHandler)
+	r.HandleFunc("/api/v1/entities/{key}/certificate", CertHandler)
+	r.HandleFunc("/api/v1/entities/{key}", EntityHandler)
 
 	assertions.InitKeyPair()
 	datastore.InitInMemoryDataStore()
 
 	entity := &assertions.Entity{
 		CommonName: "John Smith",
-		PublicKey:  assertions.PublicKey.N.String(),
 	}
 	entityKey = datastore.DataStore.StoreClaims(entity)
 
@@ -55,6 +55,15 @@ func EntityHandler(w http.ResponseWriter, r *http.Request) {
 	e := json.NewEncoder(w)
 	e.SetIndent("", "  ")
 	e.Encode(entity)
+}
+
+func CertHandler(w http.ResponseWriter, r *http.Request) {
+	entity, _ := datastore.DataStore.FetchEntity(entityKey)
+	assertions.MakeEntityCertificate(&entity)
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
+	w.Write([]byte(entity.Certificate))
 }
 
 func listenAddress() string {

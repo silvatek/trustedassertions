@@ -3,8 +3,14 @@ package assertions
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
+	"encoding/pem"
+	"math/big"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -44,7 +50,6 @@ func TestJwtAsymmetric(t *testing.T) {
 			Issuer: "your-issuer",
 		},
 		CommonName: "John Doe",
-		PublicKey:  publicKey.N.String(),
 	}
 
 	t.Log(claims)
@@ -69,7 +74,6 @@ func TestJwtAsymmetric(t *testing.T) {
 
 	if claims, ok := parsedToken.Claims.(*Entity); ok && parsedToken.Valid {
 		t.Logf("Name: %s", claims.CommonName)
-		t.Logf("Key: %s", claims.PublicKey)
 	} else {
 		t.Fail()
 	}
@@ -80,7 +84,6 @@ func TestAssertionClaims(t *testing.T) {
 
 	entity1 := &Entity{
 		CommonName: "John Smith",
-		PublicKey:  PublicKey.N.String(),
 	}
 
 	token, err := CreateJwt(entity1)
@@ -88,7 +91,7 @@ func TestAssertionClaims(t *testing.T) {
 		t.Error(err)
 	}
 
-	t.Log(token)
+	t.Error(token)
 
 	entity2, err := ParseEntityJwt(token)
 	if err != nil {
@@ -98,4 +101,65 @@ func TestAssertionClaims(t *testing.T) {
 	if entity2.CommonName != entity1.CommonName {
 		t.Errorf("Common name does not match: '%s' != '%s'", entity2.CommonName, entity1.CommonName)
 	}
+}
+
+func TestCreateCertificate(t *testing.T) {
+	InitKeyPair()
+
+	max := new(big.Int)
+	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
+
+	serNum, _ := rand.Int(rand.Reader, max)
+	template := x509.Certificate{
+		SerialNumber:          serNum,
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
+		Subject:               pkix.Name{Organization: []string{"Testing"}},
+		SignatureAlgorithm:    x509.SHA256WithRSA,
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Hour * 24 * 365 * 2),
+		BasicConstraintsValid: true,
+	}
+	cert, err := x509.CreateCertificate(rand.Reader, &template, &template, &PublicKey, PrivateKey)
+	if err != nil {
+		t.Error(err)
+	}
+	b := pem.Block{Type: "CERTIFICATE", Bytes: cert}
+	certPEM := pem.EncodeToMemory(&b)
+	if string(certPEM) == "" {
+		t.Fail()
+	}
+
+}
+
+func TestEntityCertificate(t *testing.T) {
+	InitKeyPair()
+
+	entity := &Entity{
+		CommonName: "John Smith",
+	}
+
+	MakeEntityCertificate(entity)
+
+	if entity.Certificate == "" {
+		t.Error(entity)
+	}
+
+}
+
+func TestStatementHash(t *testing.T) {
+	verifyStatementUri("", t)
+	verifyStatementUri("T", t)
+	verifyStatementUri("The world is flat", t)
+}
+
+func verifyStatementUri(statement string, t *testing.T) {
+	uri := StatementUri(statement)
+	if !strings.HasPrefix(uri, "ash://sha256/") {
+		t.Errorf("Statement URI does not have correct prefix: %s", uri)
+	}
+	if len(uri) != 78 {
+		t.Errorf("Statement URI is not correct length: %d", len(uri))
+	}
+
 }
