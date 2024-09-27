@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -60,8 +60,24 @@ func setupTestData() {
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "Welcome to TrustedAssertions\n")
+	dir := "./web"
+	templateName := "index"
+	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+templateName+".html")
+	if err != nil {
+		msg := http.StatusText(http.StatusInternalServerError)
+		log.Printf("Error parsing template: %+v", err)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	data := "test"
+
+	if err := t.ExecuteTemplate(w, "base", data); err != nil {
+		msg := http.StatusText(http.StatusInternalServerError)
+		log.Printf("template.Execute: %v", err)
+		http.Error(w, msg, http.StatusInternalServerError)
+	}
+
 }
 
 func StatementHandler(w http.ResponseWriter, r *http.Request) {

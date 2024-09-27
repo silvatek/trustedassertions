@@ -16,5 +16,5 @@ FROM gcr.io/distroless/static-debian11
 
 WORKDIR /taf
 COPY --from=build /taf-server .
-# COPY web ./web
+COPY web ./web
 ENTRYPOINT ["./taf-server"]
