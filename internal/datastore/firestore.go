@@ -28,7 +28,18 @@ func (fs *FireStore) Name() string {
 	return "FireStore"
 }
 
-func (fs *FireStore) Store(value assertions.Referenceable) {}
+func (fs *FireStore) client(ctx context.Context) *firestore.Client {
+	client, err := firestore.NewClientWithDatabase(ctx, fs.projectId, fs.databaseName)
+	if err == nil {
+		log.Printf("Error connecting to database: %v", err)
+	} else {
+		log.Printf("Connected to Firestore database: %v", client)
+	}
+	return client
+}
+
+func (fs *FireStore) Store(value assertions.Referenceable) {
+}
 
 func (fs *FireStore) FetchStatement(key string) assertions.Statement {
 	return assertions.NewStatement("{empty}")
@@ -37,11 +48,12 @@ func (fs *FireStore) FetchStatement(key string) assertions.Statement {
 func (fs *FireStore) FetchEntity(key string) assertions.Entity {
 	log.Printf("Fetch entity %s", key)
 	ctx := context.TODO()
-	client, err := firestore.NewClientWithDatabase(ctx, fs.projectId, fs.databaseName)
-	if err == nil {
-		log.Print(err)
+	doc := fs.client(ctx).Collection("Test1").Doc("zLvK61myGkmekzGwsO7Z")
+	data, err := doc.Get(context.TODO())
+	if err != nil {
+		log.Printf("Error getting doc: %v", err)
 	} else {
-		log.Print(client.Collections(ctx).GetAll())
+		log.Printf("Retrieved doc: %v", data.Data())
 	}
 	return assertions.NewEntity("{empty}", *big.NewInt(0))
 }
