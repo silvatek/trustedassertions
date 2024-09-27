@@ -28,6 +28,8 @@ func main() {
 	assertions.InitKeyPair()
 	datastore.InitInMemoryDataStore()
 
+	log.Print(assertions.Base64Private())
+
 	statement := assertions.NewStatement("The world is flat")
 	statementUri = statement.Uri()
 	datastore.DataStore.Store(&statement)

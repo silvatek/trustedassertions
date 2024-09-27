@@ -6,9 +6,12 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math/big"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -153,11 +156,6 @@ func (a *Assertion) Kind() string {
 	return "Assertion"
 }
 
-func InitKeyPair() {
-	PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
-	PublicKey = PrivateKey.PublicKey
-}
-
 func CreateJwt(value jwt.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, value)
 
@@ -207,3 +205,24 @@ func MakeEntityCertificate(entity *Entity) {
 	b := pem.Block{Type: "CERTIFICATE", Bytes: cert}
 	entity.Certificate = string(pem.EncodeToMemory(&b))
 }
+
+//============================================//
+
+func InitKeyPair() {
+	osKey := os.Getenv("PRV_KEY")
+	if osKey == "" {
+		log.Println("Generating new key pair")
+		PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
+	} else {
+		log.Println("Loading private key from environment")
+		bytes, _ := base64.StdEncoding.DecodeString(osKey)
+		PrivateKey, _ = x509.ParsePKCS1PrivateKey(bytes)
+	}
+	PublicKey = PrivateKey.PublicKey
+}
+
+func Base64Private() string {
+	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(PrivateKey))
+}
+
+//============================================//
