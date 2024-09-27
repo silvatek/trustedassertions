@@ -67,12 +67,35 @@ func safeKey(uri string) string {
 	return uri
 }
 
-func (fs *FireStore) FetchStatement(key string) assertions.Statement {
+type DbRecord struct {
+	uri     string
+	content string
+}
+
+func (fs *FireStore) fetch(key string) (*DbRecord, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
 	defer client.Close()
 
-	return assertions.NewStatement("{empty}")
+	data, err := client.Collection(MainCollection).Doc(safeKey(key)).Get(ctx)
+	if err != nil {
+		log.Printf("Error reading value: %v", err)
+		return nil, err
+	} else {
+		record := DbRecord{}
+		data.DataTo(&record)
+		return &record, nil
+	}
+}
+
+func (fs *FireStore) FetchStatement(key string) assertions.Statement {
+	record, err := fs.fetch(key)
+
+	if err != nil {
+		return assertions.NewStatement("")
+	} else {
+		return assertions.NewStatement(record.content)
+	}
 }
 
 func (fs *FireStore) FetchEntity(key string) assertions.Entity {
