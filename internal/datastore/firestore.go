@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strings"
 
 	"cloud.google.com/go/firestore"
 	"silvatek.uk/trustedassertions/internal/assertions"
@@ -51,7 +52,7 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	result, err := client.Collection(MainCollection).NewDoc().Set(ctx, data)
+	result, err := client.Collection(MainCollection).Doc(safeKey(value.Uri())).Set(ctx, data)
 
 	if err != nil {
 		log.Printf("Error writing value: %v", err)
@@ -60,7 +61,17 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	}
 }
 
+func safeKey(uri string) string {
+	uri = strings.ReplaceAll(uri, ":", "_")
+	uri = strings.ReplaceAll(uri, "/", "_")
+	return uri
+}
+
 func (fs *FireStore) FetchStatement(key string) assertions.Statement {
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
 	return assertions.NewStatement("{empty}")
 }
 
