@@ -27,6 +27,10 @@ func main() {
 	r.HandleFunc("/api/v1/entities/{key}", EntityHandler)
 	r.HandleFunc("/api/v1/assertions/{key}", AssertionHandler)
 
+	staticDir := http.Dir("./web/static")
+	fs := http.FileServer(staticDir)
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
 	assertions.InitKeyPair()
 	datastore.InitInMemoryDataStore()
 
