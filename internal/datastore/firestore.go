@@ -23,7 +23,7 @@ func InitFireStore() {
 		projectId:    os.Getenv("GCLOUD_PROJECT"),
 		databaseName: os.Getenv("FIRESTORE_DB_NAME"),
 	}
-	log.Printf("Initialising FireStore: %s / %s", datastore.projectId, datastore.databaseName)
+	log.Infof("Initialising FireStore: %s / %s", datastore.projectId, datastore.databaseName)
 	ActiveDataStore = datastore
 }
 
@@ -34,15 +34,15 @@ func (fs *FireStore) Name() string {
 func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 	client, err := firestore.NewClientWithDatabase(ctx, fs.projectId, fs.databaseName)
 	if err != nil {
-		log.Printf("Error connecting to database: %v", err)
+		log.Errorf("Error connecting to database: %v", err)
 	} else {
-		log.Printf("Connected to Firestore database: %v", client)
+		log.Debugf("Connected to Firestore database: %v", client)
 	}
 	return client
 }
 
 func (fs *FireStore) StoreRaw(uri string, content string) {
-	log.Printf("Writing to datastore: %s", uri)
+	log.Debugf("Writing to datastore: %s", uri)
 
 	data := make(map[string]string)
 	data["uri"] = uri
@@ -56,14 +56,14 @@ func (fs *FireStore) StoreRaw(uri string, content string) {
 	result, err := client.Collection(MainCollection).Doc(safeKey(uri)).Set(ctx, data)
 
 	if err != nil {
-		log.Printf("Error writing value: %v", err)
+		log.Errorf("Error writing value: %v", err)
 	} else {
-		log.Printf("Written: %v", result)
+		log.Debugf("Written: %v", result)
 	}
 }
 
 func (fs *FireStore) Store(value assertions.Referenceable) {
-	log.Printf("Writing to datastore: %s", value.Uri())
+	log.Debugf("Writing to datastore: %s", value.Uri())
 
 	data := make(map[string]string)
 	data["uri"] = value.Uri()
@@ -77,9 +77,9 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	result, err := client.Collection(MainCollection).Doc(safeKey(value.Uri())).Set(ctx, data)
 
 	if err != nil {
-		log.Printf("Error writing value: %v", err)
+		log.Errorf("Error writing value: %v", err)
 	} else {
-		log.Printf("Written: %v", result)
+		log.Debugf("Written: %v", result)
 	}
 }
 
@@ -103,7 +103,7 @@ func (fs *FireStore) fetch(key string) (*DbRecord, error) {
 
 	doc, err := client.Collection(MainCollection).Doc(safeKey(key)).Get(ctx)
 	if err != nil {
-		log.Printf("Error reading value: %v", err)
+		log.Errorf("Error reading value: %v", err)
 		return nil, err
 	} else {
 		record := DbRecord{}
@@ -141,7 +141,7 @@ func (fs *FireStore) FetchAssertion(key string) (assertions.Assertion, error) {
 
 	assertion, err := assertions.ParseAssertionJwt(record.Content)
 	if err != nil {
-		log.Printf("Error parsing JWT: %v", err)
+		log.Errorf("Error parsing JWT: %v", err)
 		return assertions.NewAssertion("{bad record}"), err
 	}
 	return assertion, nil
