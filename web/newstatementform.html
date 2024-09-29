@@ -1,0 +1,15 @@
+{{define "content"}}		
+        <h1>New Statement</h1>
+        <div>Create a new Statment with an Assertion that it is true.</div>
+
+        <form method="POST" action="/web/newstatement">
+                <div>
+                        Statement:<br>
+                        <textarea id="statment" name="statement" rows="12" cols="80">                                
+                        </textarea>
+                </div>
+                <div>
+                        <input id="submit" type="Submit">
+                </div>
+        </form>
+{{end}}

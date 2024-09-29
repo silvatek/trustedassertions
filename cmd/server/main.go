@@ -36,6 +36,7 @@ func main() {
 func setupHandlers() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeWebHandler)
+	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 	r.HandleFunc("/api/v1/statements/{key}", StatementApiHandler)
 	r.HandleFunc("/api/v1/entities/{key}", EntityApiHandler)
 	r.HandleFunc("/api/v1/assertions/{key}", AssertionApiHandler)
@@ -84,10 +85,10 @@ func setupTestData() {
 	log.Info("Test data load complete.")
 }
 
-func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
+func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter) {
 	dir := "./web"
-	templateName := "index"
-	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+templateName+".html")
+
+	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
 	if err != nil {
 		msg := http.StatusText(http.StatusInternalServerError)
 		log.Errorf("Error parsing template: %+v", err)
@@ -95,16 +96,48 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := t.ExecuteTemplate(w, "base", data); err != nil {
+		msg := http.StatusText(http.StatusInternalServerError)
+		log.Errorf("template.Execute: %v", err)
+		http.Error(w, msg, http.StatusInternalServerError)
+	}
+}
+
+func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		EntityHash string
 	}{
 		EntityHash: strings.TrimPrefix(entityUri, "hash://sha256/"),
 	}
 
-	if err := t.ExecuteTemplate(w, "base", data); err != nil {
-		msg := http.StatusText(http.StatusInternalServerError)
-		log.Errorf("template.Execute: %v", err)
-		http.Error(w, msg, http.StatusInternalServerError)
+	RenderWebPage("index", data, w)
+}
+
+func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		RenderWebPage("newstatementform", "", w)
+	} else if r.Method == "POST" {
+		r.ParseForm()
+		content := r.Form.Get("statement")
+		log.Debugf("Web post of new statement: %s", content)
+
+		// Create and save the statement
+		statement := assertions.NewStatement(content)
+		datastore.ActiveDataStore.Store(&statement)
+
+		// Fetch the default entity
+		entity, _ := datastore.ActiveDataStore.FetchEntity("hash://sha256/c6355ef5dfbc9da513ac4d683729ee24209aa1f9a8afe66bb4aa60217439183f")
+
+		// Create and save an assertion by the default entity that the statement is probably true
+		assertion := assertions.NewAssertion("IsTrue")
+		assertion.Subject = statement.Uri()
+		assertion.Confidence = 0.8
+		assertion.SetAssertingEntity(entity)
+		datastore.ActiveDataStore.Store(&assertion)
+
+		// Redirect the user to the assertion
+		hash := strings.TrimPrefix(assertion.Uri(), "hash://sha256/")
+		http.Redirect(w, r, "/api/v1/assertions/"+hash, http.StatusSeeOther)
 	}
 }
 
