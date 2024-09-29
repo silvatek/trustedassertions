@@ -13,6 +13,8 @@ import (
 
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)
+	r.HandleFunc("/web/statements/{key}", ViewStatementWebHandler)
+	r.HandleFunc("/web/entities/{key}", ViewEntityWebHandler)
 	r.HandleFunc("/web/assertions/{key}", ViewAssertionWebHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 
@@ -43,6 +45,23 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	RenderWebPage("index", "", w)
 }
 
+func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
+	statement, _ := datastore.ActiveDataStore.FetchStatement("hash://sha256/" + key)
+
+	data := struct {
+		Uri     string
+		Content string
+		ApiLink string
+	}{
+		Uri:     statement.Uri(),
+		Content: statement.Content(),
+		ApiLink: "/api/v1/statements/" + key,
+	}
+
+	RenderWebPage("viewstatement", data, w)
+}
+
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	assertion, _ := datastore.ActiveDataStore.FetchAssertion("hash://sha256/" + key)
@@ -52,15 +71,34 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		Assertion   assertions.Assertion
 		IssuerLink  string
 		SubjectLink string
+		ApiLink     string
 	}{
 		Uri:        assertion.Uri(),
 		Assertion:  assertion,
-		IssuerLink: "/api/v1/entities/" + strings.TrimPrefix(assertion.Issuer, "hash://sha256/"),
+		ApiLink:    "/api/v1/statements/" + strings.TrimPrefix(assertion.Uri(), "hash://sha256/"),
+		IssuerLink: "/web/entities/" + strings.TrimPrefix(assertion.Issuer, "hash://sha256/"),
 		//TODO: don't assume subject is a statement
-		SubjectLink: "/api/v1/statements/" + strings.TrimPrefix(assertion.Subject, "hash://sha256/"),
+		SubjectLink: "/web/statements/" + key,
 	}
 
 	RenderWebPage("viewassertion", data, w)
+}
+
+func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
+	entity, _ := datastore.ActiveDataStore.FetchEntity("hash://sha256/" + key)
+
+	data := struct {
+		Uri        string
+		CommonName string
+		ApiLink    string
+	}{
+		Uri:        entity.Uri(),
+		CommonName: entity.CommonName,
+		ApiLink:    "/api/v1/entities/" + key,
+	}
+
+	RenderWebPage("viewentity", data, w)
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
