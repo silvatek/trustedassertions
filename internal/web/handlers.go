@@ -75,10 +75,10 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Uri:        assertion.Uri(),
 		Assertion:  assertion,
-		ApiLink:    "/api/v1/statements/" + strings.TrimPrefix(assertion.Uri(), "hash://sha256/"),
+		ApiLink:    "/api/v1/statements/" + key,
 		IssuerLink: "/web/entities/" + strings.TrimPrefix(assertion.Issuer, "hash://sha256/"),
 		//TODO: don't assume subject is a statement
-		SubjectLink: "/web/statements/" + key,
+		SubjectLink: "/web/statements/" + strings.TrimPrefix(assertion.Subject, "hash://sha256/"),
 	}
 
 	RenderWebPage("viewassertion", data, w)
