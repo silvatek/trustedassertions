@@ -36,6 +36,7 @@ func main() {
 func setupHandlers() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeWebHandler)
+	r.HandleFunc("/web/assertions/{key}", ViewAssertionWebHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 	r.HandleFunc("/api/v1/statements/{key}", StatementApiHandler)
 	r.HandleFunc("/api/v1/entities/{key}", EntityApiHandler)
@@ -104,13 +105,27 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter) {
 }
 
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
+	RenderWebPage("index", "", w)
+}
+
+func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["key"]
+	assertion, _ := datastore.ActiveDataStore.FetchAssertion("hash://sha256/" + key)
+
 	data := struct {
-		EntityHash string
+		Uri         string
+		Assertion   assertions.Assertion
+		IssuerLink  string
+		SubjectLink string
 	}{
-		EntityHash: strings.TrimPrefix(entityUri, "hash://sha256/"),
+		Uri:        assertion.Uri(),
+		Assertion:  assertion,
+		IssuerLink: "/api/v1/entities/" + strings.TrimPrefix(assertion.Issuer, "hash://sha256/"),
+		//TODO: don't assume subject is a statement
+		SubjectLink: "/api/v1/statements/" + strings.TrimPrefix(assertion.Subject, "hash://sha256/"),
 	}
 
-	RenderWebPage("index", data, w)
+	RenderWebPage("viewassertion", data, w)
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {

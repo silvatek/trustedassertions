@@ -1,0 +1,33 @@
+{{define "content"}}		
+        <h1>View Assertion</h1>
+        <table>
+            <tr>
+                <td>URI:</td>
+                <td>{{.Uri}}</td>
+            </tr>
+            <tr>
+                <td>Issuer:</td>
+                <td>
+                    <a href="{{.IssuerLink}}">{{.Assertion.Issuer}}</a>
+                </td>
+            </tr>
+            <tr>
+                <td>Subject:</td>
+                <td>
+                    <a href="{{.SubjectLink}}">{{.Assertion.Subject}}</a>
+                </td>
+            </tr>
+            <tr>
+                <td>Category:</td>
+                <td>{{.Assertion.Category}}</td>
+            </tr>
+            <tr>
+                <td>Object:</td>
+                <td>{{.Assertion.Object}}</td>
+            </tr>
+            <tr>
+                <td>Confidence:</td>
+                <td>{{.Assertion.Confidence}}</td>
+            </tr>
+        </table>
+{{end}}
