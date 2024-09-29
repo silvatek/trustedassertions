@@ -2,9 +2,9 @@ package datastore
 
 import (
 	"errors"
-	"log"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
+	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
 type DataStore interface {

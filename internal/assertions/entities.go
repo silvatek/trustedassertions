@@ -7,9 +7,10 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"log"
 	"math/big"
 	"time"
+
+	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
 type Entity struct {
@@ -83,8 +84,6 @@ func (e *Entity) MakeCertificate() {
 
 func ParseCertificate(content string) Entity {
 	entity := NewEntity("{unknown}", *big.NewInt(0))
-
-	log.Printf("Parsing certificate:\n%s", content)
 
 	entity.Certificate = content
 

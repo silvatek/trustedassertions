@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -11,11 +10,13 @@ import (
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/datastore"
+	log "silvatek.uk/trustedassertions/internal/logging"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	log.StructureLogs = true
 	log.Print("Starting TrustedAssertions server...")
 
 	r := setupHandlers()

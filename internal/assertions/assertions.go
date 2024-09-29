@@ -8,10 +8,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"
+	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
 const DEFAULT_AUDIENCE = "trustedassertions:0.1/any"
@@ -100,11 +100,11 @@ var (
 func InitKeyPair() {
 	osKey := os.Getenv("PRV_KEY")
 	if osKey == "" {
-		log.Println("Generating new key pair")
+		log.Print("Generating new key pair")
 		PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
 	} else {
 		// Expects a base64 encoded RSA private key
-		log.Println("Loading private key from environment")
+		log.Print("Loading private key from environment")
 		bytes, _ := base64.StdEncoding.DecodeString(osKey)
 		PrivateKey, _ = x509.ParsePKCS1PrivateKey(bytes)
 	}

@@ -2,13 +2,13 @@ package datastore
 
 import (
 	"context"
-	"log"
 	"math/big"
 	"os"
 	"strings"
 
 	"cloud.google.com/go/firestore"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
 type FireStore struct {
