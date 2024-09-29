@@ -100,11 +100,11 @@ var (
 func InitKeyPair() {
 	osKey := os.Getenv("PRV_KEY")
 	if osKey == "" {
-		log.Print("Generating new key pair")
+		log.Info("Generating new key pair")
 		PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
 	} else {
 		// Expects a base64 encoded RSA private key
-		log.Print("Loading private key from environment")
+		log.Info("Loading private key from environment")
 		bytes, _ := base64.StdEncoding.DecodeString(osKey)
 		PrivateKey, _ = x509.ParsePKCS1PrivateKey(bytes)
 	}

@@ -40,7 +40,7 @@ func (ds *InMemoryDataStore) Name() string {
 }
 
 func (ds *InMemoryDataStore) StoreRaw(uri string, content string) {
-	log.Printf("Storing %s", uri)
+	log.Debugf("Storing %s", uri)
 	ds.data[uri] = content
 }
 
@@ -65,7 +65,7 @@ func (ds *InMemoryDataStore) FetchAssertion(key string) (assertions.Assertion, e
 	content := ds.data[key]
 	assertion, err := assertions.ParseAssertionJwt(content)
 	if err != nil {
-		log.Printf("Error parsing assertion JWT: %v", err)
+		log.Errorf("Error parsing assertion JWT: %v", err)
 	}
 	return assertion, err
 }

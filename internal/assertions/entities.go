@@ -91,12 +91,12 @@ func ParseCertificate(content string) Entity {
 
 	cert, err := x509.ParseCertificate(p.Bytes)
 	if err != nil {
-		log.Printf("Error parsing X509 certificate: %v", err)
+		log.Errorf("Error parsing X509 certificate: %v", err)
 	} else {
 		entity.SerialNum = *cert.SerialNumber
 		entity.CommonName = cert.Subject.CommonName
-		log.Printf("Entity serial number: %d", entity.SerialNum.Int64())
-		log.Printf("Entity name: %s", entity.CommonName)
+		log.Debugf("Entity serial number: %d", entity.SerialNum.Int64())
+		log.Debugf("Entity name: %s", entity.CommonName)
 	}
 
 	return entity

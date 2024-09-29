@@ -80,9 +80,6 @@ func TestJwtAsymmetric(t *testing.T) {
 	} else {
 		t.Fail()
 	}
-
-	t.Fail()
-
 }
 
 func TestAssertionClaims(t *testing.T) {
@@ -108,8 +105,6 @@ func TestAssertionClaims(t *testing.T) {
 	if assertion2.Audience[0] != DEFAULT_AUDIENCE {
 		t.Error("No default audience found")
 	}
-
-	t.Fail()
 }
 
 func TestDecodePrivateKey(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -36,6 +37,22 @@ func Printf(text string, args ...interface{}) {
 	Infof(text, args...)
 }
 
+func Debug(text string) {
+	Debugf(text)
+}
+
+func Debugf(text string, args ...interface{}) {
+	DebugfX(context.Background(), text, args...)
+}
+
+func DebugfX(ctx context.Context, text string, args ...interface{}) {
+	WriteLog(context.Background(), "DEBUG", text, args...)
+}
+
+func Info(text string) {
+	Infof(text)
+}
+
 func Infof(text string, args ...interface{}) {
 	InfofX(context.Background(), text, args...)
 }
@@ -44,12 +61,12 @@ func InfofX(ctx context.Context, text string, args ...interface{}) {
 	WriteLog(context.Background(), "INFO ", text, args...)
 }
 
-func ErrorfX(text string, args ...interface{}) {
-	WriteLog(context.Background(), "ERROR", text, args...)
+func Errorf(text string, args ...interface{}) {
+	ErrorfX(context.Background(), text, args...)
 }
 
-func DebugfX(text string, args ...interface{}) {
-	WriteLog(context.Background(), "DEBUG", text, args...)
+func ErrorfX(ctx context.Context, text string, args ...interface{}) {
+	WriteLog(context.Background(), "ERROR", text, args...)
 }
 
 func WriteLog(ctx context.Context, level string, template string, args ...interface{}) {
@@ -58,7 +75,7 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 			encoder = json.NewEncoder(os.Stderr)
 		}
 		entry := LogEntry{
-			Severity:  level,
+			Severity:  strings.TrimSpace(level),
 			Timestamp: time.Now(),
 			Message:   fmt.Sprintf(template, args...),
 		}
@@ -74,6 +91,6 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 }
 
 func Fatal(err error) {
-	ErrorfX("Error: %v", err)
-	os.Exit(123)
+	Errorf("Fatal error: %v", err)
+	os.Exit(1)
 }

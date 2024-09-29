@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -16,17 +15,13 @@ import (
 )
 
 func main() {
-	log.StructureLogs = true
+	initLogging()
 	log.Print("Starting TrustedAssertions server...")
-
-	r := setupHandlers()
 
 	assertions.InitKeyPair()
 	initDataStore()
 
-	if datastore.ActiveDataStore.Name() == "InMemoryDataStore" {
-		setupTestData()
-	}
+	r := setupHandlers()
 
 	srv := &http.Server{
 		Handler:      r,
@@ -59,29 +54,34 @@ func initDataStore() {
 		datastore.InitFireStore()
 	} else {
 		datastore.InitInMemoryDataStore()
+		setupTestData()
 	}
 }
 
+func initLogging() {
+	log.StructureLogs = (os.Getenv("FIRESTORE_DB_NAME") != "")
+}
+
 func setupTestData() {
-	log.Printf("Loading test data into %s", datastore.ActiveDataStore.Name())
+	log.Infof("Loading test data into %s", datastore.ActiveDataStore.Name())
 
 	files, err := os.ReadDir("./testdata/")
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("Error reading directory: %v", err)
 	}
 
 	for _, file := range files {
 		uri := "hash://sha256/" + strings.TrimSuffix(file.Name(), ".txt")
 
-		content, err := os.ReadFile("./testdata/" + file.Name()) // just pass the file name
+		content, err := os.ReadFile("./testdata/" + file.Name())
 		if err != nil {
-			fmt.Print(err)
+			log.Errorf("Error reading file %s, %v", file.Name(), err)
 		} else {
 			datastore.ActiveDataStore.StoreRaw(uri, string(content))
 		}
 	}
 
-	log.Print("Test data load complete.")
+	log.Info("Test data load complete.")
 }
 
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +90,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+templateName+".html")
 	if err != nil {
 		msg := http.StatusText(http.StatusInternalServerError)
-		log.Printf("Error parsing template: %+v", err)
+		log.Errorf("Error parsing template: %+v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
@@ -103,7 +103,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := t.ExecuteTemplate(w, "base", data); err != nil {
 		msg := http.StatusText(http.StatusInternalServerError)
-		log.Printf("template.Execute: %v", err)
+		log.Errorf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
 }
@@ -117,11 +117,11 @@ func InitDbApiHandler(w http.ResponseWriter, r *http.Request) {
 
 func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	log.Printf("Statement key: %s", key)
+	log.Debugf("Statement key: %s", key)
 
 	statement, err := datastore.ActiveDataStore.FetchStatement("hash://sha256/" + key)
 	if err != nil {
-		log.Printf("Error fetching statement: %v", err)
+		log.Errorf("Error fetching statement: %v", err)
 	}
 
 	w.WriteHeader(http.StatusOK)
