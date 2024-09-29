@@ -38,6 +38,7 @@ E.g.  `hash://sha256/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b785
     * `IsFalse`
     * `Replaces`
     * `IsSameAs`
+    * `IsCompromised`
 * `object` is the URI of the object of the claim, for assertions that relate multiple URIs, such as "Replaces"
 * `confidence` is the confidence of the claim, from 0.0 (no conficence) to 1.0 (fully confident)
 * `basis` as a list of URIs of other assertions that support this assertion
@@ -49,3 +50,23 @@ A trust model is a mechanism for estimating how likely any individual statement 
 The root of a trust model is a set of entities that the user of the model has some level of trust in. Different users can supply different sets of trusted entities to the same trust model, and will get different outcomes from the model.
 
 Any number of trust models can be created from the same set of assertions, and it is anticipated that the science of trust modelling will evolve significantly over time.
+
+## Things to Do
+
+* QR Codes for statement, entity and assertion pages 
+* SubjectType and ObjectType claims in assertions, or auto-detect type
+* Web page for adding assertion to existing statements etc
+* Stylesheets and mobile views
+* User authentication and access control
+* Web page to create new entity
+* Secure management of private keys
+* Error handling
+
+### Done
+
+* Initial framework
+* Minimal API
+* Firestore data store
+* Structured logging
+* Initial web UI
+* Web UI to create statement & assertion
