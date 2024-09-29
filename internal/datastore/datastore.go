@@ -42,7 +42,6 @@ func (ds *InMemoryDataStore) Name() string {
 func (ds *InMemoryDataStore) StoreRaw(uri string, content string) {
 	log.Printf("Storing %s", uri)
 	ds.data[uri] = content
-	// log.Printf("Database: %v", ds.data)
 }
 
 func (ds *InMemoryDataStore) Store(value assertions.Referenceable) {
@@ -63,9 +62,7 @@ func (ds *InMemoryDataStore) FetchEntity(key string) (assertions.Entity, error) 
 }
 
 func (ds *InMemoryDataStore) FetchAssertion(key string) (assertions.Assertion, error) {
-	log.Printf("Fetching assertion %s", key)
 	content := ds.data[key]
-	log.Printf("Got assertion content from datastore: %s", content)
 	assertion, err := assertions.ParseAssertionJwt(content)
 	if err != nil {
 		log.Printf("Error parsing assertion JWT: %v", err)

@@ -39,11 +39,11 @@ func main() {
 
 func setupHandlers() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/", HomeHandler)
-	r.HandleFunc("/api/v1/statements/{key}", StatementHandler)
-	r.HandleFunc("/api/v1/entities/{key}", EntityHandler)
-	r.HandleFunc("/api/v1/assertions/{key}", AssertionHandler)
-	r.HandleFunc("/api/v1/initdb", InitDbHandler)
+	r.HandleFunc("/", HomeWebHandler)
+	r.HandleFunc("/api/v1/statements/{key}", StatementApiHandler)
+	r.HandleFunc("/api/v1/entities/{key}", EntityApiHandler)
+	r.HandleFunc("/api/v1/assertions/{key}", AssertionApiHandler)
+	r.HandleFunc("/api/v1/initdb", InitDbApiHandler)
 
 	staticDir := http.Dir("./web/static")
 	fs := http.FileServer(staticDir)
@@ -81,27 +81,9 @@ func setupTestData() {
 	}
 
 	log.Print("Test data load complete.")
-
-	// statement := assertions.NewStatement("The world is flat")
-	// datastore.ActiveDataStore.Store(&statement)
-	// log.Printf("Statement URI: %s", statement.Uri())
-
-	// entity := assertions.NewEntity("Fred Bloggs", *big.NewInt(2337203685477580792))
-	// entity.Issued = time.Date(2024, 10, 05, 12, 34, 58, 651387237, time.UTC)
-	// entity.MakeCertificate()
-	// datastore.ActiveDataStore.Store(&entity)
-	// entityUri = entity.Uri()
-	// log.Printf("Entity URI: %s", entityUri)
-
-	// assertion := assertions.NewAssertion("IsFalse")
-	// assertion.Subject = statement.Uri()
-	// assertion.SetAssertingEntity(entity)
-	// assertion.Confidence = 0.9
-	// datastore.ActiveDataStore.Store(&assertion)
-	// log.Printf("Assertion URI: %s", assertion.Uri())
 }
 
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
+func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	dir := "./web"
 	templateName := "index"
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+templateName+".html")
@@ -125,14 +107,14 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func InitDbHandler(w http.ResponseWriter, r *http.Request) {
+func InitDbApiHandler(w http.ResponseWriter, r *http.Request) {
 	setupTestData()
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("Data store initialised"))
 }
 
-func StatementHandler(w http.ResponseWriter, r *http.Request) {
+func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	log.Printf("Statement key: %s", key)
 
@@ -146,7 +128,7 @@ func StatementHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(statement.Content()))
 }
 
-func EntityHandler(w http.ResponseWriter, r *http.Request) {
+func EntityApiHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	entity, _ := datastore.ActiveDataStore.FetchEntity("hash://sha256/" + key)
 
@@ -155,7 +137,7 @@ func EntityHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(entity.Certificate))
 }
 
-func AssertionHandler(w http.ResponseWriter, r *http.Request) {
+func AssertionApiHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	assertion, err := datastore.ActiveDataStore.FetchAssertion("hash://sha256/" + key)
 
