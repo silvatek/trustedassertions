@@ -2,6 +2,7 @@ package assertions
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -15,6 +16,7 @@ type Entity struct {
 	SerialNum   big.Int
 	CommonName  string `json:"name"`
 	Certificate string `json:"cert"`
+	uri         string `json:"-"`
 }
 
 func NewEntity(commonName string, serialNum big.Int) Entity {
@@ -31,10 +33,15 @@ func randomSerialNum() big.Int {
 }
 
 func (e *Entity) Uri() string {
-	if !e.HasSerialNum() {
-		e.AssignSerialNum()
+	if e.uri == "" {
+		if e.Certificate == "" {
+			e.MakeCertificate()
+		}
+		hash := sha256.New()
+		hash.Write([]byte(e.Certificate))
+		e.uri = fmt.Sprintf("hash://sha256/%x", hash.Sum(nil))
 	}
-	return fmt.Sprintf("cert://x509/%s", e.SerialNum.String())
+	return e.uri
 }
 
 func (e *Entity) AssignSerialNum() {
@@ -76,13 +83,15 @@ func (e *Entity) MakeCertificate() {
 func ParseCertificate(content string) Entity {
 	entity := NewEntity("{unknown}", *big.NewInt(0))
 
+	log.Printf("Parsing certificate:\n%s", content)
+
 	entity.Certificate = content
 
 	p, _ := pem.Decode([]byte(content))
 
 	cert, err := x509.ParseCertificate(p.Bytes)
 	if err != nil {
-		log.Print(err)
+		log.Printf("Error parsing X509 certificate: %v", err)
 	} else {
 		entity.SerialNum = *cert.SerialNumber
 		entity.CommonName = cert.Subject.CommonName

@@ -147,10 +147,7 @@ func TestAssertionJwt(t *testing.T) {
 	t.Log(a.Uri())
 	t.Log(a.Content())
 
-	if !strings.HasPrefix(a.Uri(), "sig://jwt/") {
+	if !strings.HasPrefix(a.Uri(), "hash://sha256/") {
 		t.Errorf("Bad URI prefix: %s", a.Uri())
-	}
-	if !strings.HasPrefix(a.Content(), a.sig) {
-		t.Errorf("Bad content prefix: %s", a.Content())
 	}
 }

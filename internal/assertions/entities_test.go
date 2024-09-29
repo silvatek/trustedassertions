@@ -18,7 +18,7 @@ func TestEntityUri(t *testing.T) {
 	if uri == "" {
 		t.Error("Empty entity URI")
 	}
-	if !strings.HasPrefix(uri, "cert://x509/") {
+	if !strings.HasPrefix(uri, "hash://sha256/") {
 		t.Errorf("Entity URI does not have correct prefix: %s", uri)
 	}
 }

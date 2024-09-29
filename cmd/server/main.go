@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
@@ -21,7 +22,10 @@ func main() {
 
 	assertions.InitKeyPair()
 	initDataStore()
-	setupTestData()
+
+	if datastore.ActiveDataStore.Name() == "InMemoryDataStore" {
+		setupTestData()
+	}
 
 	srv := &http.Server{
 		Handler:      r,
@@ -39,12 +43,15 @@ func setupHandlers() *mux.Router {
 	r.HandleFunc("/api/v1/statements/{key}", StatementHandler)
 	r.HandleFunc("/api/v1/entities/{key}", EntityHandler)
 	r.HandleFunc("/api/v1/assertions/{key}", AssertionHandler)
+	r.HandleFunc("/api/v1/initdb", InitDbHandler)
 
 	staticDir := http.Dir("./web/static")
 	fs := http.FileServer(staticDir)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 	return r
 }
+
+var entityUri string
 
 func initDataStore() {
 	if os.Getenv("FIRESTORE_DB_NAME") != "" {
@@ -55,20 +62,24 @@ func initDataStore() {
 }
 
 func setupTestData() {
-	if datastore.ActiveDataStore.Name() != "InMemoryDataStore" {
-		return
-	}
-
 	log.Printf("Loading test data into %s", datastore.ActiveDataStore.Name())
+
 	statement := assertions.NewStatement("The world is flat")
 	datastore.ActiveDataStore.Store(&statement)
+	log.Printf("Statement URI: %s", statement.Uri())
 
 	entity := assertions.NewEntity("Fred Bloggs", *big.NewInt(2337203685477580792))
 	entity.MakeCertificate()
 	datastore.ActiveDataStore.Store(&entity)
+	entityUri = entity.Uri()
+	log.Printf("Entity URI: %s", entityUri)
 
-	assertion := assertions.NewAssertion("simple")
+	assertion := assertions.NewAssertion("IsFalse")
+	assertion.Subject = statement.Uri()
+	assertion.SetAssertingEntity(entity)
+	assertion.Confidence = 0.9
 	datastore.ActiveDataStore.Store(&assertion)
+	log.Printf("Assertion URI: %s", assertion.Uri())
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -82,13 +93,24 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := "test"
+	data := struct {
+		EntityHash string
+	}{
+		EntityHash: strings.TrimPrefix(entityUri, "hash://sha256/"),
+	}
 
 	if err := t.ExecuteTemplate(w, "base", data); err != nil {
 		msg := http.StatusText(http.StatusInternalServerError)
 		log.Printf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
+}
+
+func InitDbHandler(w http.ResponseWriter, r *http.Request) {
+	setupTestData()
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("Data store initialised"))
 }
 
 func StatementHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,14 +121,12 @@ func StatementHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte([]byte(statement.Content())))
+	w.Write([]byte(statement.Content()))
 }
 
 func EntityHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	entityUri := "cert://x509/" + key
-	log.Printf("Entity URI: %s", entityUri)
-	entity := datastore.ActiveDataStore.FetchEntity(entityUri)
+	entity := datastore.ActiveDataStore.FetchEntity("hash://sha256/" + key)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
@@ -115,7 +135,7 @@ func EntityHandler(w http.ResponseWriter, r *http.Request) {
 
 func AssertionHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	assertion := datastore.ActiveDataStore.FetchAssertion("sig://jwt/" + key)
+	assertion := datastore.ActiveDataStore.FetchAssertion("hash://sha256/" + key)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/jwt")

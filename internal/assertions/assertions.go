@@ -3,25 +3,36 @@ package assertions
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const DEFAULT_AUDIENCE = "trustedassertions:0.1/any"
+const UNDEFINED_CATEGORY = "Undefined"
+
 type Assertion struct {
 	*jwt.RegisteredClaims
-	Category string `json:"category"`
-	content  string `json:"-"`
-	sig      string `json:"-"`
+	Category   string  `json:"category,omitempty"`
+	Confidence float32 `json:"confidence,omitempty"`
+	Object     string  `json:"object,omitempty"`
+	content    string  `json:"-"`
+	uri        string  `json:"-"`
 }
 
 func NewAssertion(category string) Assertion {
-	return Assertion{Category: "{unknown}"}
+	return Assertion{
+		Category:   category,
+		Confidence: 0.0,
+		RegisteredClaims: &jwt.RegisteredClaims{
+			Audience: []string{DEFAULT_AUDIENCE},
+		},
+	}
 }
 
 func verificationKey(token *jwt.Token) (interface{}, error) {
@@ -40,19 +51,18 @@ func ParseAssertionJwt(token string) (Assertion, error) {
 func (a *Assertion) makeJwt() {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, a)
 	a.content, _ = token.SignedString(PrivateKey)
-	a.sig = jwtSignature(a.content)
-}
-
-func jwtSignature(token string) string {
-	parts := strings.SplitN(token, ".", 2)
-	return parts[0]
 }
 
 func (a *Assertion) Uri() string {
-	if a.sig == "" {
-		a.makeJwt()
+	if a.uri == "" {
+		if a.content == "" {
+			a.makeJwt()
+		}
+		hash := sha256.New()
+		hash.Write([]byte(a.Content()))
+		a.uri = fmt.Sprintf("hash://sha256/%x", hash.Sum(nil))
 	}
-	return fmt.Sprintf("sig://jwt/%s", a.sig)
+	return a.uri
 }
 
 func (a *Assertion) Type() string {
@@ -64,6 +74,10 @@ func (a *Assertion) Content() string {
 		a.makeJwt()
 	}
 	return a.content
+}
+
+func (a *Assertion) SetAssertingEntity(entity Entity) {
+	a.RegisteredClaims.Issuer = entity.Uri()
 }
 
 //============================================//
