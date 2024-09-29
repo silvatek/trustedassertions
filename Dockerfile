@@ -15,6 +15,7 @@ RUN go build -mod=readonly -v -o /taf-server ./cmd/server
 FROM gcr.io/distroless/static-debian11
 
 WORKDIR /taf
+COPY testdata ./testdata
 COPY --from=build /taf-server .
 COPY web ./web
 ENTRYPOINT ["./taf-server"]

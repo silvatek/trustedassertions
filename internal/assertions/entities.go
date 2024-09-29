@@ -14,13 +14,14 @@ import (
 
 type Entity struct {
 	SerialNum   big.Int
-	CommonName  string `json:"name"`
-	Certificate string `json:"cert"`
-	uri         string `json:"-"`
+	CommonName  string    `json:"name"`
+	Certificate string    `json:"cert"`
+	uri         string    `json:"-"`
+	Issued      time.Time `json:"-"`
 }
 
 func NewEntity(commonName string, serialNum big.Int) Entity {
-	return Entity{CommonName: commonName, SerialNum: serialNum}
+	return Entity{CommonName: commonName, SerialNum: serialNum, Issued: time.Now()}
 }
 
 func randomSerialNum() big.Int {
@@ -71,8 +72,8 @@ func (e *Entity) MakeCertificate() {
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
 		Subject:               pkix.Name{CommonName: e.CommonName},
 		SignatureAlgorithm:    x509.SHA256WithRSA,
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().Add(time.Hour * 24 * 365 * 2),
+		NotBefore:             e.Issued,
+		NotAfter:              e.Issued.Add(time.Hour * 24 * 365 * 2),
 		BasicConstraintsValid: true,
 	}
 	cert, _ := x509.CreateCertificate(rand.Reader, &template, &template, &PublicKey, PrivateKey)

@@ -41,12 +41,34 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 	return client
 }
 
+func (fs *FireStore) StoreRaw(uri string, content string) {
+	log.Printf("Writing to datastore: %s", uri)
+
+	data := make(map[string]string)
+	data["uri"] = uri
+	data["content"] = content
+	data["datatype"] = "unknown"
+
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	result, err := client.Collection(MainCollection).Doc(safeKey(uri)).Set(ctx, data)
+
+	if err != nil {
+		log.Printf("Error writing value: %v", err)
+	} else {
+		log.Printf("Written: %v", result)
+	}
+}
+
 func (fs *FireStore) Store(value assertions.Referenceable) {
 	log.Printf("Writing to datastore: %s", value.Uri())
 
 	data := make(map[string]string)
 	data["uri"] = value.Uri()
 	data["content"] = value.Content()
+	data["datatype"] = value.Type()
 
 	ctx := context.TODO()
 	client := fs.client(ctx)
@@ -68,8 +90,10 @@ func safeKey(uri string) string {
 }
 
 type DbRecord struct {
-	Uri     string `json:"uri"`
-	Content string `json:"content"`
+	Uri      string `json:"uri"`
+	Content  string `json:"content"`
+	DataType string `json:"datatype"`
+	Summary  string `json:"summary"`
 }
 
 func (fs *FireStore) fetch(key string) (*DbRecord, error) {
@@ -88,37 +112,37 @@ func (fs *FireStore) fetch(key string) (*DbRecord, error) {
 	}
 }
 
-func (fs *FireStore) FetchStatement(key string) assertions.Statement {
+func (fs *FireStore) FetchStatement(key string) (assertions.Statement, error) {
 	record, err := fs.fetch(key)
 
 	if err != nil {
-		return assertions.NewStatement("{bad record}")
+		return assertions.NewStatement("{bad record}"), err
 	} else {
-		return assertions.NewStatement(record.Content)
+		return assertions.NewStatement(record.Content), nil
 	}
 }
 
-func (fs *FireStore) FetchEntity(key string) assertions.Entity {
+func (fs *FireStore) FetchEntity(key string) (assertions.Entity, error) {
 	record, err := fs.fetch(key)
 
 	if err != nil {
-		return assertions.NewEntity("{bad record}", *big.NewInt(0))
+		return assertions.NewEntity("{bad record}", *big.NewInt(0)), err
 	} else {
-		return assertions.ParseCertificate(record.Content)
+		return assertions.ParseCertificate(record.Content), nil
 	}
 }
 
-func (fs *FireStore) FetchAssertion(key string) assertions.Assertion {
+func (fs *FireStore) FetchAssertion(key string) (assertions.Assertion, error) {
 	record, err := fs.fetch(key)
 
 	if err != nil {
-		return assertions.NewAssertion("{bad record}")
+		return assertions.NewAssertion("{bad record}"), err
 	}
 
 	assertion, err := assertions.ParseAssertionJwt(record.Content)
 	if err != nil {
 		log.Printf("Error parsing JWT: %v", err)
-		return assertions.NewAssertion("{bad record}")
+		return assertions.NewAssertion("{bad record}"), err
 	}
-	return assertion
+	return assertion, nil
 }

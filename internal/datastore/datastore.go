@@ -1,15 +1,19 @@
 package datastore
 
 import (
+	"errors"
+	"log"
+
 	"silvatek.uk/trustedassertions/internal/assertions"
 )
 
 type DataStore interface {
 	Name() string
 	Store(value assertions.Referenceable)
-	FetchStatement(key string) assertions.Statement
-	FetchEntity(key string) assertions.Entity
-	FetchAssertion(key string) assertions.Assertion
+	StoreRaw(uri string, content string)
+	FetchStatement(key string) (assertions.Statement, error)
+	FetchEntity(key string) (assertions.Entity, error)
+	FetchAssertion(key string) (assertions.Assertion, error)
 }
 
 type KeyNotFoundError struct {
@@ -35,22 +39,36 @@ func (ds *InMemoryDataStore) Name() string {
 	return "InMemoryDataStore"
 }
 
+func (ds *InMemoryDataStore) StoreRaw(uri string, content string) {
+	log.Printf("Storing %s", uri)
+	ds.data[uri] = content
+	// log.Printf("Database: %v", ds.data)
+}
+
 func (ds *InMemoryDataStore) Store(value assertions.Referenceable) {
-	ds.data[value.Uri()] = value.Content()
+	ds.StoreRaw(value.Uri(), value.Content())
 }
 
-func (ds *InMemoryDataStore) FetchStatement(key string) assertions.Statement {
-	content := ds.data[key]
-	return assertions.NewStatement(content)
+func (ds *InMemoryDataStore) FetchStatement(key string) (assertions.Statement, error) {
+	content, ok := ds.data[key]
+	if !ok {
+		return assertions.Statement{}, errors.New("statement not found: " + key)
+	}
+	return assertions.NewStatement(content), nil
 }
 
-func (ds *InMemoryDataStore) FetchEntity(key string) assertions.Entity {
+func (ds *InMemoryDataStore) FetchEntity(key string) (assertions.Entity, error) {
 	content := ds.data[key]
-	return assertions.ParseCertificate(content)
+	return assertions.ParseCertificate(content), nil
 }
 
-func (ds *InMemoryDataStore) FetchAssertion(key string) assertions.Assertion {
+func (ds *InMemoryDataStore) FetchAssertion(key string) (assertions.Assertion, error) {
+	log.Printf("Fetching assertion %s", key)
 	content := ds.data[key]
-	assertion, _ := assertions.ParseAssertionJwt(content)
-	return assertion
+	log.Printf("Got assertion content from datastore: %s", content)
+	assertion, err := assertions.ParseAssertionJwt(content)
+	if err != nil {
+		log.Printf("Error parsing assertion JWT: %v", err)
+	}
+	return assertion, err
 }

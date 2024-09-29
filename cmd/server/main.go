@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
-	"math/big"
 	"net/http"
 	"os"
 	"strings"
@@ -64,22 +64,41 @@ func initDataStore() {
 func setupTestData() {
 	log.Printf("Loading test data into %s", datastore.ActiveDataStore.Name())
 
-	statement := assertions.NewStatement("The world is flat")
-	datastore.ActiveDataStore.Store(&statement)
-	log.Printf("Statement URI: %s", statement.Uri())
+	files, err := os.ReadDir("./testdata/")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	entity := assertions.NewEntity("Fred Bloggs", *big.NewInt(2337203685477580792))
-	entity.MakeCertificate()
-	datastore.ActiveDataStore.Store(&entity)
-	entityUri = entity.Uri()
-	log.Printf("Entity URI: %s", entityUri)
+	for _, file := range files {
+		uri := "hash://sha256/" + strings.TrimSuffix(file.Name(), ".txt")
 
-	assertion := assertions.NewAssertion("IsFalse")
-	assertion.Subject = statement.Uri()
-	assertion.SetAssertingEntity(entity)
-	assertion.Confidence = 0.9
-	datastore.ActiveDataStore.Store(&assertion)
-	log.Printf("Assertion URI: %s", assertion.Uri())
+		content, err := os.ReadFile("./testdata/" + file.Name()) // just pass the file name
+		if err != nil {
+			fmt.Print(err)
+		} else {
+			datastore.ActiveDataStore.StoreRaw(uri, string(content))
+		}
+	}
+
+	log.Print("Test data load complete.")
+
+	// statement := assertions.NewStatement("The world is flat")
+	// datastore.ActiveDataStore.Store(&statement)
+	// log.Printf("Statement URI: %s", statement.Uri())
+
+	// entity := assertions.NewEntity("Fred Bloggs", *big.NewInt(2337203685477580792))
+	// entity.Issued = time.Date(2024, 10, 05, 12, 34, 58, 651387237, time.UTC)
+	// entity.MakeCertificate()
+	// datastore.ActiveDataStore.Store(&entity)
+	// entityUri = entity.Uri()
+	// log.Printf("Entity URI: %s", entityUri)
+
+	// assertion := assertions.NewAssertion("IsFalse")
+	// assertion.Subject = statement.Uri()
+	// assertion.SetAssertingEntity(entity)
+	// assertion.Confidence = 0.9
+	// datastore.ActiveDataStore.Store(&assertion)
+	// log.Printf("Assertion URI: %s", assertion.Uri())
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +136,10 @@ func StatementHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	log.Printf("Statement key: %s", key)
 
-	statement := datastore.ActiveDataStore.FetchStatement("hash://sha256/" + key)
+	statement, err := datastore.ActiveDataStore.FetchStatement("hash://sha256/" + key)
+	if err != nil {
+		log.Printf("Error fetching statement: %v", err)
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
@@ -126,7 +148,7 @@ func StatementHandler(w http.ResponseWriter, r *http.Request) {
 
 func EntityHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	entity := datastore.ActiveDataStore.FetchEntity("hash://sha256/" + key)
+	entity, _ := datastore.ActiveDataStore.FetchEntity("hash://sha256/" + key)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
@@ -135,10 +157,17 @@ func EntityHandler(w http.ResponseWriter, r *http.Request) {
 
 func AssertionHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	assertion := datastore.ActiveDataStore.FetchAssertion("hash://sha256/" + key)
+	assertion, err := datastore.ActiveDataStore.FetchAssertion("hash://sha256/" + key)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte(err.Error()))
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/jwt")
+	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte(assertion.Content()))
 }
 

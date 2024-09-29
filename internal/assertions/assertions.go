@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -40,12 +41,21 @@ func verificationKey(token *jwt.Token) (interface{}, error) {
 }
 
 func ParseAssertionJwt(token string) (Assertion, error) {
-	assertion := Assertion{
+	template := Assertion{
 		RegisteredClaims: &jwt.RegisteredClaims{},
-		content:          token,
 	}
-	_, err := jwt.ParseWithClaims(token, &assertion, verificationKey)
-	return assertion, err
+
+	if token == "" {
+		return template, errors.New("unable to parse empty JWT")
+	}
+
+	parsed, err := jwt.ParseWithClaims(token, &template, verificationKey)
+
+	if assertion, ok := parsed.Claims.(*Assertion); ok && parsed.Valid {
+		return *assertion, err
+	} else {
+		return *assertion, errors.New("unable to parse JWT claims")
+	}
 }
 
 func (a *Assertion) makeJwt() {
