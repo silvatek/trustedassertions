@@ -17,6 +17,7 @@ type FireStore struct {
 }
 
 const MainCollection = "Primary"
+const KeyCollection = "Keys"
 
 func InitFireStore() {
 	datastore := &FireStore{
@@ -75,6 +76,25 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	defer client.Close()
 
 	result, err := client.Collection(MainCollection).Doc(safeKey(value.Uri())).Set(ctx, data)
+
+	if err != nil {
+		log.Errorf("Error writing value: %v", err)
+	} else {
+		log.Debugf("Written: %v", result)
+	}
+}
+
+func (fs *FireStore) StoreKey(entityUri string, key string) {
+	data := make(map[string]string)
+	data["entity"] = entityUri
+	data["encoding"] = "base64"
+	data["key"] = key
+
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	result, err := client.Collection(MainCollection).Doc(safeKey(entityUri)).Set(ctx, data)
 
 	if err != nil {
 		log.Errorf("Error writing value: %v", err)
@@ -145,4 +165,8 @@ func (fs *FireStore) FetchAssertion(key string) (assertions.Assertion, error) {
 		return assertions.NewAssertion("{bad record}"), err
 	}
 	return assertion, nil
+}
+
+func (fs *FireStore) FetchKey(entityUri string) (string, error) {
+	return "", nil
 }

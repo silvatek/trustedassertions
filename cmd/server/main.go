@@ -80,6 +80,8 @@ func setupTestData() {
 		}
 	}
 
+	datastore.ActiveDataStore.StoreKey("hash://sha256/177ed36580cf1ed395e1d0d3a7709993ac1599ee844dc4cf5b9573a1265df2db", assertions.Base64Private())
+
 	log.Info("Test data load complete.")
 }
 
