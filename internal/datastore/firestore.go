@@ -167,6 +167,24 @@ func (fs *FireStore) FetchAssertion(key string) (assertions.Assertion, error) {
 	return assertion, nil
 }
 
+type KeyRecord struct {
+	Entity   string `json:"entity"`
+	Key      string `json:"key"`
+	Encoding string `json:"encoding"`
+}
+
 func (fs *FireStore) FetchKey(entityUri string) (string, error) {
-	return "", nil
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	doc, err := client.Collection(KeyCollection).Doc(safeKey(entityUri)).Get(ctx)
+	if err != nil {
+		log.Errorf("Error reading value: %v", err)
+		return "", err
+	} else {
+		record := KeyRecord{}
+		doc.DataTo(&record)
+		return record.Key, nil
+	}
 }

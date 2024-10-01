@@ -2,6 +2,7 @@ package assertions
 
 import (
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -15,10 +16,11 @@ import (
 
 type Entity struct {
 	SerialNum   big.Int
-	CommonName  string    `json:"name"`
-	Certificate string    `json:"cert"`
-	uri         string    `json:"-"`
-	Issued      time.Time `json:"-"`
+	CommonName  string         `json:"name"`
+	Certificate string         `json:"cert"`
+	uri         string         `json:"-"`
+	Issued      time.Time      `json:"-"`
+	PublicKey   *rsa.PublicKey `json:"-"`
 }
 
 func NewEntity(commonName string, serialNum big.Int) Entity {
@@ -37,7 +39,8 @@ func randomSerialNum() big.Int {
 func (e *Entity) Uri() string {
 	if e.uri == "" {
 		if e.Certificate == "" {
-			e.MakeCertificate()
+			log.Errorf("Cannot make URI without certificate")
+			return ""
 		}
 		hash := sha256.New()
 		hash.Write([]byte(e.Certificate))
@@ -62,7 +65,7 @@ func (e *Entity) Content() string {
 	return e.Certificate
 }
 
-func (e *Entity) MakeCertificate() {
+func (e *Entity) MakeCertificate(privateKey *rsa.PrivateKey) {
 	if !e.HasSerialNum() {
 		e.AssignSerialNum()
 	}
@@ -77,7 +80,11 @@ func (e *Entity) MakeCertificate() {
 		NotAfter:              e.Issued.Add(time.Hour * 24 * 365 * 2),
 		BasicConstraintsValid: true,
 	}
-	cert, _ := x509.CreateCertificate(rand.Reader, &template, &template, &PublicKey, PrivateKey)
+	cert, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		log.Errorf("Error creating entity certificate: %v", err)
+		return
+	}
 	b := pem.Block{Type: "CERTIFICATE", Bytes: cert}
 	e.Certificate = string(pem.EncodeToMemory(&b))
 }
@@ -95,6 +102,7 @@ func ParseCertificate(content string) Entity {
 	} else {
 		entity.SerialNum = *cert.SerialNumber
 		entity.CommonName = cert.Subject.CommonName
+		entity.PublicKey = cert.PublicKey.(*rsa.PublicKey)
 		log.Debugf("Entity serial number: %d", entity.SerialNum.Int64())
 		log.Debugf("Entity name: %s", entity.CommonName)
 	}

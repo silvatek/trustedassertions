@@ -7,7 +7,6 @@ import (
 )
 
 func TestStoreFetchStatement(t *testing.T) {
-	assertions.InitKeyPair("")
 	InitInMemoryDataStore()
 
 	statement1 := assertions.NewStatement("testing")

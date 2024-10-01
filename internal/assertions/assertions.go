@@ -1,7 +1,6 @@
 package assertions
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -26,6 +25,18 @@ type Assertion struct {
 	uri        string  `json:"-"`
 }
 
+type KeyFetcher interface {
+	FetchKey(entityUri string) (string, error)
+}
+
+var ActiveKeyFetcher KeyFetcher
+
+type EntityFetcher interface {
+	FetchEntity(key string) (Entity, error)
+}
+
+var ActiveEntityFetcher EntityFetcher
+
 func NewAssertion(category string) Assertion {
 	return Assertion{
 		Category:   category,
@@ -36,8 +47,12 @@ func NewAssertion(category string) Assertion {
 	}
 }
 
+// Returns the public key to be used to verify the specified JWT token.
+// The token issuer should be the URI of an entity, and that entity is fetched from the data store.
 func verificationKey(token *jwt.Token) (interface{}, error) {
-	return &PublicKey, nil
+	entityUri, _ := token.Claims.GetIssuer()
+	entity, err := ActiveEntityFetcher.FetchEntity(entityUri)
+	return entity.PublicKey, err
 }
 
 func ParseAssertionJwt(token string) (Assertion, error) {
@@ -58,15 +73,21 @@ func ParseAssertionJwt(token string) (Assertion, error) {
 	}
 }
 
-func (a *Assertion) makeJwt() {
+func (a *Assertion) MakeJwt(privateKey *rsa.PrivateKey) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, a)
-	a.content, _ = token.SignedString(PrivateKey)
+	signed, err := token.SignedString(privateKey)
+	if err != nil {
+		log.Errorf("Error creating signed JWT")
+		return
+	}
+	a.content = signed
 }
 
 func (a *Assertion) Uri() string {
 	if a.uri == "" {
 		if a.content == "" {
-			a.makeJwt()
+			log.Errorf("Attempting to get URI for empty assertion content")
+			return ""
 		}
 		hash := sha256.New()
 		hash.Write([]byte(a.Content()))
@@ -81,7 +102,7 @@ func (a *Assertion) Type() string {
 
 func (a *Assertion) Content() string {
 	if a.content == "" {
-		a.makeJwt()
+		log.Errorf("Attempting to get URI for empty assertion content")
 	}
 	return a.content
 }
@@ -109,26 +130,38 @@ func HashUri(hash string, dataType string) string {
 
 //============================================//
 
-var (
-	PublicKey  rsa.PublicKey
-	PrivateKey *rsa.PrivateKey
-)
+// // var (
+// // 	PublicKey  rsa.PublicKey
+// // 	PrivateKey *rsa.PrivateKey
+// // )
 
-func InitKeyPair(osKey string) {
-	if osKey == "" {
-		log.Info("Generating new key pair")
-		PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
-	} else {
-		// Expects a base64 encoded RSA private key
-		log.Info("Loading private key from environment")
-		bytes, _ := base64.StdEncoding.DecodeString(osKey)
-		PrivateKey, _ = x509.ParsePKCS1PrivateKey(bytes)
-	}
-	PublicKey = PrivateKey.PublicKey
+// // func InitKeyPair(osKey string) {
+// // 	if osKey == "" {
+// // 		log.Info("Generating new key pair")
+// // 		PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
+// // 	} else {
+// // 		// Expects a base64 encoded RSA private key
+// // 		log.Info("Loading private key from environment")
+// // 		PrivateKey = PrivateBase64(osKey)
+// // 	}
+// // 	PublicKey = PrivateKey.PublicKey
+// // }
+
+// func Base64Private() string {
+// 	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(PrivateKey))
+// }
+
+func DecodePrivateKey(prvKey *rsa.PrivateKey) string {
+	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(prvKey))
 }
 
-func Base64Private() string {
-	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(PrivateKey))
+func EncodePrivateKey(base64encoded string) *rsa.PrivateKey {
+	bytes, _ := base64.StdEncoding.DecodeString(base64encoded)
+	privateKey, err := x509.ParsePKCS1PrivateKey(bytes)
+	if err != nil {
+		log.Errorf("Error decoding key")
+	}
+	return privateKey
 }
 
 //============================================//

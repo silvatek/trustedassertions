@@ -1,7 +1,9 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 	"text/template"
 
 	"github.com/gorilla/mux"
@@ -96,9 +98,11 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		Uri        string
 		CommonName string
 		ApiLink    string
+		PublicKey  string
 	}{
 		Uri:        assertions.HashUri(key, ""),
 		CommonName: entity.CommonName,
+		PublicKey:  fmt.Sprintf("%v", entity.PublicKey),
 		ApiLink:    "/api/v1/entities/" + key,
 	}
 
@@ -106,7 +110,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func fetchDefaultEntity() (assertions.Entity, error) {
-	return datastore.ActiveDataStore.FetchEntity("hash://sha256/177ed36580cf1ed395e1d0d3a7709993ac1599ee844dc4cf5b9573a1265df2db")
+	return datastore.ActiveDataStore.FetchEntity(os.Getenv("DEFAULT_ENTITY"))
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -124,6 +128,13 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		b64key, err := datastore.ActiveDataStore.FetchKey(entity.Uri())
+		if err != nil {
+			http.Redirect(w, r, "/error?err=1003", http.StatusSeeOther)
+			return
+		}
+		privateKey := assertions.EncodePrivateKey(b64key)
+
 		// Create and save the statement
 		statement := assertions.NewStatement(content)
 		datastore.ActiveDataStore.Store(&statement)
@@ -133,6 +144,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		assertion.Subject = statement.Uri() + "?type=statement"
 		assertion.Confidence = 0.8
 		assertion.SetAssertingEntity(entity)
+		assertion.MakeJwt(privateKey)
 		datastore.ActiveDataStore.Store(&assertion)
 
 		// Redirect the user to the assertion

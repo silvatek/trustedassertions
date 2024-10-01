@@ -19,7 +19,7 @@ func main() {
 	initLogging()
 	log.Print("Starting TrustedAssertions server...")
 
-	assertions.InitKeyPair(os.Getenv("PRV_KEY"))
+	//assertions.InitKeyPair(os.Getenv("PRV_KEY"))
 
 	initDataStore()
 
@@ -54,6 +54,8 @@ func initDataStore() {
 		datastore.InitInMemoryDataStore()
 		setupTestData()
 	}
+	assertions.ActiveKeyFetcher = datastore.ActiveDataStore
+	assertions.ActiveEntityFetcher = datastore.ActiveDataStore
 }
 
 func initLogging() {
@@ -80,7 +82,10 @@ func setupTestData() {
 		}
 	}
 
-	datastore.ActiveDataStore.StoreKey("hash://sha256/177ed36580cf1ed395e1d0d3a7709993ac1599ee844dc4cf5b9573a1265df2db", assertions.Base64Private())
+	default_entity := os.Getenv("DEFAULT_ENTITY")
+	if default_entity != "" {
+		datastore.ActiveDataStore.StoreKey(default_entity, os.Getenv("PRV_KEY"))
+	}
 
 	log.Info("Test data load complete.")
 }

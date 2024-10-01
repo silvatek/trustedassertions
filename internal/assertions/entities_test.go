@@ -2,6 +2,7 @@ package assertions
 
 import (
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -12,8 +13,10 @@ import (
 )
 
 func TestEntityUri(t *testing.T) {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 	entity := NewEntity("Tester", *big.NewInt(0))
 	entity.AssignSerialNum()
+	entity.MakeCertificate(privateKey)
 	uri := entity.Uri()
 	if uri == "" {
 		t.Error("Empty entity URI")
@@ -24,7 +27,8 @@ func TestEntityUri(t *testing.T) {
 }
 
 func TestCreateCertificate(t *testing.T) {
-	InitKeyPair("")
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	publicKey := privateKey.PublicKey
 
 	max := new(big.Int)
 	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
@@ -40,7 +44,7 @@ func TestCreateCertificate(t *testing.T) {
 		NotAfter:              time.Now().Add(time.Hour * 24 * 365 * 2),
 		BasicConstraintsValid: true,
 	}
-	cert, err := x509.CreateCertificate(rand.Reader, &template, &template, &PublicKey, PrivateKey)
+	cert, err := x509.CreateCertificate(rand.Reader, &template, &template, &publicKey, privateKey)
 	if err != nil {
 		t.Error(err)
 	}
@@ -53,13 +57,13 @@ func TestCreateCertificate(t *testing.T) {
 }
 
 func TestEntityCertificate(t *testing.T) {
-	InitKeyPair("")
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 
 	entity := &Entity{
 		CommonName: "John Smith",
 	}
 
-	entity.MakeCertificate()
+	entity.MakeCertificate(privateKey)
 
 	if entity.Certificate == "" {
 		t.Error(entity)
@@ -67,10 +71,10 @@ func TestEntityCertificate(t *testing.T) {
 }
 
 func TestEntityUriRoundTrip(t *testing.T) {
-	InitKeyPair("")
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 
 	e1 := NewEntity("Anentity", *big.NewInt(123456))
-	e1.MakeCertificate()
+	e1.MakeCertificate(privateKey)
 	c1 := e1.Certificate
 	u1 := e1.Uri()
 

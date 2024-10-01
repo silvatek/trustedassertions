@@ -13,12 +13,18 @@ func main() {
 	log.StructureLogs = (os.Getenv("GCLOUD_PROJECT") != "")
 	log.Info("TrustedAssertions utils")
 
-	assertions.InitKeyPair(os.Getenv("PRV_KEY"))
-	key := assertions.Base64Private()
-	log.Infof("Key: %s", key[len(key)-8:])
+	b64key := os.Getenv("PRV_KEY")
+	prvKey := assertions.EncodePrivateKey(b64key)
+	err := prvKey.Validate()
+	if err != nil {
+		log.Errorf("Private key is not valid: %v", err)
+		return
+	}
+
+	log.Infof("Key: %s", b64key[len(b64key)-8:])
 
 	entity := assertions.NewEntity("Mr Tester", *big.NewInt(8376446832743937489))
-	entity.MakeCertificate()
+	entity.MakeCertificate(prvKey)
 
 	log.Infof("Certificate URI: %s", entity.Uri())
 
@@ -26,7 +32,7 @@ func main() {
 
 	dirName := "./testdata"
 
-	err := os.WriteFile(dirName+"/"+hash+".txt", []byte(entity.Content()), 0777)
+	err = os.WriteFile(dirName+"/"+hash+".txt", []byte(entity.Content()), 0777)
 	if err != nil {
 		log.Errorf("Error writing file %v", err)
 	}
@@ -43,6 +49,7 @@ func main() {
 	assertion := assertions.NewAssertion("IsTrue")
 	assertion.Subject = statement.Uri()
 	assertion.SetAssertingEntity(entity)
+	assertion.MakeJwt(prvKey)
 	log.Infof("Assertion URI: %s", assertion.Uri())
 	hash = assertions.UriHash(assertion.Uri())
 
