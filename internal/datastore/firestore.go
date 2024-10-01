@@ -94,10 +94,10 @@ func (fs *FireStore) StoreKey(entityUri string, key string) {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	result, err := client.Collection(MainCollection).Doc(safeKey(entityUri)).Set(ctx, data)
+	result, err := client.Collection(KeyCollection).Doc(safeKey(entityUri)).Set(ctx, data)
 
 	if err != nil {
-		log.Errorf("Error writing value: %v", err)
+		log.Errorf("Error writing key: %v", err)
 	} else {
 		log.Debugf("Written: %v", result)
 	}
