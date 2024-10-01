@@ -19,7 +19,8 @@ func main() {
 	initLogging()
 	log.Print("Starting TrustedAssertions server...")
 
-	assertions.InitKeyPair()
+	assertions.InitKeyPair(os.Getenv("PRV_KEY"))
+
 	initDataStore()
 
 	r := setupHandlers()
@@ -56,7 +57,7 @@ func initDataStore() {
 }
 
 func initLogging() {
-	log.StructureLogs = (os.Getenv("FIRESTORE_DB_NAME") != "")
+	log.StructureLogs = (os.Getenv("GCLOUD_PROJECT") != "")
 }
 
 func setupTestData() {
@@ -68,7 +69,8 @@ func setupTestData() {
 	}
 
 	for _, file := range files {
-		uri := "hash://sha256/" + strings.TrimSuffix(file.Name(), ".txt")
+		hash := strings.TrimSuffix(file.Name(), ".txt")
+		uri := "hash://sha256/" + hash
 
 		content, err := os.ReadFile("./testdata/" + file.Name())
 		if err != nil {

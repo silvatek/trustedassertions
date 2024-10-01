@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"os"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	log "silvatek.uk/trustedassertions/internal/logging"
@@ -90,6 +90,23 @@ func (a *Assertion) SetAssertingEntity(entity Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri()
 }
 
+func UriHash(uri string) string {
+	hash := strings.TrimPrefix(uri, "hash://sha256/")
+	queryIndex := strings.Index(hash, "?")
+	if queryIndex > -1 {
+		hash = hash[0:queryIndex]
+	}
+	return hash
+}
+
+func HashUri(hash string, dataType string) string {
+	uri := "hash://sha256/" + hash
+	if dataType != "" {
+		uri = uri + "?type=" + dataType
+	}
+	return uri
+}
+
 //============================================//
 
 var (
@@ -97,8 +114,7 @@ var (
 	PrivateKey *rsa.PrivateKey
 )
 
-func InitKeyPair() {
-	osKey := os.Getenv("PRV_KEY")
+func InitKeyPair(osKey string) {
 	if osKey == "" {
 		log.Info("Generating new key pair")
 		PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)

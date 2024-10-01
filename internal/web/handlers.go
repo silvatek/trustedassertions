@@ -2,7 +2,6 @@ package web
 
 import (
 	"net/http"
-	"strings"
 	"text/template"
 
 	"github.com/gorilla/mux"
@@ -47,7 +46,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	statement, _ := datastore.ActiveDataStore.FetchStatement("hash://sha256/" + key)
+	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.HashUri(key, ""))
 
 	data := struct {
 		Uri     string
@@ -64,7 +63,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	assertion, _ := datastore.ActiveDataStore.FetchAssertion("hash://sha256/" + key)
+	assertion, _ := datastore.ActiveDataStore.FetchAssertion(assertions.HashUri(key, ""))
 
 	data := struct {
 		Uri         string
@@ -76,9 +75,9 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		Uri:        assertion.Uri(),
 		Assertion:  assertion,
 		ApiLink:    "/api/v1/statements/" + key,
-		IssuerLink: "/web/entities/" + strings.TrimPrefix(assertion.Issuer, "hash://sha256/"),
+		IssuerLink: "/web/entities/" + assertions.UriHash(assertion.Issuer),
 		//TODO: don't assume subject is a statement
-		SubjectLink: "/web/statements/" + strings.TrimPrefix(assertion.Subject, "hash://sha256/"),
+		SubjectLink: "/web/statements/" + assertions.UriHash(assertion.Subject),
 	}
 
 	RenderWebPage("viewassertion", data, w)
@@ -86,19 +85,28 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	entity, _ := datastore.ActiveDataStore.FetchEntity("hash://sha256/" + key)
+
+	entity, err := datastore.ActiveDataStore.FetchEntity(assertions.HashUri(key, ""))
+	if err != nil {
+		http.Redirect(w, r, "/error?err=1001", http.StatusSeeOther)
+		return
+	}
 
 	data := struct {
 		Uri        string
 		CommonName string
 		ApiLink    string
 	}{
-		Uri:        entity.Uri(),
+		Uri:        assertions.HashUri(key, ""),
 		CommonName: entity.CommonName,
 		ApiLink:    "/api/v1/entities/" + key,
 	}
 
 	RenderWebPage("viewentity", data, w)
+}
+
+func fetchDefaultEntity() (assertions.Entity, error) {
+	return datastore.ActiveDataStore.FetchEntity("hash://sha256/177ed36580cf1ed395e1d0d3a7709993ac1599ee844dc4cf5b9573a1265df2db")
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -109,22 +117,25 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		content := r.Form.Get("statement")
 		log.Debugf("Web post of new statement: %s", content)
 
+		// Fetch the default entity
+		entity, err := fetchDefaultEntity()
+		if err != nil {
+			http.Redirect(w, r, "/error?err=1002", http.StatusSeeOther)
+			return
+		}
+
 		// Create and save the statement
 		statement := assertions.NewStatement(content)
 		datastore.ActiveDataStore.Store(&statement)
 
-		// Fetch the default entity
-		entity, _ := datastore.ActiveDataStore.FetchEntity("hash://sha256/c6355ef5dfbc9da513ac4d683729ee24209aa1f9a8afe66bb4aa60217439183f")
-
 		// Create and save an assertion by the default entity that the statement is probably true
 		assertion := assertions.NewAssertion("IsTrue")
-		assertion.Subject = statement.Uri()
+		assertion.Subject = statement.Uri() + "?type=statement"
 		assertion.Confidence = 0.8
 		assertion.SetAssertingEntity(entity)
 		datastore.ActiveDataStore.Store(&assertion)
 
 		// Redirect the user to the assertion
-		hash := strings.TrimPrefix(assertion.Uri(), "hash://sha256/")
-		http.Redirect(w, r, "/api/v1/assertions/"+hash, http.StatusSeeOther)
+		http.Redirect(w, r, "/web/assertions/"+assertions.UriHash(assertion.Uri()), http.StatusSeeOther)
 	}
 }

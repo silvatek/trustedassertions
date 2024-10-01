@@ -83,7 +83,7 @@ func TestJwtAsymmetric(t *testing.T) {
 }
 
 func TestAssertionClaims(t *testing.T) {
-	InitKeyPair()
+	InitKeyPair("")
 
 	assertion1 := NewAssertion("IsFalse")
 	assertion1.Subject = "hash://sha256/1234"
@@ -150,12 +150,26 @@ func TestDecodePrivateKey(t *testing.T) {
 }
 
 func TestAssertionJwt(t *testing.T) {
-	InitKeyPair()
+	InitKeyPair("")
 	a := NewAssertion("simple")
 	t.Log(a.Uri())
 	t.Log(a.Content())
 
 	if !strings.HasPrefix(a.Uri(), "hash://sha256/") {
 		t.Errorf("Bad URI prefix: %s", a.Uri())
+	}
+}
+
+func TestUriHash(t *testing.T) {
+	uris := map[string]string{
+		"hash://sha256/3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e":                "3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e",
+		"hash://sha256/3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e?type=statement": "3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e",
+		"hash://sha256/12345?type=entity": "12345",
+	}
+	for uri, expectedHash := range uris {
+		actualHash := UriHash(uri)
+		if actualHash != expectedHash {
+			t.Errorf("Unexpected hash from URI: %s => %s", uri, actualHash)
+		}
 	}
 }

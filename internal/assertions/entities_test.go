@@ -24,7 +24,7 @@ func TestEntityUri(t *testing.T) {
 }
 
 func TestCreateCertificate(t *testing.T) {
-	InitKeyPair()
+	InitKeyPair("")
 
 	max := new(big.Int)
 	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
@@ -53,7 +53,7 @@ func TestCreateCertificate(t *testing.T) {
 }
 
 func TestEntityCertificate(t *testing.T) {
-	InitKeyPair()
+	InitKeyPair("")
 
 	entity := &Entity{
 		CommonName: "John Smith",
@@ -63,5 +63,21 @@ func TestEntityCertificate(t *testing.T) {
 
 	if entity.Certificate == "" {
 		t.Error(entity)
+	}
+}
+
+func TestEntityUriRoundTrip(t *testing.T) {
+	InitKeyPair("")
+
+	e1 := NewEntity("Anentity", *big.NewInt(123456))
+	e1.MakeCertificate()
+	c1 := e1.Certificate
+	u1 := e1.Uri()
+
+	e2 := ParseCertificate(c1)
+	u2 := e2.Uri()
+
+	if u1 != u2 {
+		t.Errorf("Round trip URI mismatch: %s != %s", u1, u2)
 	}
 }
