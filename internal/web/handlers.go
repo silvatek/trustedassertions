@@ -48,7 +48,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.HashUri(key, ""))
+	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.HashToUri(key, ""))
 
 	data := struct {
 		Uri     string
@@ -65,7 +65,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	assertion, _ := datastore.ActiveDataStore.FetchAssertion(assertions.HashUri(key, ""))
+	assertion, _ := datastore.ActiveDataStore.FetchAssertion(assertions.HashToUri(key, ""))
 
 	data := struct {
 		Uri         string
@@ -88,7 +88,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 
-	entity, err := datastore.ActiveDataStore.FetchEntity(assertions.HashUri(key, ""))
+	entity, err := datastore.ActiveDataStore.FetchEntity(assertions.HashToUri(key, ""))
 	if err != nil {
 		http.Redirect(w, r, "/error?err=1001", http.StatusSeeOther)
 		return
@@ -100,7 +100,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		ApiLink    string
 		PublicKey  string
 	}{
-		Uri:        assertions.HashUri(key, ""),
+		Uri:        assertions.HashToUri(key, ""),
 		CommonName: entity.CommonName,
 		PublicKey:  fmt.Sprintf("%v", entity.PublicKey),
 		ApiLink:    "/api/v1/entities/" + key,

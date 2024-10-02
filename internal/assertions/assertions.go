@@ -67,6 +67,7 @@ func ParseAssertionJwt(token string) (Assertion, error) {
 	parsed, err := jwt.ParseWithClaims(token, &template, verificationKey)
 
 	if assertion, ok := parsed.Claims.(*Assertion); ok && parsed.Valid {
+		assertion.content = token
 		return *assertion, err
 	} else {
 		return *assertion, errors.New("unable to parse JWT claims")
@@ -120,7 +121,7 @@ func UriHash(uri string) string {
 	return hash
 }
 
-func HashUri(hash string, dataType string) string {
+func HashToUri(hash string, dataType string) string {
 	uri := "hash://sha256/" + hash
 	if dataType != "" {
 		uri = uri + "?type=" + dataType
