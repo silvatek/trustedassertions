@@ -51,6 +51,12 @@ The root of a trust model is a set of entities that the user of the model has so
 
 Any number of trust models can be created from the same set of assertions, and it is anticipated that the science of trust modelling will evolve significantly over time.
 
+## Development Commands
+
+* `go run ./cmd/server/main.go`
+* `go test -coverprofile=coverage.out ./...`
+* `go tool cover -html=coverage.out`
+
 ## Things to Do
 
 * QR Codes for statement, entity and assertion pages 
