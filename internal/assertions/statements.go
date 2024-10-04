@@ -2,11 +2,10 @@ package assertions
 
 import (
 	"crypto/sha256"
-	"fmt"
 )
 
 type Statement struct {
-	uri     string
+	uri     HashUri
 	content string
 }
 
@@ -14,11 +13,11 @@ func NewStatement(content string) Statement {
 	return Statement{content: content}
 }
 
-func (s *Statement) Uri() string {
-	if s.uri == "" {
+func (s *Statement) Uri() HashUri {
+	if s.uri.IsEmpty() {
 		hash := sha256.New()
 		hash.Write([]byte(s.content))
-		return fmt.Sprintf("hash://sha256/%x", hash.Sum(nil))
+		s.uri = MakeUriB(hash.Sum(nil), "statement")
 	}
 	return s.uri
 }

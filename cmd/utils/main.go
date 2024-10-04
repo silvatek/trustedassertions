@@ -26,9 +26,9 @@ func main() {
 	entity := assertions.NewEntity("Mr Tester", *big.NewInt(8376446832743937489))
 	entity.MakeCertificate(prvKey)
 
-	log.Infof("Certificate URI: %s", entity.Uri())
-
-	hash := assertions.UriHash(entity.Uri())
+	u := entity.Uri()
+	log.Infof("Certificate URI: %s", u)
+	hash := u.Hash()
 
 	dirName := "./testdata"
 
@@ -39,7 +39,8 @@ func main() {
 
 	statement := assertions.NewStatement("The universe exists")
 	log.Infof("Statement URI: %s", statement.Uri())
-	hash = assertions.UriHash(statement.Uri())
+	u = statement.Uri()
+	hash = u.Hash()
 
 	err = os.WriteFile(dirName+"/"+hash+".txt", []byte(statement.Content()), 0777)
 	if err != nil {
@@ -47,11 +48,12 @@ func main() {
 	}
 
 	assertion := assertions.NewAssertion("IsTrue")
-	assertion.Subject = statement.Uri()
+	assertion.Subject = u.String()
 	assertion.SetAssertingEntity(entity)
 	assertion.MakeJwt(prvKey)
 	log.Infof("Assertion URI: %s", assertion.Uri())
-	hash = assertions.UriHash(assertion.Uri())
+	u = assertion.Uri()
+	hash = u.Hash()
 
 	err = os.WriteFile(dirName+"/"+hash+".txt", []byte(assertion.Content()), 0777)
 	if err != nil {

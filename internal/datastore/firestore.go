@@ -42,11 +42,11 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 	return client
 }
 
-func (fs *FireStore) StoreRaw(uri string, content string) {
+func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	log.Debugf("Writing to datastore: %s", uri)
 
 	data := make(map[string]string)
-	data["uri"] = uri
+	data["uri"] = uri.Unadorned()
 	data["content"] = content
 	data["datatype"] = "unknown"
 
@@ -54,7 +54,7 @@ func (fs *FireStore) StoreRaw(uri string, content string) {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	result, err := client.Collection(MainCollection).Doc(safeKey(uri)).Set(ctx, data)
+	result, err := client.Collection(MainCollection).Doc(safeKey(uri.Unadorned())).Set(ctx, data)
 
 	if err != nil {
 		log.Errorf("Error writing value: %v", err)
@@ -67,7 +67,7 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	log.Debugf("Writing to datastore: %s", value.Uri())
 
 	data := make(map[string]string)
-	data["uri"] = value.Uri()
+	data["uri"] = value.Uri().Unadorned()
 	data["content"] = value.Content()
 	data["datatype"] = value.Type()
 
@@ -75,7 +75,7 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	result, err := client.Collection(MainCollection).Doc(safeKey(value.Uri())).Set(ctx, data)
+	result, err := client.Collection(MainCollection).Doc(safeKey(value.Uri().Unadorned())).Set(ctx, data)
 
 	if err != nil {
 		log.Errorf("Error writing value: %v", err)
@@ -84,9 +84,9 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	}
 }
 
-func (fs *FireStore) StoreKey(entityUri string, key string) {
+func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
 	data := make(map[string]string)
-	data["entity"] = entityUri
+	data["entity"] = entityUri.Unadorned()
 	data["encoding"] = "base64"
 	data["key"] = key
 
@@ -94,7 +94,7 @@ func (fs *FireStore) StoreKey(entityUri string, key string) {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	result, err := client.Collection(KeyCollection).Doc(safeKey(entityUri)).Set(ctx, data)
+	result, err := client.Collection(KeyCollection).Doc(safeKey(entityUri.Unadorned())).Set(ctx, data)
 
 	if err != nil {
 		log.Errorf("Error writing key: %v", err)

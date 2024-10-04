@@ -1,13 +1,13 @@
 package assertions
 
 type Referenceable interface {
-	Uri() string
+	Uri() HashUri
 	Type() string
 	Content() string
 }
 
 type Reference struct {
-	target  string
+	target  HashUri
 	refType string
-	source  string
+	source  HashUri
 }

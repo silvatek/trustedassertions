@@ -14,11 +14,11 @@ func TestStatementUri(t *testing.T) {
 func verifyStatementUri(content string, t *testing.T) {
 	statement := Statement{content: content}
 	uri := statement.Uri()
-	if !strings.HasPrefix(uri, "hash://sha256/") {
+	if !strings.HasPrefix(uri.String(), "hash://sha256/") {
 		t.Errorf("Statement URI does not have correct prefix: %s", uri)
 	}
-	if len(uri) != 78 {
-		t.Errorf("Statement URI is not correct length: %d", len(uri))
+	if uri.Len() != 93 {
+		t.Errorf("Statement URI is not correct length: %d", uri.Len())
 	}
 
 }

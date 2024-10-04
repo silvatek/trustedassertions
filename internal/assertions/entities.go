@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -18,7 +17,7 @@ type Entity struct {
 	SerialNum   big.Int
 	CommonName  string         `json:"name"`
 	Certificate string         `json:"cert"`
-	uri         string         `json:"-"`
+	uri         HashUri        `json:"-"`
 	Issued      time.Time      `json:"-"`
 	PublicKey   *rsa.PublicKey `json:"-"`
 }
@@ -36,15 +35,15 @@ func randomSerialNum() big.Int {
 	return *serNum
 }
 
-func (e *Entity) Uri() string {
-	if e.uri == "" {
+func (e *Entity) Uri() HashUri {
+	if e.uri.String() == "" {
 		if e.Certificate == "" {
 			log.Errorf("Cannot make URI without certificate")
-			return ""
+			return EMPTY_URI
 		}
 		hash := sha256.New()
 		hash.Write([]byte(e.Certificate))
-		e.uri = fmt.Sprintf("hash://sha256/%x", hash.Sum(nil))
+		e.uri = MakeUriB(hash.Sum(nil), "entity")
 	}
 	return e.uri
 }

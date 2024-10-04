@@ -1,19 +1,34 @@
 package assertions
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
-type HashUri string
+type HashUri struct {
+	uri string
+}
+
+var EMPTY_URI = HashUri{uri: ""}
 
 func MakeUri(hash string, kind string) HashUri {
 	uri := "hash://sha256/" + hash
 	if kind != "" {
 		uri = uri + "?type=" + kind
 	}
-	return HashUri(uri)
+	return HashUri{uri: uri}
+}
+
+func MakeUriB(hash []byte, kind string) HashUri {
+	return MakeUri(fmt.Sprintf("%x", hash), kind)
+}
+
+func UriFromString(u string) HashUri {
+	return HashUri{uri: u}
 }
 
 func (u *HashUri) Hash() string {
-	hash := strings.TrimPrefix(u.string(), "hash://sha256/")
+	hash := strings.TrimPrefix(u.String(), "hash://sha256/")
 	index := strings.Index(hash, "?type=")
 	if index > -1 {
 		hash = hash[:index]
@@ -25,8 +40,8 @@ func (u *HashUri) Alg() string {
 	return "sha256"
 }
 
-func (u *HashUri) string() string {
-	return string(*u)
+func (u HashUri) String() string {
+	return u.uri
 }
 
 func (u *HashUri) Short() string {
@@ -39,12 +54,11 @@ func (u *HashUri) Short() string {
 }
 
 func (u *HashUri) Kind() string {
-	hash := u.Hash()
-	index := strings.Index(hash, "?type=")
+	index := strings.Index(u.uri, "?type=")
 	if index == -1 {
 		return "unknown"
 	} else {
-		return hash[index+6:]
+		return u.uri[index+6:]
 	}
 }
 
@@ -59,10 +73,27 @@ func mapPathType(kind string) string {
 	}
 }
 
-func (u *HashUri) WebPath() string {
+func (u HashUri) Unadorned() string {
+	s := u.String()
+	index := strings.Index(s, "?type=")
+	if index > -1 {
+		return s[0:index]
+	}
+	return s
+}
+
+func (u HashUri) WebPath() string {
 	return "/web/" + mapPathType(u.Kind()) + "/" + u.Hash()
 }
 
-func (u *HashUri) ApiPath() string {
+func (u HashUri) ApiPath() string {
 	return "/api/v1/" + mapPathType(u.Kind()) + "/" + u.Hash()
+}
+
+func (u HashUri) IsEmpty() bool {
+	return u.uri == ""
+}
+
+func (u HashUri) Len() int {
+	return len(u.uri)
 }

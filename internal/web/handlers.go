@@ -55,7 +55,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		Content string
 		ApiLink string
 	}{
-		Uri:     statement.Uri(),
+		Uri:     statement.Uri().String(),
 		Content: statement.Content(),
 		ApiLink: "/api/v1/statements/" + key,
 	}
@@ -74,7 +74,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		SubjectLink string
 		ApiLink     string
 	}{
-		Uri:        assertion.Uri(),
+		Uri:        assertion.Uri().String(),
 		Assertion:  assertion,
 		ApiLink:    "/api/v1/statements/" + key,
 		IssuerLink: "/web/entities/" + assertions.UriHash(assertion.Issuer),
@@ -117,6 +117,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		RenderWebPage("newstatementform", "", w)
 	} else if r.Method == "POST" {
+		log.Info("Creating new statement and assertion")
 		r.ParseForm()
 		content := r.Form.Get("statement")
 		log.Debugf("Web post of new statement: %s", content)
@@ -128,7 +129,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b64key, err := datastore.ActiveDataStore.FetchKey(entity.Uri())
+		b64key, err := datastore.ActiveDataStore.FetchKey(entity.Uri().Unadorned())
 		if err != nil {
 			http.Redirect(w, r, "/error?err=1003", http.StatusSeeOther)
 			return
@@ -139,15 +140,19 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		statement := assertions.NewStatement(content)
 		datastore.ActiveDataStore.Store(&statement)
 
+		su := statement.Uri()
+
 		// Create and save an assertion by the default entity that the statement is probably true
 		assertion := assertions.NewAssertion("IsTrue")
-		assertion.Subject = statement.Uri() + "?type=statement"
+		assertion.Subject = su.String()
 		assertion.Confidence = 0.8
 		assertion.SetAssertingEntity(entity)
 		assertion.MakeJwt(privateKey)
 		datastore.ActiveDataStore.Store(&assertion)
 
 		// Redirect the user to the assertion
-		http.Redirect(w, r, "/web/assertions/"+assertions.UriHash(assertion.Uri()), http.StatusSeeOther)
+		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)
+
+		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
 	}
 }

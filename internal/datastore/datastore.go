@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"errors"
+	"strings"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	log "silvatek.uk/trustedassertions/internal/logging"
@@ -10,8 +11,8 @@ import (
 type DataStore interface {
 	Name() string
 	Store(value assertions.Referenceable)
-	StoreRaw(uri string, content string)
-	StoreKey(entityUri string, key string)
+	StoreRaw(uri assertions.HashUri, content string)
+	StoreKey(entityUri assertions.HashUri, key string)
 	FetchStatement(key string) (assertions.Statement, error)
 	FetchEntity(key string) (assertions.Entity, error)
 	FetchAssertion(key string) (assertions.Assertion, error)
@@ -43,21 +44,29 @@ func (ds *InMemoryDataStore) Name() string {
 	return "InMemoryDataStore"
 }
 
-func (ds *InMemoryDataStore) StoreRaw(uri string, content string) {
+func (ds *InMemoryDataStore) StoreRaw(uri assertions.HashUri, content string) {
 	log.Debugf("Storing %s", uri)
-	ds.data[uri] = content
+	ds.data[uri.Unadorned()] = content
 }
 
 func (ds *InMemoryDataStore) Store(value assertions.Referenceable) {
 	ds.StoreRaw(value.Uri(), value.Content())
 }
 
-func (ds *InMemoryDataStore) StoreKey(entityUri string, key string) {
-	ds.keys[entityUri] = key
+func (ds *InMemoryDataStore) StoreKey(entityUri assertions.HashUri, key string) {
+	ds.keys[entityUri.Unadorned()] = key
+}
+
+func safeKey1(key string) string {
+	index := strings.Index(key, "?type=")
+	if index > -1 {
+		return key[0:index]
+	}
+	return key
 }
 
 func (ds *InMemoryDataStore) FetchStatement(key string) (assertions.Statement, error) {
-	content, ok := ds.data[key]
+	content, ok := ds.data[safeKey1(key)]
 	if !ok {
 		return assertions.Statement{}, errors.New("statement not found: " + key)
 	}
@@ -65,12 +74,12 @@ func (ds *InMemoryDataStore) FetchStatement(key string) (assertions.Statement, e
 }
 
 func (ds *InMemoryDataStore) FetchEntity(key string) (assertions.Entity, error) {
-	content := ds.data[key]
+	content := ds.data[safeKey1(key)]
 	return assertions.ParseCertificate(content), nil
 }
 
 func (ds *InMemoryDataStore) FetchAssertion(key string) (assertions.Assertion, error) {
-	content := ds.data[key]
+	content := ds.data[safeKey1(key)]
 	assertion, err := assertions.ParseAssertionJwt(content)
 	if err != nil {
 		log.Errorf("Error parsing assertion JWT: %v", err)

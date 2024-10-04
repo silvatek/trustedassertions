@@ -72,7 +72,7 @@ func setupTestData() {
 
 	for _, file := range files {
 		hash := strings.TrimSuffix(file.Name(), ".txt")
-		uri := "hash://sha256/" + hash
+		uri := assertions.MakeUri(hash, "")
 
 		content, err := os.ReadFile("./testdata/" + file.Name())
 		if err != nil {
@@ -84,7 +84,8 @@ func setupTestData() {
 
 	default_entity := os.Getenv("DEFAULT_ENTITY")
 	if default_entity != "" {
-		datastore.ActiveDataStore.StoreKey(default_entity, os.Getenv("PRV_KEY"))
+		uri := assertions.UriFromString(default_entity)
+		datastore.ActiveDataStore.StoreKey(uri, os.Getenv("PRV_KEY"))
 	}
 
 	log.Info("Test data load complete.")

@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -22,7 +21,7 @@ type Assertion struct {
 	Confidence float32 `json:"confidence,omitempty"`
 	Object     string  `json:"object,omitempty"`
 	content    string  `json:"-"`
-	uri        string  `json:"-"`
+	uri        HashUri `json:"-"`
 }
 
 type KeyFetcher interface {
@@ -84,15 +83,15 @@ func (a *Assertion) MakeJwt(privateKey *rsa.PrivateKey) {
 	a.content = signed
 }
 
-func (a *Assertion) Uri() string {
-	if a.uri == "" {
+func (a *Assertion) Uri() HashUri {
+	if a.uri.IsEmpty() {
 		if a.content == "" {
 			log.Errorf("Attempting to get URI for empty assertion content")
-			return ""
+			return EMPTY_URI
 		}
 		hash := sha256.New()
 		hash.Write([]byte(a.Content()))
-		a.uri = fmt.Sprintf("hash://sha256/%x", hash.Sum(nil))
+		a.uri = MakeUriB(hash.Sum(nil), "assertion")
 	}
 	return a.uri
 }
@@ -109,7 +108,7 @@ func (a *Assertion) Content() string {
 }
 
 func (a *Assertion) SetAssertingEntity(entity Entity) {
-	a.RegisteredClaims.Issuer = entity.Uri()
+	a.RegisteredClaims.Issuer = entity.Uri().String()
 }
 
 func UriHash(uri string) string {

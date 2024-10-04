@@ -18,10 +18,10 @@ func TestEntityUri(t *testing.T) {
 	entity.AssignSerialNum()
 	entity.MakeCertificate(privateKey)
 	uri := entity.Uri()
-	if uri == "" {
+	if uri.IsEmpty() {
 		t.Error("Empty entity URI")
 	}
-	if !strings.HasPrefix(uri, "hash://sha256/") {
+	if !strings.HasPrefix(uri.String(), "hash://sha256/") {
 		t.Errorf("Entity URI does not have correct prefix: %s", uri)
 	}
 }

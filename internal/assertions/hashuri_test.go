@@ -11,7 +11,7 @@ func TestBasicHashUri(t *testing.T) {
 
 	for input, expected := range data {
 		hashUri := MakeUri(input[0], input[1])
-		if hashUri.string() != expected {
+		if hashUri.String() != expected {
 			t.Errorf("Unexptected HashUri (%s, %s): %s", input[0], input[1], hashUri)
 		}
 	}
@@ -27,7 +27,7 @@ func TestHashUriHash(t *testing.T) {
 	}
 
 	for input, expected := range data {
-		uri := HashUri(input)
+		uri := HashUri{uri: input}
 		hash := uri.Hash()
 		if hash != expected {
 			t.Errorf("Unexpected hash for %s - %s", input, hash)
@@ -46,7 +46,7 @@ func TestHashShort(t *testing.T) {
 	}
 
 	for input, expected := range data {
-		uri := HashUri(input)
+		uri := HashUri{uri: input}
 		short := uri.Short()
 		if short != expected {
 			t.Errorf("Unexpected short hash for %s => %s", input, short)
@@ -60,7 +60,7 @@ func TestHashPath(t *testing.T) {
 	}
 
 	for input, expected := range data {
-		uri := HashUri(input)
+		uri := HashUri{uri: input}
 		path := uri.WebPath()
 		if path != expected[0] {
 			t.Errorf("Unexpected web path for uri %s ==> %s", input, path)
@@ -69,5 +69,12 @@ func TestHashPath(t *testing.T) {
 		if path != expected[1] {
 			t.Errorf("Unexpected api path for uri %s ==> %s", input, path)
 		}
+	}
+}
+
+func TestUnadornedUri(t *testing.T) {
+	uri := MakeUri("12345678", "statement")
+	if uri.Unadorned() != "hash://sha256/12345678" {
+		t.Errorf("Incorrect unadorned URI: %s", uri.Unadorned())
 	}
 }
