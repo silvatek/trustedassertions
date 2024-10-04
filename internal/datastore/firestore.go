@@ -104,6 +104,10 @@ func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
 }
 
 func safeKey(uri string) string {
+	index := strings.Index(uri, "?type=")
+	if index > -1 {
+		uri = uri[0:index]
+	}
 	uri = strings.ReplaceAll(uri, ":", "_")
 	uri = strings.ReplaceAll(uri, "/", "_")
 	return uri
