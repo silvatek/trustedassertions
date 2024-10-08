@@ -111,6 +111,17 @@ func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
 }
 
 func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashUri, refType string) {
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	data := make(map[string]string)
+	data["source"] = source.String()
+	data["target"] = target.String()
+	data["type"] = refType
+
+	refs := client.Collection(MainCollection).Doc(target.Escaped()).Collection("refs")
+	refs.Doc(source.Escaped()).Set(ctx, data)
 }
 
 func safeKey(uri string) string {
