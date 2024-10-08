@@ -120,7 +120,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func fetchDefaultEntity() (assertions.Entity, error) {
-	return datastore.ActiveDataStore.FetchEntity(assertions.MakeUri(os.Getenv("DEFAULT_ENTITY"), "entity"))
+	return datastore.ActiveDataStore.FetchEntity(assertions.UriFromString(os.Getenv("DEFAULT_ENTITY")))
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
