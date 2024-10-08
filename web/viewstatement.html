@@ -13,7 +13,7 @@
         <h2>References</h2>
         <ul>
             {{range $ref := .References}}
-                <li>{{$ref.Kind}} <a href="{{$ref.WebPath}}">{{$ref.Short}}</a></li>
+                <li><a href="{{$ref.Uri.WebPath}}">{{$ref.Summary}} [{{$ref.Uri.Short}}]</a></li>
             {{end}}
         </ul>
         <hr/>

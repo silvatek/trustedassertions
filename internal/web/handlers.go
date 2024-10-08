@@ -54,17 +54,67 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	RenderWebPage("index", "", w)
 }
 
+type ReferenceSummary struct {
+	Uri     assertions.HashUri
+	Summary string
+}
+
+func summariseAssertion(assertion assertions.Assertion, currentUri assertions.HashUri) string {
+	if assertion.Issuer == "" {
+		var err error
+		assertion, err = assertions.ParseAssertionJwt(assertion.Content())
+		if err != nil {
+			return "Error parsing JWT"
+		}
+	}
+
+	subjectUri := assertions.UriFromString(assertion.Subject)
+	if subjectUri.Equals(currentUri) {
+		issuer, _ := datastore.ActiveDataStore.FetchEntity(assertions.UriFromString(assertion.Issuer))
+		return fmt.Sprintf("%s asserts this %s", issuer.CommonName, assertion.Category)
+	}
+
+	issuerUri := assertions.UriFromString(assertion.Issuer)
+	if issuerUri.Equals(currentUri) {
+		statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.UriFromString(assertion.Subject))
+		return fmt.Sprintf("This entity asserts that statement %s %s", statement.Uri().Short(), assertion.Category)
+	}
+
+	return "Some kind of assertion"
+}
+
+func enrichReferences(uris []assertions.HashUri, currentUri assertions.HashUri) []ReferenceSummary {
+	summaries := make([]ReferenceSummary, 0)
+
+	for _, uri := range uris {
+		var summary string
+		switch uri.Kind() {
+		case "assertion":
+			assertion, _ := datastore.ActiveDataStore.FetchAssertion(uri)
+
+			summary = summariseAssertion(assertion, currentUri)
+		default:
+			summary = "unknown " + uri.Kind()
+		}
+		ref := ReferenceSummary{Uri: uri, Summary: summary}
+		summaries = append(summaries, ref)
+	}
+
+	return summaries
+}
+
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(key, "statement"))
 
-	refs, _ := datastore.ActiveDataStore.FetchRefs(statement.Uri())
+	refUris, _ := datastore.ActiveDataStore.FetchRefs(statement.Uri())
+	refs := enrichReferences(refUris, statement.Uri())
 
 	data := struct {
 		Uri        string
 		Content    string
 		ApiLink    string
-		References []assertions.HashUri
+		References []ReferenceSummary
 	}{
 		Uri:        statement.Uri().String(),
 		Content:    statement.Content(),
@@ -119,14 +169,15 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refs, _ := datastore.ActiveDataStore.FetchRefs(entity.Uri())
+	refUris, _ := datastore.ActiveDataStore.FetchRefs(entity.Uri())
+	refs := enrichReferences(refUris, entity.Uri())
 
 	data := struct {
 		Uri        string
 		CommonName string
 		ApiLink    string
 		PublicKey  string
-		References []assertions.HashUri
+		References []ReferenceSummary
 	}{
 		Uri:        uri.String(),
 		CommonName: entity.CommonName,

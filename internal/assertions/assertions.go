@@ -108,7 +108,7 @@ func (a *Assertion) Content() string {
 }
 
 func (a *Assertion) Summary() string {
-	return "Assertion"
+	return a.Category + " Assertion"
 }
 
 func (a *Assertion) SetAssertingEntity(entity Entity) {
@@ -122,14 +122,6 @@ func UriHash(uri string) string {
 		hash = hash[0:queryIndex]
 	}
 	return hash
-}
-
-func _HashToUri(hash string, dataType string) string {
-	uri := "hash://sha256/" + hash
-	if dataType != "" {
-		uri = uri + "?type=" + dataType
-	}
-	return uri
 }
 
 func DecodePrivateKey(prvKey *rsa.PrivateKey) string {

@@ -46,7 +46,7 @@ func (u HashUri) String() string {
 	return u.uri
 }
 
-func (u *HashUri) Short() string {
+func (u HashUri) Short() string {
 	s := u.Hash()
 	if len(s) > 8 {
 		return s[len(s)-8:]
@@ -125,4 +125,8 @@ func (u HashUri) Len() int {
 func (u HashUri) WithType(kind string) HashUri {
 	u2 := HashUri{uri: u.uri + TYPE_QUERY + kind}
 	return u2
+}
+
+func (u *HashUri) Equals(other HashUri) bool {
+	return u.Escaped() == other.Escaped()
 }
