@@ -78,3 +78,15 @@ func TestUnadornedUri(t *testing.T) {
 		t.Errorf("Incorrect unadorned URI: %s", uri.Unadorned())
 	}
 }
+
+func TestEscaped(t *testing.T) {
+	u := MakeUri("12345678", "statement")
+	if u.Escaped() != "hash:%2F%2Fsha256%2F12345678" {
+		t.Errorf("Unexpected escaped URI: %s", u.Escaped())
+	}
+
+	u1 := UnescapeUri(u.Escaped(), "statement")
+	if u1.String() != "hash://sha256/12345678?type=statement" {
+		t.Errorf("Unexpected round-tripped URI: %s", u1.String())
+	}
+}

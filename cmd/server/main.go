@@ -52,10 +52,14 @@ func initDataStore() {
 		datastore.InitFireStore()
 	} else {
 		datastore.InitInMemoryDataStore()
-		setupTestData()
 	}
+
 	assertions.ActiveKeyFetcher = datastore.ActiveDataStore
 	assertions.ActiveEntityFetcher = datastore.ActiveDataStore
+
+	if datastore.ActiveDataStore.AutoInit() {
+		setupTestData()
+	}
 }
 
 func initLogging() {
@@ -65,22 +69,7 @@ func initLogging() {
 func setupTestData() {
 	log.Infof("Loading test data into %s", datastore.ActiveDataStore.Name())
 
-	files, err := os.ReadDir("./testdata/")
-	if err != nil {
-		log.Errorf("Error reading directory: %v", err)
-	}
-
-	for _, file := range files {
-		hash := strings.TrimSuffix(file.Name(), ".txt")
-		uri := assertions.MakeUri(hash, "")
-
-		content, err := os.ReadFile("./testdata/" + file.Name())
-		if err != nil {
-			log.Errorf("Error reading file %s, %v", file.Name(), err)
-		} else {
-			datastore.ActiveDataStore.StoreRaw(uri, string(content))
-		}
-	}
+	loadTestData("./testdata/entities", "entity")
 
 	default_entity := os.Getenv("DEFAULT_ENTITY")
 	if default_entity != "" {
@@ -88,7 +77,39 @@ func setupTestData() {
 		datastore.ActiveDataStore.StoreKey(uri, os.Getenv("PRV_KEY"))
 	}
 
+	loadTestData("./testdata/statements", "statement")
+	loadTestData("./testdata/assertions", "assertion")
+
 	log.Info("Test data load complete.")
+}
+
+func loadTestData(dirName string, dataType string) {
+	files, err := os.ReadDir(dirName)
+	if err != nil {
+		log.Errorf("Error reading directory: %v", err)
+	}
+
+	for _, file := range files {
+		hash := strings.TrimSuffix(file.Name(), ".txt")
+		uri := assertions.MakeUri(hash, dataType)
+
+		content, err := os.ReadFile(dirName + "/" + file.Name())
+		if err != nil {
+			log.Errorf("Error reading file %s, %v", file.Name(), err)
+		} else {
+			datastore.ActiveDataStore.StoreRaw(uri, string(content))
+		}
+
+		if dataType == "assertion" {
+			addAssertionReferences(string(content))
+		}
+	}
+}
+
+func addAssertionReferences(content string) {
+	a, _ := assertions.ParseAssertionJwt(content)
+	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")
+	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Issuer), "Assertion.Issuer:Entity")
 }
 
 func InitDbApiHandler(w http.ResponseWriter, r *http.Request) {

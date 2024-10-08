@@ -48,16 +48,20 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.HashToUri(key, ""))
+	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(key, "statement"))
+
+	refs, _ := datastore.ActiveDataStore.FetchRefs(statement.Uri())
 
 	data := struct {
-		Uri     string
-		Content string
-		ApiLink string
+		Uri        string
+		Content    string
+		ApiLink    string
+		References []assertions.HashUri
 	}{
-		Uri:     statement.Uri().String(),
-		Content: statement.Content(),
-		ApiLink: "/api/v1/statements/" + key,
+		Uri:        statement.Uri().String(),
+		Content:    statement.Content(),
+		ApiLink:    "/api/v1/statements/" + key,
+		References: refs,
 	}
 
 	RenderWebPage("viewstatement", data, w)
@@ -65,7 +69,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	assertion, _ := datastore.ActiveDataStore.FetchAssertion(assertions.HashToUri(key, ""))
+	assertion, _ := datastore.ActiveDataStore.FetchAssertion(assertions.MakeUri(key, "assertion"))
 
 	data := struct {
 		Uri         string
@@ -73,6 +77,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		IssuerLink  string
 		SubjectLink string
 		ApiLink     string
+		References  []string
 	}{
 		Uri:        assertion.Uri().String(),
 		Assertion:  assertion,
@@ -80,6 +85,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		IssuerLink: "/web/entities/" + assertions.UriHash(assertion.Issuer),
 		//TODO: don't assume subject is a statement
 		SubjectLink: "/web/statements/" + assertions.UriHash(assertion.Subject),
+		References:  make([]string, 0),
 	}
 
 	RenderWebPage("viewassertion", data, w)
@@ -88,29 +94,33 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 
-	entity, err := datastore.ActiveDataStore.FetchEntity(assertions.HashToUri(key, ""))
+	entity, err := datastore.ActiveDataStore.FetchEntity(assertions.MakeUri(key, "entity"))
 	if err != nil {
 		http.Redirect(w, r, "/error?err=1001", http.StatusSeeOther)
 		return
 	}
+
+	refs, _ := datastore.ActiveDataStore.FetchRefs(entity.Uri())
 
 	data := struct {
 		Uri        string
 		CommonName string
 		ApiLink    string
 		PublicKey  string
+		References []assertions.HashUri
 	}{
 		Uri:        assertions.HashToUri(key, ""),
 		CommonName: entity.CommonName,
 		PublicKey:  fmt.Sprintf("%v", entity.PublicKey),
 		ApiLink:    "/api/v1/entities/" + key,
+		References: refs,
 	}
 
 	RenderWebPage("viewentity", data, w)
 }
 
 func fetchDefaultEntity() (assertions.Entity, error) {
-	return datastore.ActiveDataStore.FetchEntity(os.Getenv("DEFAULT_ENTITY"))
+	return datastore.ActiveDataStore.FetchEntity(assertions.MakeUri(os.Getenv("DEFAULT_ENTITY"), "entity"))
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +139,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b64key, err := datastore.ActiveDataStore.FetchKey(entity.Uri().Unadorned())
+		b64key, err := datastore.ActiveDataStore.FetchKey(entity.Uri())
 		if err != nil {
 			http.Redirect(w, r, "/error?err=1003", http.StatusSeeOther)
 			return
@@ -150,9 +160,16 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		assertion.MakeJwt(privateKey)
 		datastore.ActiveDataStore.Store(&assertion)
 
+		addAssertionReferences(assertion)
+
 		// Redirect the user to the assertion
 		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)
 
 		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
 	}
+}
+
+func addAssertionReferences(a assertions.Assertion) {
+	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")
+	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Issuer), "Assertion.Issuer:Entity")
 }

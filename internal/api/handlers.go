@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
@@ -18,7 +19,7 @@ func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	log.Debugf("Statement key: %s", key)
 
-	statement, err := datastore.ActiveDataStore.FetchStatement("hash://sha256/" + key)
+	statement, err := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(key, "statement"))
 	if err != nil {
 		log.Errorf("Error fetching statement: %v", err)
 	}
@@ -30,7 +31,7 @@ func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
 
 func EntityApiHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	entity, _ := datastore.ActiveDataStore.FetchEntity("hash://sha256/" + key)
+	entity, _ := datastore.ActiveDataStore.FetchEntity(assertions.MakeUri(key, "entity"))
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
@@ -39,7 +40,7 @@ func EntityApiHandler(w http.ResponseWriter, r *http.Request) {
 
 func AssertionApiHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	assertion, err := datastore.ActiveDataStore.FetchAssertion("hash://sha256/" + key)
+	assertion, err := datastore.ActiveDataStore.FetchAssertion(assertions.MakeUri(key, "assertion"))
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

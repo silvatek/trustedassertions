@@ -32,6 +32,10 @@ func (fs *FireStore) Name() string {
 	return "FireStore"
 }
 
+func (fs *FireStore) AutoInit() bool {
+	return false
+}
+
 func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 	client, err := firestore.NewClientWithDatabase(ctx, fs.projectId, fs.databaseName)
 	if err != nil {
@@ -103,6 +107,9 @@ func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
 	}
 }
 
+func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashUri, refType string) {
+}
+
 func safeKey(uri string) string {
 	index := strings.Index(uri, "?type=")
 	if index > -1 {
@@ -120,12 +127,12 @@ type DbRecord struct {
 	Summary  string `json:"summary"`
 }
 
-func (fs *FireStore) fetch(key string) (*DbRecord, error) {
+func (fs *FireStore) fetch(uri assertions.HashUri) (*DbRecord, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
 	defer client.Close()
 
-	doc, err := client.Collection(MainCollection).Doc(safeKey(key)).Get(ctx)
+	doc, err := client.Collection(MainCollection).Doc(uri.Escaped()).Get(ctx)
 	if err != nil {
 		log.Errorf("Error reading value: %v", err)
 		return nil, err
@@ -136,8 +143,8 @@ func (fs *FireStore) fetch(key string) (*DbRecord, error) {
 	}
 }
 
-func (fs *FireStore) FetchStatement(key string) (assertions.Statement, error) {
-	record, err := fs.fetch(key)
+func (fs *FireStore) FetchStatement(uri assertions.HashUri) (assertions.Statement, error) {
+	record, err := fs.fetch(uri)
 
 	if err != nil {
 		return assertions.NewStatement("{bad record}"), err
@@ -146,8 +153,8 @@ func (fs *FireStore) FetchStatement(key string) (assertions.Statement, error) {
 	}
 }
 
-func (fs *FireStore) FetchEntity(key string) (assertions.Entity, error) {
-	record, err := fs.fetch(key)
+func (fs *FireStore) FetchEntity(uri assertions.HashUri) (assertions.Entity, error) {
+	record, err := fs.fetch(uri)
 
 	if err != nil {
 		return assertions.NewEntity("{bad record}", *big.NewInt(0)), err
@@ -156,8 +163,8 @@ func (fs *FireStore) FetchEntity(key string) (assertions.Entity, error) {
 	}
 }
 
-func (fs *FireStore) FetchAssertion(key string) (assertions.Assertion, error) {
-	record, err := fs.fetch(key)
+func (fs *FireStore) FetchAssertion(uri assertions.HashUri) (assertions.Assertion, error) {
+	record, err := fs.fetch(uri)
 
 	if err != nil {
 		return assertions.NewAssertion("{bad record}"), err
@@ -177,12 +184,12 @@ type KeyRecord struct {
 	Encoding string `json:"encoding"`
 }
 
-func (fs *FireStore) FetchKey(entityUri string) (string, error) {
+func (fs *FireStore) FetchKey(entityUri assertions.HashUri) (string, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
 	defer client.Close()
 
-	doc, err := client.Collection(KeyCollection).Doc(safeKey(entityUri)).Get(ctx)
+	doc, err := client.Collection(KeyCollection).Doc(entityUri.Escaped()).Get(ctx)
 	if err != nil {
 		log.Errorf("Error reading value: %v", err)
 		return "", err
@@ -191,4 +198,8 @@ func (fs *FireStore) FetchKey(entityUri string) (string, error) {
 		doc.DataTo(&record)
 		return record.Key, nil
 	}
+}
+
+func (ds *FireStore) FetchRefs(key assertions.HashUri) ([]assertions.HashUri, error) {
+	return []assertions.HashUri{}, nil
 }

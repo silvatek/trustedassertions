@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -187,5 +188,21 @@ func TestUriHash(t *testing.T) {
 		if actualHash != expectedHash {
 			t.Errorf("Unexpected hash from URI: %s => %s", uri, actualHash)
 		}
+	}
+}
+
+func TestUrlEncode(t *testing.T) {
+	s := url.PathEscape("hash://sha256/123456")
+	if s != "hash:%2F%2Fsha256%2F123456" {
+		t.Errorf("Unexpected escaped URI: %v", s)
+	}
+
+	s1, err := url.PathUnescape(s)
+	if err != nil {
+		t.Errorf("Error unescaping URI: %v", err)
+	}
+
+	if s1 != "hash://sha256/123456" {
+		t.Errorf("Error in round-tripped URI: %s", s1)
 	}
 }

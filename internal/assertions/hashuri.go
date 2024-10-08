@@ -2,6 +2,7 @@ package assertions
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -10,11 +11,12 @@ type HashUri struct {
 }
 
 var EMPTY_URI = HashUri{uri: ""}
+var TYPE_QUERY = "?type="
 
 func MakeUri(hash string, kind string) HashUri {
 	uri := "hash://sha256/" + hash
 	if kind != "" {
-		uri = uri + "?type=" + kind
+		uri = uri + TYPE_QUERY + kind
 	}
 	return HashUri{uri: uri}
 }
@@ -29,7 +31,7 @@ func UriFromString(u string) HashUri {
 
 func (u *HashUri) Hash() string {
 	hash := strings.TrimPrefix(u.String(), "hash://sha256/")
-	index := strings.Index(hash, "?type=")
+	index := strings.Index(hash, TYPE_QUERY)
 	if index > -1 {
 		hash = hash[:index]
 	}
@@ -54,12 +56,16 @@ func (u *HashUri) Short() string {
 }
 
 func (u *HashUri) Kind() string {
-	index := strings.Index(u.uri, "?type=")
+	index := strings.Index(u.uri, TYPE_QUERY)
 	if index == -1 {
 		return "unknown"
 	} else {
 		return u.uri[index+6:]
 	}
+}
+
+func (u HashUri) HasType() bool {
+	return strings.Contains(u.uri, TYPE_QUERY)
 }
 
 func mapPathType(kind string) string {
@@ -75,11 +81,29 @@ func mapPathType(kind string) string {
 
 func (u HashUri) Unadorned() string {
 	s := u.String()
-	index := strings.Index(s, "?type=")
+	index := strings.Index(s, TYPE_QUERY)
 	if index > -1 {
 		return s[0:index]
 	}
 	return s
+}
+
+// Returns a URL path-escaped version of the unadorned URI.
+//
+// This can be used as the key in a key/pair storage model, or in HTTP requests.
+func (u HashUri) Escaped() string {
+	return url.PathEscape(u.Unadorned())
+}
+
+func UnescapeUri(uri string, kind string) HashUri {
+	s, err := url.PathUnescape(uri)
+	if err != nil {
+		return EMPTY_URI
+	}
+	if kind != "" {
+		s += TYPE_QUERY + kind
+	}
+	return HashUri{uri: s}
 }
 
 func (u HashUri) WebPath() string {
@@ -96,4 +120,9 @@ func (u HashUri) IsEmpty() bool {
 
 func (u HashUri) Len() int {
 	return len(u.uri)
+}
+
+func (u HashUri) WithType(kind string) HashUri {
+	u2 := HashUri{uri: u.uri + TYPE_QUERY + kind}
+	return u2
 }

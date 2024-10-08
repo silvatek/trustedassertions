@@ -2,3 +2,11 @@ body {
 	font-family: Arial, sans-serif;
 	font-display: fallback;
  }
+
+ a {
+	text-decoration: none;
+ }
+
+ a:hover {
+	text-decoration: underline;
+ }

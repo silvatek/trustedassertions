@@ -5,9 +5,3 @@ type Referenceable interface {
 	Type() string
 	Content() string
 }
-
-type Reference struct {
-	target  HashUri
-	refType string
-	source  HashUri
-}

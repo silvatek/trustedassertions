@@ -7,9 +7,14 @@
         <div>
             Common name: {{.CommonName}}
         </div>
-        <!-- <div>
-            Public key: {{.PublicKey}}
-        </div> -->
+        <hr>
+        <h2>References</h2>
+        <ul>
+            {{range $ref := .References}}
+                <li>{{$ref.Kind}} <a href="{{$ref.WebPath}}">{{$ref.Short}}</a></li>
+            {{end}}
+        </ul>
+        <hr/>
         <div>
             <a href="{{.ApiLink}}">Raw Data</a>
         </div>

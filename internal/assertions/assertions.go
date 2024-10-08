@@ -25,13 +25,13 @@ type Assertion struct {
 }
 
 type KeyFetcher interface {
-	FetchKey(entityUri string) (string, error)
+	FetchKey(entityUri HashUri) (string, error)
 }
 
 var ActiveKeyFetcher KeyFetcher
 
 type EntityFetcher interface {
-	FetchEntity(key string) (Entity, error)
+	FetchEntity(key HashUri) (Entity, error)
 }
 
 var ActiveEntityFetcher EntityFetcher
@@ -50,7 +50,7 @@ func NewAssertion(category string) Assertion {
 // The token issuer should be the URI of an entity, and that entity is fetched from the data store.
 func verificationKey(token *jwt.Token) (interface{}, error) {
 	entityUri, _ := token.Claims.GetIssuer()
-	entity, err := ActiveEntityFetcher.FetchEntity(entityUri)
+	entity, err := ActiveEntityFetcher.FetchEntity(HashUri{uri: entityUri})
 	return entity.PublicKey, err
 }
 
