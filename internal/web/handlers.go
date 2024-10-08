@@ -1,7 +1,9 @@
 package web
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"net/http"
 	"os"
 	"text/template"
@@ -17,6 +19,8 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/statements/{key}", ViewStatementWebHandler)
 	r.HandleFunc("/web/entities/{key}", ViewEntityWebHandler)
 	r.HandleFunc("/web/assertions/{key}", ViewAssertionWebHandler)
+	r.HandleFunc("/web/broken", ErrorTestHandler)
+	r.HandleFunc("/web/error", ErrorHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 
 	staticDir := http.Dir("./web/static")
@@ -96,7 +100,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	entity, err := datastore.ActiveDataStore.FetchEntity(assertions.MakeUri(key, "entity"))
 	if err != nil {
-		http.Redirect(w, r, "/error?err=1001", http.StatusSeeOther)
+		HandleError(1001, "Unable to fetch entity", w, r)
 		return
 	}
 
@@ -123,6 +127,17 @@ func fetchDefaultEntity() (assertions.Entity, error) {
 	return datastore.ActiveDataStore.FetchEntity(assertions.UriFromString(os.Getenv("DEFAULT_ENTITY")))
 }
 
+// Error handling for web app.
+//
+// Logs an error with a message, code and unique ID, then redirects to the error page with the error code and ID.
+func HandleError(errorCode int, errorMessage string, w http.ResponseWriter, r *http.Request) {
+	errorInt, _ := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
+	errorId := fmt.Sprintf("%X", errorInt)
+	log.Errorf("%s [%d,%s]", errorMessage, errorCode, errorId)
+	errorPage := fmt.Sprintf("/web/error?err=%d&id=%s", errorCode, errorId)
+	http.Redirect(w, r, errorPage, http.StatusSeeOther)
+}
+
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		RenderWebPage("newstatementform", "", w)
@@ -135,13 +150,13 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		// Fetch the default entity
 		entity, err := fetchDefaultEntity()
 		if err != nil {
-			http.Redirect(w, r, "/error?err=1002", http.StatusSeeOther)
+			HandleError(1002, "Error fetching default entity", w, r)
 			return
 		}
 
 		b64key, err := datastore.ActiveDataStore.FetchKey(entity.Uri())
 		if err != nil {
-			http.Redirect(w, r, "/error?err=1003", http.StatusSeeOther)
+			HandleError(1003, "Error fetching default entity private key", w, r)
 			return
 		}
 		privateKey := assertions.EncodePrivateKey(b64key)
@@ -172,4 +187,18 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 func addAssertionReferences(a assertions.Assertion) {
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Issuer), "Assertion.Issuer:Entity")
+}
+
+func ErrorHandler(w http.ResponseWriter, r *http.Request) {
+	errorCode := r.URL.Query().Get("err")
+	errorId := r.URL.Query().Get("id")
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("An error has occurred\n"))
+	w.Write([]byte(errorCode + "\n"))
+	w.Write([]byte(errorId + "\n"))
+}
+
+func ErrorTestHandler(w http.ResponseWriter, r *http.Request) {
+	HandleError(9999, "Fake error for testing", w, r)
 }
