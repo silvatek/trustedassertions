@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"os"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"silvatek.uk/trustedassertions/internal/assertions"
@@ -50,20 +51,21 @@ func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	log.Debugf("Writing to datastore: %s", uri)
 
 	data := make(map[string]string)
-	data["uri"] = uri.Unadorned()
+	data["uri"] = uri.String()
 	data["content"] = content
-	data["datatype"] = "unknown"
+	data["datatype"] = uri.Kind()
+	data["updated"] = time.Now().Format(time.RFC3339)
 
 	ctx := context.TODO()
 	client := fs.client(ctx)
 	defer client.Close()
 
-	result, err := client.Collection(MainCollection).Doc(safeKey(uri.Unadorned())).Set(ctx, data)
+	result, err := client.Collection(MainCollection).Doc(uri.Escaped()).Set(ctx, data)
 
 	if err != nil {
 		log.Errorf("Error writing value: %v", err)
 	} else {
-		log.Debugf("Written: %v", result)
+		log.Debugf("Written: %s %v", uri.Escaped(), result)
 	}
 }
 
@@ -74,17 +76,18 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	data["uri"] = value.Uri().Unadorned()
 	data["content"] = value.Content()
 	data["datatype"] = value.Type()
+	data["updated"] = time.Now().Format(time.RFC3339)
 
 	ctx := context.TODO()
 	client := fs.client(ctx)
 	defer client.Close()
 
-	result, err := client.Collection(MainCollection).Doc(safeKey(value.Uri().Unadorned())).Set(ctx, data)
+	result, err := client.Collection(MainCollection).Doc(value.Uri().Escaped()).Set(ctx, data)
 
 	if err != nil {
 		log.Errorf("Error writing value: %v", err)
 	} else {
-		log.Debugf("Written: %v", result)
+		log.Debugf("Written: %s %v", value.Uri().Escaped(), result)
 	}
 }
 
