@@ -1,12 +1,40 @@
 body {
 	font-family: Arial, sans-serif;
 	font-display: fallback;
+	margin-left: 12em;
+	margin-right: 12em;
  }
 
  a {
 	text-decoration: none;
  }
 
+ div {
+	margin-top: 0.3em;
+ }
+
+ .fieldset {
+	display: grid;
+	gap: 1em;
+	grid-template-columns: max-content max-content;
+ }
+
+ .fieldrow {
+
+ }
+
+ .fieldprompt {
+ }
+
+ .fieldvalue {
+	font-family: monospace;
+	font-size: larger;
+ }
+
  a:hover {
 	text-decoration: underline;
+ }
+
+ .uri {
+	font-family: monospace;
  }

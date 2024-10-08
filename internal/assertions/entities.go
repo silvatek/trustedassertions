@@ -64,6 +64,10 @@ func (e *Entity) Content() string {
 	return e.Certificate
 }
 
+func (e *Entity) Summary() string {
+	return e.CommonName
+}
+
 func (e *Entity) MakeCertificate(privateKey *rsa.PrivateKey) {
 	if !e.HasSerialNum() {
 		e.AssignSerialNum()

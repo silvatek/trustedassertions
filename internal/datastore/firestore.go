@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/big"
 	"os"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -77,6 +76,7 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	data["uri"] = value.Uri().Unadorned()
 	data["content"] = value.Content()
 	data["datatype"] = value.Type()
+	data["summary"] = value.Summary()
 	data["updated"] = time.Now().Format(time.RFC3339)
 
 	ctx := context.TODO()
@@ -102,7 +102,7 @@ func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	result, err := client.Collection(KeyCollection).Doc(safeKey(entityUri.Unadorned())).Set(ctx, data)
+	result, err := client.Collection(KeyCollection).Doc(entityUri.Escaped()).Set(ctx, data)
 
 	if err != nil {
 		log.Errorf("Error writing key: %v", err)
@@ -123,16 +123,6 @@ func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashU
 
 	refs := client.Collection(MainCollection).Doc(target.Escaped()).Collection("refs")
 	refs.Doc(source.Escaped()).Set(ctx, data)
-}
-
-func safeKey(uri string) string {
-	index := strings.Index(uri, "?type=")
-	if index > -1 {
-		uri = uri[0:index]
-	}
-	uri = strings.ReplaceAll(uri, ":", "_")
-	uri = strings.ReplaceAll(uri, "/", "_")
-	return uri
 }
 
 type DbRecord struct {

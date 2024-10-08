@@ -14,18 +14,22 @@ import (
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
+var errorMessages map[string]string
+
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)
 	r.HandleFunc("/web/statements/{key}", ViewStatementWebHandler)
 	r.HandleFunc("/web/entities/{key}", ViewEntityWebHandler)
 	r.HandleFunc("/web/assertions/{key}", ViewAssertionWebHandler)
 	r.HandleFunc("/web/broken", ErrorTestHandler)
-	r.HandleFunc("/web/error", ErrorHandler)
+	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 
 	staticDir := http.Dir("./web/static")
 	fs := http.FileServer(staticDir)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+	errorMessages = make(map[string]string)
 }
 
 func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter) {
@@ -64,7 +68,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Uri:        statement.Uri().String(),
 		Content:    statement.Content(),
-		ApiLink:    "/api/v1/statements/" + key,
+		ApiLink:    statement.Uri().ApiPath(),
 		References: refs,
 	}
 
@@ -73,7 +77,18 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
-	assertion, _ := datastore.ActiveDataStore.FetchAssertion(assertions.MakeUri(key, "assertion"))
+	uri := assertions.MakeUri(key, "assertion")
+	assertion, _ := datastore.ActiveDataStore.FetchAssertion(uri)
+
+	issuerUri := assertions.UriFromString(assertion.Issuer)
+	if !issuerUri.HasType() {
+		issuerUri = issuerUri.WithType("entity")
+	}
+
+	subjectUri := assertions.UriFromString(assertion.Subject)
+	if !subjectUri.HasType() {
+		subjectUri = subjectUri.WithType("statement")
+	}
 
 	data := struct {
 		Uri         string
@@ -83,12 +98,11 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		ApiLink     string
 		References  []string
 	}{
-		Uri:        assertion.Uri().String(),
-		Assertion:  assertion,
-		ApiLink:    "/api/v1/statements/" + key,
-		IssuerLink: "/web/entities/" + assertions.UriHash(assertion.Issuer),
-		//TODO: don't assume subject is a statement
-		SubjectLink: "/web/statements/" + assertions.UriHash(assertion.Subject),
+		Uri:         assertion.Uri().String(),
+		Assertion:   assertion,
+		ApiLink:     assertion.Uri().ApiPath(),
+		IssuerLink:  issuerUri.WebPath(),
+		SubjectLink: subjectUri.WebPath(),
 		References:  make([]string, 0),
 	}
 
@@ -98,7 +112,8 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 
-	entity, err := datastore.ActiveDataStore.FetchEntity(assertions.MakeUri(key, "entity"))
+	uri := assertions.MakeUri(key, "entity")
+	entity, err := datastore.ActiveDataStore.FetchEntity(uri)
 	if err != nil {
 		HandleError(1001, "Unable to fetch entity", w, r)
 		return
@@ -113,10 +128,10 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		PublicKey  string
 		References []assertions.HashUri
 	}{
-		Uri:        assertions.HashToUri(key, ""),
+		Uri:        uri.String(),
 		CommonName: entity.CommonName,
 		PublicKey:  fmt.Sprintf("%v", entity.PublicKey),
-		ApiLink:    "/api/v1/entities/" + key,
+		ApiLink:    uri.ApiPath(),
 		References: refs,
 	}
 
@@ -134,6 +149,7 @@ func HandleError(errorCode int, errorMessage string, w http.ResponseWriter, r *h
 	errorInt, _ := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
 	errorId := fmt.Sprintf("%X", errorInt)
 	log.Errorf("%s [%d,%s]", errorMessage, errorCode, errorId)
+	errorMessages[fmt.Sprintf("%d", errorCode)] = errorMessage
 	errorPage := fmt.Sprintf("/web/error?err=%d&id=%s", errorCode, errorId)
 	http.Redirect(w, r, errorPage, http.StatusSeeOther)
 }
@@ -189,14 +205,27 @@ func addAssertionReferences(a assertions.Assertion) {
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Issuer), "Assertion.Issuer:Entity")
 }
 
-func ErrorHandler(w http.ResponseWriter, r *http.Request) {
+func ErrorPageHandler(w http.ResponseWriter, r *http.Request) {
 	errorCode := r.URL.Query().Get("err")
 	errorId := r.URL.Query().Get("id")
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("An error has occurred\n"))
-	w.Write([]byte(errorCode + "\n"))
-	w.Write([]byte(errorId + "\n"))
+
+	data := struct {
+		ErrorMessage string
+		ErrorID      string
+	}{
+		ErrorMessage: errorMessage(errorCode),
+		ErrorID:      errorId,
+	}
+
+	RenderWebPage("error", data, w)
+}
+
+func errorMessage(errorCode string) string {
+	message, ok := errorMessages[errorCode]
+	if !ok {
+		return "Unknown error [" + errorCode + "]"
+	}
+	return message + " [" + errorCode + "]"
 }
 
 func ErrorTestHandler(w http.ResponseWriter, r *http.Request) {

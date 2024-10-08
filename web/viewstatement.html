@@ -1,12 +1,14 @@
 {{define "content"}}		
         <h1>View Statement</h1>
 
-        <div>
-            {{.Uri}}
+        <div class="fieldset">
+            <div class="fieldprompt">ID:</div>
+            <div id="uri" class="fieldvalue">{{.Uri}}</div>
+
+            <div class="fieldprompt">Text:</div>
+            <div id="content" class="fieldvalue" disabled>{{.Content}}</div>   
         </div>
-        <div>
-            {{.Content}}
-        </div>
+
         <hr/>
         <h2>References</h2>
         <ul>

@@ -29,3 +29,7 @@ func (s *Statement) Type() string {
 func (s *Statement) Content() string {
 	return s.content
 }
+
+func (s *Statement) Summary() string {
+	return s.content
+}

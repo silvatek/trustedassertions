@@ -107,6 +107,10 @@ func (a *Assertion) Content() string {
 	return a.content
 }
 
+func (a *Assertion) Summary() string {
+	return "Assertion"
+}
+
 func (a *Assertion) SetAssertingEntity(entity Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
 }
@@ -120,36 +124,13 @@ func UriHash(uri string) string {
 	return hash
 }
 
-func HashToUri(hash string, dataType string) string {
+func _HashToUri(hash string, dataType string) string {
 	uri := "hash://sha256/" + hash
 	if dataType != "" {
 		uri = uri + "?type=" + dataType
 	}
 	return uri
 }
-
-//============================================//
-
-// // var (
-// // 	PublicKey  rsa.PublicKey
-// // 	PrivateKey *rsa.PrivateKey
-// // )
-
-// // func InitKeyPair(osKey string) {
-// // 	if osKey == "" {
-// // 		log.Info("Generating new key pair")
-// // 		PrivateKey, _ = rsa.GenerateKey(rand.Reader, 2048)
-// // 	} else {
-// // 		// Expects a base64 encoded RSA private key
-// // 		log.Info("Loading private key from environment")
-// // 		PrivateKey = PrivateBase64(osKey)
-// // 	}
-// // 	PublicKey = PrivateKey.PublicKey
-// // }
-
-// func Base64Private() string {
-// 	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(PrivateKey))
-// }
 
 func DecodePrivateKey(prvKey *rsa.PrivateKey) string {
 	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(prvKey))

@@ -1,13 +1,15 @@
 {{define "content"}}		
         <h1>View Entity</h1>
 
-        <div>
-            {{.Uri}}
+        <div class="fieldset">
+            <div class="fieldprompt">ID:</div>
+            <div class="fieldvalue">{{.Uri}}</div>
+            <div class="fieldprompt">Common name:</div>
+            <div class="fieldvalue">{{.CommonName}}</div>
         </div>
-        <div>
-            Common name: {{.CommonName}}
-        </div>
+        
         <hr>
+        
         <h2>References</h2>
         <ul>
             {{range $ref := .References}}
