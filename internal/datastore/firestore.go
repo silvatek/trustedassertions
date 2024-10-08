@@ -228,7 +228,7 @@ func (fs *FireStore) FetchRefs(uri assertions.HashUri) ([]assertions.HashUri, er
 		if err == iterator.Done {
 			break
 		}
-		uri := assertions.UnescapeUri(doc.Ref.ID, "")
+		uri := assertions.UnescapeUri(doc.Ref.ID, "assertion")
 		results = append(results, uri)
 	}
 
