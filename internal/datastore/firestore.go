@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"google.golang.org/api/iterator"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
@@ -214,6 +215,22 @@ func (fs *FireStore) FetchKey(entityUri assertions.HashUri) (string, error) {
 	}
 }
 
-func (ds *FireStore) FetchRefs(key assertions.HashUri) ([]assertions.HashUri, error) {
-	return []assertions.HashUri{}, nil
+func (fs *FireStore) FetchRefs(uri assertions.HashUri) ([]assertions.HashUri, error) {
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	results := make([]assertions.HashUri, 0)
+
+	refs := client.Collection(MainCollection).Doc(uri.Escaped()).Collection("refs").Documents(ctx)
+	for {
+		doc, err := refs.Next()
+		if err == iterator.Done {
+			break
+		}
+		uri := assertions.UnescapeUri(doc.Ref.ID, "")
+		results = append(results, uri)
+	}
+
+	return results, nil
 }
