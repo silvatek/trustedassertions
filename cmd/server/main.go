@@ -15,14 +15,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var testDataDir string
+
 func main() {
 	initLogging()
 	log.Print("Starting TrustedAssertions server...")
 
 	//assertions.InitKeyPair(os.Getenv("PRV_KEY"))
 
+	testDataDir = "./testdata"
 	initDataStore()
 
+	web.TemplateDir = "./web"
 	r := setupHandlers()
 
 	srv := &http.Server{
@@ -69,7 +73,7 @@ func initLogging() {
 func setupTestData() {
 	log.Infof("Loading test data into %s", datastore.ActiveDataStore.Name())
 
-	loadTestData("./testdata/entities", "entity")
+	loadTestData(testDataDir+"/entities", "entity")
 
 	default_entity := os.Getenv("DEFAULT_ENTITY")
 	if default_entity != "" {
@@ -77,8 +81,8 @@ func setupTestData() {
 		datastore.ActiveDataStore.StoreKey(uri, os.Getenv("PRV_KEY"))
 	}
 
-	loadTestData("./testdata/statements", "statement")
-	loadTestData("./testdata/assertions", "assertion")
+	loadTestData(testDataDir+"/statements", "statement")
+	loadTestData(testDataDir+"/assertions", "assertion")
 
 	log.Info("Test data load complete.")
 }

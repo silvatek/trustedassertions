@@ -15,6 +15,7 @@ import (
 )
 
 var errorMessages map[string]string
+var TemplateDir string
 
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)
@@ -25,7 +26,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 
-	staticDir := http.Dir("./web/static")
+	staticDir := http.Dir(TemplateDir + "/static")
 	fs := http.FileServer(staticDir)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
@@ -33,7 +34,7 @@ func AddHandlers(r *mux.Router) {
 }
 
 func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter) {
-	dir := "./web"
+	dir := TemplateDir
 
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
 	if err != nil {

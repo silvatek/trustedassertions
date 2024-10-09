@@ -14,6 +14,9 @@ func TestBasicHashUri(t *testing.T) {
 		if hashUri.String() != expected {
 			t.Errorf("Unexptected HashUri (%s, %s): %s", input[0], input[1], hashUri)
 		}
+		if hashUri.Alg() != "sha256" {
+			t.Errorf("Unexpected algorithm: %s", hashUri.Alg())
+		}
 	}
 }
 
@@ -27,7 +30,7 @@ func TestHashUriHash(t *testing.T) {
 	}
 
 	for input, expected := range data {
-		uri := HashUri{uri: input}
+		uri := UriFromString(input)
 		hash := uri.Hash()
 		if hash != expected {
 			t.Errorf("Unexpected hash for %s - %s", input, hash)
@@ -88,5 +91,25 @@ func TestEscaped(t *testing.T) {
 	u1 := UnescapeUri(u.Escaped(), "statement")
 	if u1.String() != "hash://sha256/12345678?type=statement" {
 		t.Errorf("Unexpected round-tripped URI: %s", u1.String())
+	}
+}
+
+func TestUriType(t *testing.T) {
+	uri := MakeUri("12345678", "")
+	if uri.HasType() {
+		t.Error("Expected URI to not have type")
+	}
+
+	uri = uri.WithType("statement")
+	if uri.Kind() != "statement" {
+		t.Errorf("Unexpected URI type: %s", uri.Kind())
+	}
+}
+
+func TestEquals(t *testing.T) {
+	u1 := MakeUri("1234", "statement")
+	u2 := MakeUri("1234", "")
+	if !u1.Equals(u2) {
+		t.Error("Expected URIs to be equal")
 	}
 }
