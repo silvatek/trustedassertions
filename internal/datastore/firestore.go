@@ -47,6 +47,20 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 	return client
 }
 
+func (fs *FireStore) store(collection string, id string, data map[string]string) {
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	result, err := client.Collection(collection).Doc(id).Set(ctx, data)
+
+	if err != nil {
+		log.Errorf("Error writing value: %v", err)
+	} else {
+		log.Debugf("Written: %s %v", id, result)
+	}
+}
+
 func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	log.Debugf("Writing to datastore: %s", uri)
 
@@ -56,17 +70,19 @@ func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	data["datatype"] = uri.Kind()
 	data["updated"] = time.Now().Format(time.RFC3339)
 
-	ctx := context.TODO()
-	client := fs.client(ctx)
-	defer client.Close()
+	fs.store(MainCollection, uri.Escaped(), data)
 
-	result, err := client.Collection(MainCollection).Doc(uri.Escaped()).Set(ctx, data)
+	// ctx := context.TODO()
+	// client := fs.client(ctx)
+	// defer client.Close()
 
-	if err != nil {
-		log.Errorf("Error writing value: %v", err)
-	} else {
-		log.Debugf("Written: %s %v", uri.Escaped(), result)
-	}
+	// result, err := client.Collection(MainCollection).Doc(uri.Escaped()).Set(ctx, data)
+
+	// if err != nil {
+	// 	log.Errorf("Error writing value: %v", err)
+	// } else {
+	// 	log.Debugf("Written: %s %v", uri.Escaped(), result)
+	// }
 }
 
 func (fs *FireStore) Store(value assertions.Referenceable) {
@@ -79,17 +95,19 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	data["summary"] = value.Summary()
 	data["updated"] = time.Now().Format(time.RFC3339)
 
-	ctx := context.TODO()
-	client := fs.client(ctx)
-	defer client.Close()
+	fs.store(MainCollection, value.Uri().Escaped(), data)
 
-	result, err := client.Collection(MainCollection).Doc(value.Uri().Escaped()).Set(ctx, data)
+	// ctx := context.TODO()
+	// client := fs.client(ctx)
+	// defer client.Close()
 
-	if err != nil {
-		log.Errorf("Error writing value: %v", err)
-	} else {
-		log.Debugf("Written: %s %v", value.Uri().Escaped(), result)
-	}
+	// result, err := client.Collection(MainCollection).Doc(value.Uri().Escaped()).Set(ctx, data)
+
+	// if err != nil {
+	// 	log.Errorf("Error writing value: %v", err)
+	// } else {
+	// 	log.Debugf("Written: %s %v", value.Uri().Escaped(), result)
+	// }
 }
 
 func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
@@ -98,17 +116,19 @@ func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
 	data["encoding"] = "base64"
 	data["key"] = key
 
-	ctx := context.TODO()
-	client := fs.client(ctx)
-	defer client.Close()
+	fs.store(KeyCollection, entityUri.Escaped(), data)
 
-	result, err := client.Collection(KeyCollection).Doc(entityUri.Escaped()).Set(ctx, data)
+	// ctx := context.TODO()
+	// client := fs.client(ctx)
+	// defer client.Close()
 
-	if err != nil {
-		log.Errorf("Error writing key: %v", err)
-	} else {
-		log.Debugf("Written: %v", result)
-	}
+	// result, err := client.Collection(KeyCollection).Doc(entityUri.Escaped()).Set(ctx, data)
+
+	// if err != nil {
+	// 	log.Errorf("Error writing key: %v", err)
+	// } else {
+	// 	log.Debugf("Written: %v", result)
+	// }
 }
 
 func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashUri, refType string) {

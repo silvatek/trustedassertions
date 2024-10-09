@@ -23,8 +23,6 @@ func main() {
 	initLogging()
 	log.Print("Starting TrustedAssertions server...")
 
-	//assertions.InitKeyPair(os.Getenv("PRV_KEY"))
-
 	testDataDir = "./testdata"
 	initDataStore()
 
@@ -60,6 +58,15 @@ func initDataStore() {
 		datastore.InitInMemoryDataStore()
 	}
 
+	if defaultEntityUri == "" {
+		defaultEntityUri = os.Getenv("DEFAULT_ENTITY")
+		web.DefaultEntityUri = assertions.UriFromString(defaultEntityUri)
+	}
+
+	if defaultEntityKey == "" {
+		defaultEntityKey = os.Getenv("PRV_KEY")
+	}
+
 	assertions.ActiveKeyFetcher = datastore.ActiveDataStore
 	assertions.ActiveEntityFetcher = datastore.ActiveDataStore
 
@@ -76,15 +83,6 @@ func setupTestData() {
 	log.Infof("Loading test data into %s", datastore.ActiveDataStore.Name())
 
 	loadTestData(testDataDir+"/entities", "entity")
-
-	if defaultEntityUri == "" {
-		defaultEntityUri = os.Getenv("DEFAULT_ENTITY")
-		web.DefaultEntityUri = assertions.UriFromString(defaultEntityUri)
-	}
-
-	if defaultEntityKey == "" {
-		defaultEntityKey = os.Getenv("PRV_KEY")
-	}
 
 	if defaultEntityUri != "" {
 		uri := assertions.UriFromString(defaultEntityUri)
