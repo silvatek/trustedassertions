@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -26,6 +26,7 @@ type HttpRequestLog struct {
 	RequestUrl    string `json:"requestUrl,omitempty"`
 }
 
+var LogWriter io.Writer = os.Stderr
 var StructureLogs bool
 var encoder *json.Encoder
 
@@ -72,7 +73,7 @@ func ErrorfX(ctx context.Context, text string, args ...interface{}) {
 func WriteLog(ctx context.Context, level string, template string, args ...interface{}) {
 	if StructureLogs {
 		if encoder == nil {
-			encoder = json.NewEncoder(os.Stderr)
+			encoder = json.NewEncoder(LogWriter)
 		}
 		entry := LogEntry{
 			Severity:  strings.TrimSpace(level),
@@ -86,7 +87,7 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 		encoder.Encode(entry)
 
 	} else {
-		log.Printf(level+" "+template, args...)
+		fmt.Fprintf(LogWriter, level+" "+template+"\n", args...)
 	}
 }
 
