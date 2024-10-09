@@ -3,7 +3,7 @@
 
         <div class="fieldset">
             <div class="fieldprompt">ID:</div>
-            <div class="fieldvalue">{{.Uri}}</div>
+            <div class="fieldvalue" id="uri">{{.Uri}}</div>
 
             <div class="fieldprompt">Issuer:</div>
             <div class="fieldvalue"><a href="{{.IssuerLink}}">{{.Assertion.Issuer}}</a></div>
@@ -12,7 +12,7 @@
             <div class="fieldvalue"><a href="{{.SubjectLink}}">{{.Assertion.Subject}}</a></div>
 
             <div class="fieldprompt">Category:</div>
-            <div class="fieldvalue">{{.Assertion.Category}}</div>
+            <div class="fieldvalue" id="category">{{.Assertion.Category}}</div>
 
             <div class="fieldprompt">Confidence:</div>
             <div class="fieldvalue">{{.Assertion.Confidence}}</div>

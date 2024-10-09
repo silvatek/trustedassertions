@@ -16,6 +16,8 @@ import (
 )
 
 var testDataDir string
+var defaultEntityUri string
+var defaultEntityKey string
 
 func main() {
 	initLogging()
@@ -75,10 +77,18 @@ func setupTestData() {
 
 	loadTestData(testDataDir+"/entities", "entity")
 
-	default_entity := os.Getenv("DEFAULT_ENTITY")
-	if default_entity != "" {
-		uri := assertions.UriFromString(default_entity)
-		datastore.ActiveDataStore.StoreKey(uri, os.Getenv("PRV_KEY"))
+	if defaultEntityUri == "" {
+		defaultEntityUri = os.Getenv("DEFAULT_ENTITY")
+		web.DefaultEntityUri = assertions.UriFromString(defaultEntityUri)
+	}
+
+	if defaultEntityKey == "" {
+		defaultEntityKey = os.Getenv("PRV_KEY")
+	}
+
+	if defaultEntityUri != "" {
+		uri := assertions.UriFromString(defaultEntityUri)
+		datastore.ActiveDataStore.StoreKey(uri, defaultEntityKey)
 	}
 
 	loadTestData(testDataDir+"/statements", "statement")

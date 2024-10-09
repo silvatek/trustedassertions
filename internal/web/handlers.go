@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
-	"os"
 	"text/template"
 
 	"github.com/gorilla/mux"
@@ -16,6 +15,7 @@ import (
 
 var errorMessages map[string]string
 var TemplateDir string
+var DefaultEntityUri assertions.HashUri
 
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)
@@ -191,7 +191,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func fetchDefaultEntity() (assertions.Entity, error) {
-	return datastore.ActiveDataStore.FetchEntity(assertions.UriFromString(os.Getenv("DEFAULT_ENTITY")))
+	return datastore.ActiveDataStore.FetchEntity(DefaultEntityUri)
 }
 
 // Error handling for web app.
