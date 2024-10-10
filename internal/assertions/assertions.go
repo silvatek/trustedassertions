@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
-	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	log "silvatek.uk/trustedassertions/internal/logging"
@@ -115,20 +114,20 @@ func (a *Assertion) SetAssertingEntity(entity Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
 }
 
-func UriHash(uri string) string {
-	hash := strings.TrimPrefix(uri, "hash://sha256/")
-	queryIndex := strings.Index(hash, "?")
-	if queryIndex > -1 {
-		hash = hash[0:queryIndex]
-	}
-	return hash
-}
+// func UriHash(uri string) string {
+// 	hash := strings.TrimPrefix(uri, "hash://sha256/")
+// 	queryIndex := strings.Index(hash, "?")
+// 	if queryIndex > -1 {
+// 		hash = hash[0:queryIndex]
+// 	}
+// 	return hash
+// }
 
-func DecodePrivateKey(prvKey *rsa.PrivateKey) string {
+func PrivateKeyToString(prvKey *rsa.PrivateKey) string {
 	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(prvKey))
 }
 
-func EncodePrivateKey(base64encoded string) *rsa.PrivateKey {
+func StringToPrivateKey(base64encoded string) *rsa.PrivateKey {
 	bytes, _ := base64.StdEncoding.DecodeString(base64encoded)
 	privateKey, err := x509.ParsePKCS1PrivateKey(bytes)
 	if err != nil {

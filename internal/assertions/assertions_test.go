@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"math/big"
 	"net/url"
 	"strings"
 	"testing"
@@ -88,39 +89,51 @@ type TestKeyFetcher struct {
 	key string
 }
 
-func (tkf *TestKeyFetcher) FetchKey(entityUri string) (string, error) {
+func (tkf *TestKeyFetcher) FetchKey(entityUri HashUri) (string, error) {
 	log.Debugf("Fetching private key for %s", entityUri)
 	return tkf.key, nil
 }
 
-// func TestAssertionClaims(t *testing.T) {
-// 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+type TestEntityFetcher struct {
+	entity Entity
+}
 
-// 	tkf := TestKeyFetcher{key: Base64Private(privateKey)}
-// 	ActiveKeyFetcher = &tkf
+func (f TestEntityFetcher) FetchEntity(key HashUri) (Entity, error) {
+	return f.entity, nil
+}
 
-// 	assertion1 := NewAssertion("IsFalse")
-// 	assertion1.Subject = "hash://sha256/1234"
-// 	assertion1.Issuer = "hash://sha256/3456"
-// 	assertion1.MakeJwt(privateKey)
+func TestAssertionClaims(t *testing.T) {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 
-// 	token := assertion1.Content()
+	entity := NewEntity("Test entity", *big.NewInt(123456))
+	entity.MakeCertificate(privateKey)
 
-// 	t.Logf("Assertion JWT = %s", token)
+	tkf := TestKeyFetcher{key: PrivateKeyToString(privateKey)}
+	ActiveKeyFetcher = &tkf
+	ActiveEntityFetcher = TestEntityFetcher{entity: entity}
 
-// 	assertion2, err := ParseAssertionJwt(token)
-// 	t.Log(assertion2)
-// 	t.Log(assertion2.RegisteredClaims)
-// 	if err != nil {
-// 		t.Errorf("Error parsing JWT: %v", err)
-// 	}
-// 	if assertion2.Subject != assertion1.Subject {
-// 		t.Errorf("Subject does not match: %s", assertion2.Subject)
-// 	}
-// 	if assertion2.Audience[0] != DEFAULT_AUDIENCE {
-// 		t.Error("No default audience found")
-// 	}
-// }
+	assertion1 := NewAssertion("IsFalse")
+	assertion1.Subject = "hash://sha256/12345678"
+	assertion1.Issuer = entity.Uri().String()
+	assertion1.MakeJwt(privateKey)
+
+	token := assertion1.Content()
+
+	t.Logf("Assertion JWT = %s", token)
+
+	assertion2, err := ParseAssertionJwt(token)
+	t.Log(assertion2)
+	t.Log(assertion2.RegisteredClaims)
+	if err != nil {
+		t.Errorf("Error parsing JWT: %v", err)
+	}
+	if assertion2.Subject != assertion1.Subject {
+		t.Errorf("Subject does not match: %s", assertion2.Subject)
+	}
+	if assertion2.Audience[0] != DEFAULT_AUDIENCE {
+		t.Error("No default audience found")
+	}
+}
 
 func TestDecodePrivateKey(t *testing.T) {
 	content := "MIIEpAIBAAKCAQEAr3xk/tl8uNGuxgZgCT72gDJaEdwDRCZC/hChe9tCHXy8fHNK1IvH2BtTDst/fKeKdHWvMFiPJuYhz6jIDiz3IlH7xDXiFOTYj55vSqfnv6D0JUwHqlIpBr/8EuuITIq8RJ3iXHJ6YLbBUPNWW0kXyEwTEXFVaaPipjGdjMtrHBgOIEiqS7Q+zkyNdxuhyQ0+zackC/Io/794L9KMC+TEL5wCvcmmmf/AE2VjsRqAn3Tq8qfp8B8/Oukotp7L4l1QY+VTaW7Xs/j2p9YKGzIVUOqy3htemCT4CczlndrkWib9hqowk/9yHLXtdsZflC2BGQG0+Qb4XMdWKNEEWccolQIDAQABAoIBAGWetGF8EiR4kCvuPyi7hEVCYzQaYu3Q9lRnzwuJMaUfuYqbvQaOF2EGmbdkkmPeJWhBSfzGG8eb1pKJG6hR057VOOUrisssplesmKfzyVkH3LnIaFvyDf3xqQhPynMAl/toLk/4nvNogVPeRfDAx/veSeB878gn9jTlYGXK2jC+q87hLQCYC1ynJ6IQQOQS5OXu6nZOf/bc6YQ7gUG35KT/hkSmFEYAu/y3pNGsRPYJcIbh23PwW0xcz9XQqddH0sOxwwevxuQWHEw38vE/YDRVaw7lXh77iRSiasRlQeeS3NjRSx00SJ+jVYwb0XapvrS/gggGB5TL4hDJhugARjUCgYEAz4iR35A8jZfYO7z4tBQukyo9dGGmh5JD1xmiDiCDjdMaGxQq85tDvS3s0jf60CMba0S5h48kT4UYmf6Ui72LZL7q6PHAJyih1It1VCTKG0pGlFCGRCY0/LMobkw1f51ZEyNRSsGgXswk+DezH53JqKhnHvSeOFcSjJ4FQnY7vTcCgYEA2Hfa3iyrv3Rf/HtzbhzHkTJtIWgyNiha/54h1JyTy3H9qCU5DRn3Uy3COBzieeDnFXZDr6Z+ik5wQ3mUaIXj/dH3pu53RWfiw2osJEcbj2T3bk2vkOGCz8EeELNGK+MiU5ETByQxLhFr6QU+QyZc5t2Anf5dYTi9ZUBvkywjjpMCgYBSd1hP2AbX1PDNvCevlx1yySQmbO85i/t9K+hjaLQd1TbYb8kpiBcAw5EJb8kwj+LDW0nF/jFVj/PYrXrllGohnGPIMNhENzcnOEtlJkFRWtB0+xJ/XhdMGv0D5zCTBzlwC2awKATL5p8CK0/4TkDlzhU8DcQZazApxFkesdDHPQKBgQDCZPAScX9TEclZTevdSM8XX3eNdqsQ47DEuVecPXikTRwEMllHoLfw5Ljz90yTMxuStIAYb6ZXwhUjIz3Zl9OlDzgdmy1VEPQdlW1KrujbH0rsrasqqrn0pHLBgJ1VsEYVUcUKtr/LpS2JN4Iwf3UShnyIZfOp6XB8Sx9nxU2xLQKBgQC/8Qvm7ehzlgW4gpAdtU3fgDJ056FWNuC1r7DlYxaesPtij/u81U3G3XHiROBD06SYzBTDCi/bjAwQUakmqtveMD1yFmBg1gle0YP73AscApfch0aG38NY37XYSo93IgxcNunc32lHv69xiHUFR7p2tbTdyf7/BPgFRa3NLYdWxQ=="
@@ -177,19 +190,19 @@ func TestAssertionJwt(t *testing.T) {
 	}
 }
 
-func TestUriHash(t *testing.T) {
-	uris := map[string]string{
-		"hash://sha256/3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e":                "3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e",
-		"hash://sha256/3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e?type=statement": "3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e",
-		"hash://sha256/12345?type=entity": "12345",
-	}
-	for uri, expectedHash := range uris {
-		actualHash := UriHash(uri)
-		if actualHash != expectedHash {
-			t.Errorf("Unexpected hash from URI: %s => %s", uri, actualHash)
-		}
-	}
-}
+// func TestUriHash(t *testing.T) {
+// 	uris := map[string]string{
+// 		"hash://sha256/3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e":                "3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e",
+// 		"hash://sha256/3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e?type=statement": "3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e",
+// 		"hash://sha256/12345?type=entity": "12345",
+// 	}
+// 	for uri, expectedHash := range uris {
+// 		actualHash := UriHash(uri)
+// 		if actualHash != expectedHash {
+// 			t.Errorf("Unexpected hash from URI: %s => %s", uri, actualHash)
+// 		}
+// 	}
+// }
 
 func TestUrlEncode(t *testing.T) {
 	s := url.PathEscape("hash://sha256/123456")

@@ -72,6 +72,7 @@ func (e *Entity) MakeCertificate(privateKey *rsa.PrivateKey) {
 	if !e.HasSerialNum() {
 		e.AssignSerialNum()
 	}
+	e.PublicKey = &privateKey.PublicKey
 
 	template := x509.Certificate{
 		SerialNumber:          &e.SerialNum,

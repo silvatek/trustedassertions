@@ -27,7 +27,7 @@ func setupTestServer() *httptest.Server {
 	signer := assertions.NewEntity("Signing entity", *big.NewInt(123456))
 	signer.MakeCertificate(privateKey)
 	datastore.ActiveDataStore.Store(&signer)
-	datastore.ActiveDataStore.StoreKey(signer.Uri(), assertions.DecodePrivateKey(privateKey))
+	datastore.ActiveDataStore.StoreKey(signer.Uri(), assertions.PrivateKeyToString(privateKey))
 	web.DefaultEntityUri = signer.Uri()
 
 	return httptest.NewServer(setupHandlers())

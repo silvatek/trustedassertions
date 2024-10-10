@@ -227,7 +227,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 			HandleError(1003, "Error fetching default entity private key", w, r)
 			return
 		}
-		privateKey := assertions.EncodePrivateKey(b64key)
+		privateKey := assertions.StringToPrivateKey(b64key)
 
 		// Create and save the statement
 		statement := assertions.NewStatement(content)
