@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
-	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
 func TestJwtSymmetric(t *testing.T) {
@@ -85,15 +84,6 @@ func TestJwtAsymmetric(t *testing.T) {
 	}
 }
 
-type TestKeyFetcher struct {
-	key string
-}
-
-func (tkf *TestKeyFetcher) FetchKey(entityUri HashUri) (string, error) {
-	log.Debugf("Fetching private key for %s", entityUri)
-	return tkf.key, nil
-}
-
 type TestEntityFetcher struct {
 	entity Entity
 }
@@ -108,13 +98,11 @@ func TestAssertionClaims(t *testing.T) {
 	entity := NewEntity("Test entity", *big.NewInt(123456))
 	entity.MakeCertificate(privateKey)
 
-	tkf := TestKeyFetcher{key: PrivateKeyToString(privateKey)}
-	ActiveKeyFetcher = &tkf
 	ActiveEntityFetcher = TestEntityFetcher{entity: entity}
 
 	assertion1 := NewAssertion("IsFalse")
 	assertion1.Subject = "hash://sha256/12345678"
-	assertion1.Issuer = entity.Uri().String()
+	assertion1.SetAssertingEntity(entity)
 	assertion1.MakeJwt(privateKey)
 
 	token := assertion1.Content()
@@ -177,10 +165,21 @@ func TestDecodePrivateKey(t *testing.T) {
 	}
 }
 
+func TestKeyStringRoundTrip(t *testing.T) {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	s := PrivateKeyToString(privateKey)
+
+	key2 := StringToPrivateKey(s)
+
+	if !key2.Equal(privateKey) {
+		t.Error("Private key did not verify after round-trip through string")
+	}
+}
+
 func TestAssertionJwt(t *testing.T) {
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 
-	a := NewAssertion("simple")
+	a := NewAssertion("Simple")
 	a.MakeJwt(privateKey)
 	t.Log(a.Uri())
 	t.Log(a.Content())
@@ -188,21 +187,15 @@ func TestAssertionJwt(t *testing.T) {
 	if !strings.HasPrefix(a.Uri().String(), "hash://sha256/") {
 		t.Errorf("Bad URI prefix: %s", a.Uri())
 	}
-}
 
-// func TestUriHash(t *testing.T) {
-// 	uris := map[string]string{
-// 		"hash://sha256/3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e":                "3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e",
-// 		"hash://sha256/3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e?type=statement": "3c5662612980a49623540b301996e5c8d239f8e5da56ec8bc8fda5b5e3ca529e",
-// 		"hash://sha256/12345?type=entity": "12345",
-// 	}
-// 	for uri, expectedHash := range uris {
-// 		actualHash := UriHash(uri)
-// 		if actualHash != expectedHash {
-// 			t.Errorf("Unexpected hash from URI: %s => %s", uri, actualHash)
-// 		}
-// 	}
-// }
+	if a.Type() != "Assertion" {
+		t.Errorf("Unexpected assertion type: %s", a.Type())
+	}
+	if a.Summary() != "Simple Assertion" {
+		t.Errorf("Unexpected assertion summary: %s", a.Summary())
+	}
+
+}
 
 func TestUrlEncode(t *testing.T) {
 	s := url.PathEscape("hash://sha256/123456")

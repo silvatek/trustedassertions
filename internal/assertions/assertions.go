@@ -23,12 +23,6 @@ type Assertion struct {
 	uri        HashUri `json:"-"`
 }
 
-type KeyFetcher interface {
-	FetchKey(entityUri HashUri) (string, error)
-}
-
-var ActiveKeyFetcher KeyFetcher
-
 type EntityFetcher interface {
 	FetchEntity(key HashUri) (Entity, error)
 }
@@ -113,15 +107,6 @@ func (a *Assertion) Summary() string {
 func (a *Assertion) SetAssertingEntity(entity Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
 }
-
-// func UriHash(uri string) string {
-// 	hash := strings.TrimPrefix(uri, "hash://sha256/")
-// 	queryIndex := strings.Index(hash, "?")
-// 	if queryIndex > -1 {
-// 		hash = hash[0:queryIndex]
-// 	}
-// 	return hash
-// }
 
 func PrivateKeyToString(prvKey *rsa.PrivateKey) string {
 	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(prvKey))

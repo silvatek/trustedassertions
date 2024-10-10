@@ -67,7 +67,7 @@ func initDataStore() {
 		defaultEntityKey = os.Getenv("PRV_KEY")
 	}
 
-	assertions.ActiveKeyFetcher = datastore.ActiveDataStore
+	// assertions.ActiveKeyFetcher = datastore.ActiveDataStore
 	assertions.ActiveEntityFetcher = datastore.ActiveDataStore
 
 	if datastore.ActiveDataStore.AutoInit() {
