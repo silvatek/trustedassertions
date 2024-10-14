@@ -63,9 +63,12 @@ Any number of trust models can be created from the same set of assertions, and i
 * SubjectType and ObjectType claims in assertions, or auto-detect type
 * Web page for adding assertion to existing statements etc
 * Mobile web views
-* User authentication and access control
 * Web page to create new entity
 * Secure management of private keys
+* Access control
+* Logout
+* User JWT refresh
+* User management
 
 ### Done
 
@@ -77,3 +80,4 @@ Any number of trust models can be created from the same set of assertions, and i
 * Web UI to create statement & assertion
 * Error handling
 * Basic stylesheets
+* User authentication
