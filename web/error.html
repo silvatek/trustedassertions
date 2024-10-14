@@ -1,6 +1,6 @@
 {{define "content"}}		
         <h1>Unexpected Error</h1>
         <div id="intro">Sorry, an error has occurred.</div>
-        <div id="message">{{.ErrorMessage}}</div>
-        <div>Unique error reference (UER): {{.ErrorID}}</div>
+        <div id="message">{{.Detail.ErrorMessage}}</div>
+        <div>Unique error reference (UER): {{.Detail.ErrorID}}</div>
 {{end}}

@@ -16,6 +16,14 @@
     <div class="footer">
         <hr>
         <a href="/">Home</a>
+        &nbsp;|&nbsp;
+        {{if .LoggedIn}}
+            <span id="username">{{.AuthUser}}</span>
+        {{else}}
+            <a href="/web/login">Login</a>
+        {{end}}
+        
+
     </div>
 </body>
 </html>

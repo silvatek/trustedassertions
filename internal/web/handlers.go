@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"text/template"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/datastore"
@@ -26,6 +27,8 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 
+	addAuthHandlers(r)
+
 	staticDir := http.Dir(TemplateDir + "/static")
 	fs := http.FileServer(staticDir)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
@@ -33,7 +36,13 @@ func AddHandlers(r *mux.Router) {
 	errorMessages = make(map[string]string)
 }
 
-func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter) {
+type PageData struct {
+	AuthUser string
+	LoggedIn bool
+	Detail   interface{}
+}
+
+func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *http.Request) {
 	dir := TemplateDir
 
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
@@ -44,15 +53,41 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter) {
 		return
 	}
 
-	if err := t.ExecuteTemplate(w, "base", data); err != nil {
+	username := authUser(r)
+	pageData := PageData{
+		AuthUser: username,
+		LoggedIn: username != "",
+		Detail:   data,
+	}
+
+	if err := t.ExecuteTemplate(w, "base", pageData); err != nil {
 		msg := http.StatusText(http.StatusInternalServerError)
 		log.Errorf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
 }
 
+// Returns the name of the currently authenticated user, or an empty string.
+func authUser(r *http.Request) string {
+	cookie, err := r.Cookie("auth")
+	if err != nil {
+		return ""
+	}
+	userToken, err := jwt.Parse(cookie.Value,
+		func(token *jwt.Token) (interface{}, error) {
+			return userJwtKey, nil
+		},
+	)
+	if err != nil {
+		log.Errorf("Error parsing user JWT: %v", err)
+		return ""
+	}
+	userName, _ := userToken.Claims.GetSubject()
+	return userName
+}
+
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
-	RenderWebPage("index", "", w)
+	RenderWebPage("index", "", w, r)
 }
 
 type ReferenceSummary struct {
@@ -123,7 +158,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		References: refs,
 	}
 
-	RenderWebPage("viewstatement", data, w)
+	RenderWebPage("viewstatement", data, w, r)
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +192,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		References:  make([]string, 0),
 	}
 
-	RenderWebPage("viewassertion", data, w)
+	RenderWebPage("viewassertion", data, w, r)
 }
 
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +222,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		References: refs,
 	}
 
-	RenderWebPage("viewentity", data, w)
+	RenderWebPage("viewentity", data, w, r)
 }
 
 func fetchDefaultEntity() (assertions.Entity, error) {
@@ -208,7 +243,11 @@ func HandleError(errorCode int, errorMessage string, w http.ResponseWriter, r *h
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		RenderWebPage("newstatementform", "", w)
+		if authUser(r) == "" {
+			HandleError(1005, "Not logged in", w, r)
+			return
+		}
+		RenderWebPage("newstatementform", "", w, r)
 	} else if r.Method == "POST" {
 		log.Info("Creating new statement and assertion")
 		r.ParseForm()
@@ -269,7 +308,7 @@ func ErrorPageHandler(w http.ResponseWriter, r *http.Request) {
 		ErrorID:      errorId,
 	}
 
-	RenderWebPage("error", data, w)
+	RenderWebPage("error", data, w, r)
 }
 
 func errorMessage(errorCode string) string {

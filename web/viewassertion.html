@@ -3,24 +3,24 @@
 
         <div class="fieldset">
             <div class="fieldprompt">ID:</div>
-            <div class="fieldvalue" id="uri">{{.Uri}}</div>
+            <div class="fieldvalue" id="uri">{{.Detail.Uri}}</div>
 
             <div class="fieldprompt">Issuer:</div>
-            <div class="fieldvalue"><a href="{{.IssuerLink}}">{{.Assertion.Issuer}}</a></div>
+            <div class="fieldvalue"><a href="{{.Detail.IssuerLink}}">{{.Detail.Assertion.Issuer}}</a></div>
 
             <div class="fieldprompt">Subject:</div>
-            <div class="fieldvalue"><a href="{{.SubjectLink}}">{{.Assertion.Subject}}</a></div>
+            <div class="fieldvalue"><a href="{{.Detail.SubjectLink}}">{{.Detail.Assertion.Subject}}</a></div>
 
             <div class="fieldprompt">Category:</div>
-            <div class="fieldvalue" id="category">{{.Assertion.Category}}</div>
+            <div class="fieldvalue" id="category">{{.Detail.Assertion.Category}}</div>
 
             <div class="fieldprompt">Confidence:</div>
-            <div class="fieldvalue">{{.Assertion.Confidence}}</div>
+            <div class="fieldvalue">{{.Detail.Assertion.Confidence}}</div>
         </div>
 
         <hr>
 
         <div>
-            <a href="{{.ApiLink}}">Raw Data</a>
+            <a href="{{.Detail.ApiLink}}">Raw Data</a>
         </div>
 {{end}}

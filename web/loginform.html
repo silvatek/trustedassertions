@@ -1,0 +1,19 @@
+{{define "content"}}		
+        <h1>Login</h1>        
+
+        <div class="error">{{.Detail}}</div>
+
+        <form method="POST" action="/web/login">
+                <div>
+                        User ID:<br>
+                        <input id="user_id" name="user_id" autofocus>
+                </div>
+                <div>
+                    Password:<br>
+                    <input id="password" name="password" type="password">
+                </div>
+                <div>
+                        <input id="login" type="Submit" value="Login">
+                </div>
+        </form>
+{{end}}

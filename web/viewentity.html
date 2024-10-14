@@ -3,22 +3,22 @@
 
         <div class="fieldset">
             <div class="fieldprompt">ID:</div>
-            <div class="fieldvalue">{{.Uri}}</div>
+            <div class="fieldvalue">{{.Detail.Uri}}</div>
             <div class="fieldprompt">Common name:</div>
-            <div class="fieldvalue" id="common_name">{{.CommonName}}</div>
+            <div class="fieldvalue" id="common_name">{{.Detail.CommonName}}</div>
         </div>
         
         <hr>
         
         <h2>References</h2>
         <ul>
-            {{range $ref := .References}}
+            {{range $ref := .Detail.References}}
             <li><a href="{{$ref.Uri.WebPath}}">{{$ref.Summary}}</a></li>
             {{end}}
         </ul>
         <hr/>
         <div>
-            <a href="{{.ApiLink}}">Raw Data</a>
+            <a href="{{.Detail.ApiLink}}">Raw Data</a>
         </div>
 
 {{end}}
