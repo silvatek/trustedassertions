@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/auth"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
@@ -14,11 +15,13 @@ type DataStore interface {
 	StoreRaw(uri assertions.HashUri, content string)
 	StoreKey(entityUri assertions.HashUri, key string)
 	StoreRef(source assertions.HashUri, target assertions.HashUri, refType string)
+	StoreUser(user auth.User)
 	FetchStatement(key assertions.HashUri) (assertions.Statement, error)
 	FetchEntity(key assertions.HashUri) (assertions.Entity, error)
 	FetchAssertion(key assertions.HashUri) (assertions.Assertion, error)
 	FetchKey(entityUri assertions.HashUri) (string, error)
 	FetchRefs(key assertions.HashUri) ([]assertions.HashUri, error)
+	FetchUser(id string) (auth.User, error)
 }
 
 type KeyNotFoundError struct {
@@ -29,9 +32,10 @@ func (e *KeyNotFoundError) Error() string {
 }
 
 type InMemoryDataStore struct {
-	data map[string]string
-	keys map[string]string
-	refs map[string][]string
+	data  map[string]string
+	keys  map[string]string
+	refs  map[string][]string
+	users map[string]auth.User
 }
 
 var ActiveDataStore DataStore
@@ -41,6 +45,7 @@ func InitInMemoryDataStore() {
 	datastore.data = make(map[string]string)
 	datastore.keys = make(map[string]string)
 	datastore.refs = make(map[string][]string)
+	datastore.users = make(map[string]auth.User)
 	ActiveDataStore = &datastore
 }
 
@@ -117,4 +122,16 @@ func (ds *InMemoryDataStore) FetchRefs(key assertions.HashUri) ([]assertions.Has
 		uris = append(uris, uri)
 	}
 	return uris, nil
+}
+
+func (ds *InMemoryDataStore) StoreUser(user auth.User) {
+	ds.users[user.Id] = user
+}
+
+func (ds *InMemoryDataStore) FetchUser(id string) (auth.User, error) {
+	user, ok := ds.users[id]
+	if !ok {
+		return auth.User{}, errors.New("User not found with id " + id)
+	}
+	return user, nil
 }

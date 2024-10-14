@@ -8,6 +8,7 @@ import (
 
 	"silvatek.uk/trustedassertions/internal/api"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	"silvatek.uk/trustedassertions/internal/web"
@@ -67,12 +68,15 @@ func initDataStore() {
 		defaultEntityKey = os.Getenv("PRV_KEY")
 	}
 
-	// assertions.ActiveKeyFetcher = datastore.ActiveDataStore
 	assertions.ActiveEntityFetcher = datastore.ActiveDataStore
 
 	if datastore.ActiveDataStore.AutoInit() {
 		setupTestData()
 	}
+
+	testUser := auth.User{Id: "test@user.org"}
+	testUser.HashPassword(os.Getenv("TEST_PW"))
+	datastore.ActiveDataStore.StoreUser(testUser)
 }
 
 func initLogging() {

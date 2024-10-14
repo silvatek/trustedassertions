@@ -9,6 +9,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/auth"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
@@ -19,6 +20,7 @@ type FireStore struct {
 
 const MainCollection = "Primary"
 const KeyCollection = "Keys"
+const UserCollection = "Users"
 
 func InitFireStore() {
 	datastore := &FireStore{
@@ -243,4 +245,27 @@ func (fs *FireStore) FetchRefs(uri assertions.HashUri) ([]assertions.HashUri, er
 	}
 
 	return results, nil
+}
+
+func (fs *FireStore) StoreUser(user auth.User) {
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	client.Collection(UserCollection).Doc(user.Id).Set(ctx, user)
+}
+
+func (fs *FireStore) FetchUser(id string) (auth.User, error) {
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	user := auth.User{}
+
+	doc, err := client.Collection(UserCollection).Doc(id).Get(ctx)
+	if err != nil {
+		return user, err
+	}
+	doc.DataTo(&user)
+	return user, nil
 }
