@@ -1,15 +1,15 @@
 {{define "content"}}		
-        <h1>Login</h1>        
+        <h2>Login</h2>
 
         <div class="error">{{.Detail}}</div>
 
         <form method="POST" action="/web/login">
                 <div>
-                        User ID:<br>
-                        <input id="user_id" name="user_id" autofocus>
+                    <label for="user_id">ID:</label><br>
+                    <input id="user_id" name="user_id" autofocus>
                 </div>
                 <div>
-                    Password:<br>
+                    <label for="password">Password:</label><br>
                     <input id="password" name="password" type="password">
                 </div>
                 <div>

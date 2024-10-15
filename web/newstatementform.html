@@ -1,11 +1,11 @@
 {{define "content"}}		
-        <h1>New Statement</h1>
+        <h2>New Statement</h2>
         <div>Create a new Statment with an Assertion that it is true.</div>
 
         <form method="POST" action="/web/newstatement">
                 <div>
-                        Statement:<br>
-                        <textarea id="statment" name="statement" rows="12" cols="80" autofocus></textarea>
+                        <label for="statement">Statement:</label><br>
+                        <textarea id="statement" name="statement" rows="12" cols="80" autofocus></textarea>
                 </div>
                 <div>
                         <input id="submit" type="Submit">

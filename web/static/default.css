@@ -13,6 +13,23 @@ body {
 	margin-top: 0.3em;
  }
 
+ .header {
+	display: inline-block;
+	margin-top: 4px;
+ }
+
+.pagelogo {
+	float: left;
+	margin: 0px;
+	padding-right: 1em;
+}
+
+.pageheading {
+	float: left;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
  .linkset {
 
  }
@@ -49,4 +66,8 @@ body {
 
  .uri {
 	font-family: monospace;
+ }
+
+ li {
+	padding-bottom: 4px;
  }

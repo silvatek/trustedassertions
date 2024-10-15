@@ -1,5 +1,5 @@
 {{define "content"}}		
-        <h1>View Statement</h1>
+        <h2>View Statement</h2>
 
         <div class="fieldset">
             <div class="fieldprompt">ID:</div>
@@ -9,8 +9,7 @@
             <div id="content" class="fieldvalue" disabled>{{.Detail.Content}}</div>   
         </div>
 
-        <hr/>
-        <h2>References</h2>
+        <h3>References</h3>
         <ul>
             {{range $ref := .Detail.References}}
                 <li><a href="{{$ref.Uri.WebPath}}">{{$ref.Summary}} [{{$ref.Uri.Short}}]</a></li>
