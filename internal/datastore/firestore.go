@@ -255,6 +255,7 @@ func (fs *FireStore) StoreUser(user auth.User) {
 	client.Collection(UserCollection).Doc(user.Id).Set(ctx, user)
 
 	if user.KeyRefs != nil {
+		log.Debugf("Found %d key references", len(user.KeyRefs))
 		for _, ref := range user.KeyRefs {
 			client.Collection(UserCollection).Doc(user.Id).Collection("refs").Doc(ref.KeyId).Set(ctx, ref)
 		}
