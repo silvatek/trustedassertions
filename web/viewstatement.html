@@ -3,7 +3,10 @@
 
         <div class="fieldset">
             <div class="fieldprompt">ID:</div>
-            <div id="uri" class="fieldvalue">{{.Detail.Uri}}</div>
+            <div id="uri" class="fieldvalue">
+                <span class="fulluri">{{.Detail.Uri}}</span>
+                <span class="shorturi">{{.Detail.ShortUri}}</span>
+            </div>
 
             <div class="fieldprompt">Text:</div>
             <div id="content" class="fieldvalue" disabled>{{.Detail.Content}}</div>   

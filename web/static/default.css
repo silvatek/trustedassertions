@@ -1,9 +1,43 @@
+@media screen and (max-width:920px) {
+	body {
+		margin-left: 1em;
+		margin-right: 1em;
+	}
+	.fulluri {
+		display: none;
+	}
+ }
+
+ @media screen and (min-width:921px) and (max-width:1200px) {
+	body {
+		margin-left: 1em;
+		margin-right: 1em;
+	}
+	.shorturi {
+		display: none;		
+	}
+ }
+
+ @media screen and (min-width:1200px) {
+	body {
+		margin-left: 20%;
+		margin-right: 20%;
+	}	
+	.shorturi {
+		display: none;		
+	}
+ }
+
+ @media print {
+	body {
+		background-color: white;
+	}
+ }
+
 body {
 	font-family: Arial, sans-serif;
 	font-display: fallback;
-	margin-left: 12em;
-	margin-right: 12em;
- }
+}	
 
  a {
 	text-decoration: none;
@@ -71,3 +105,4 @@ body {
  li {
 	padding-bottom: 4px;
  }
+

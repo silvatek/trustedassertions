@@ -148,11 +148,13 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Uri        string
+		ShortUri   string
 		Content    string
 		ApiLink    string
 		References []ReferenceSummary
 	}{
 		Uri:        statement.Uri().String(),
+		ShortUri:   statement.Uri().Short(),
 		Content:    statement.Content(),
 		ApiLink:    statement.Uri().ApiPath(),
 		References: refs,
@@ -178,6 +180,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Uri         string
+		ShortUri    string
 		Assertion   assertions.Assertion
 		IssuerLink  string
 		SubjectLink string
@@ -185,6 +188,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		References  []string
 	}{
 		Uri:         assertion.Uri().String(),
+		ShortUri:    assertion.Uri().Short(),
 		Assertion:   assertion,
 		ApiLink:     assertion.Uri().ApiPath(),
 		IssuerLink:  issuerUri.WebPath(),
@@ -210,12 +214,14 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Uri        string
+		ShortUri   string
 		CommonName string
 		ApiLink    string
 		PublicKey  string
 		References []ReferenceSummary
 	}{
 		Uri:        uri.String(),
+		ShortUri:   uri.Short(),
 		CommonName: entity.CommonName,
 		PublicKey:  fmt.Sprintf("%v", entity.PublicKey),
 		ApiLink:    uri.ApiPath(),

@@ -3,7 +3,11 @@
 
         <div class="fieldset">
             <div class="fieldprompt">ID:</div>
-            <div class="fieldvalue" id="uri">{{.Detail.Uri}}</div>
+            <div class="fieldvalue" id="uri">
+                <span class="fulluri">{{.Detail.Uri}}</span>
+                <span class="shorturi">{{.Detail.ShortUri}}</span>
+
+            </div>
 
             <div class="fieldprompt">Issuer:</div>
             <div class="fieldvalue"><a href="{{.Detail.IssuerLink}}">{{.Detail.Assertion.Issuer}}</a></div>

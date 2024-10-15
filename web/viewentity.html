@@ -3,8 +3,11 @@
 
         <div class="fieldset">
             <div class="fieldprompt">ID:</div>
-            <div class="fieldvalue">{{.Detail.Uri}}</div>
-            <div class="fieldprompt">Common name:</div>
+            <div class="fieldvalue" id="uri">
+                <span class="fulluri">{{.Detail.Uri}}</span>
+                <span class="shorturi">{{.Detail.ShortUri}}</span>
+            </div>
+            <div class="fieldprompt">Name:</div>
             <div class="fieldvalue" id="common_name">{{.Detail.CommonName}}</div>
         </div>
         
