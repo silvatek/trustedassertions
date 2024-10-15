@@ -10,6 +10,20 @@ import (
 type User struct {
 	Id       string `json:"id"`
 	PassHash string `json:"passhash"`
+	KeyRefs  []KeyRef
+}
+
+type KeyRef struct {
+	UserId  string `json:"user_id"`
+	KeyId   string `json:"key_id"`
+	Summary string `json:"summary"`
+}
+
+func (u *User) AddKeyRef(keyId string, summary string) {
+	if u.KeyRefs == nil {
+		u.KeyRefs = make([]KeyRef, 0)
+	}
+	u.KeyRefs = append(u.KeyRefs, KeyRef{UserId: u.Id, KeyId: keyId, Summary: summary})
 }
 
 var DefaultHashCost int = bcrypt.DefaultCost

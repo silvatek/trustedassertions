@@ -253,6 +253,12 @@ func (fs *FireStore) StoreUser(user auth.User) {
 	defer client.Close()
 
 	client.Collection(UserCollection).Doc(user.Id).Set(ctx, user)
+
+	if user.KeyRefs != nil {
+		for _, ref := range user.KeyRefs {
+			client.Collection(UserCollection).Doc(user.Id).Collection("refs").Doc(ref.KeyId).Set(ctx, ref)
+		}
+	}
 }
 
 func (fs *FireStore) FetchUser(id string) (auth.User, error) {
@@ -267,5 +273,8 @@ func (fs *FireStore) FetchUser(id string) (auth.User, error) {
 		return user, err
 	}
 	doc.DataTo(&user)
+
+	user.KeyRefs = make([]auth.KeyRef, 0)
+
 	return user, nil
 }

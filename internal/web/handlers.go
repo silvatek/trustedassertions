@@ -256,31 +256,40 @@ func HandleError(errorCode int, errorMessage string, w http.ResponseWriter, r *h
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
+	username := authUser(r)
+	if username == "" {
+		HandleError(1005, "Not logged in", w, r)
+		return
+	}
+	user, _ := datastore.ActiveDataStore.FetchUser(username)
+
 	if r.Method == "GET" {
-		if authUser(r) == "" {
-			HandleError(1005, "Not logged in", w, r)
-			return
-		}
-		RenderWebPage("newstatementform", "", w, r)
+		RenderWebPage("newstatementform", user, w, r)
 	} else if r.Method == "POST" {
 		log.Info("Creating new statement and assertion")
 		r.ParseForm()
 		content := r.Form.Get("statement")
 		log.Debugf("Web post of new statement: %s", content)
 
-		// Fetch the default entity
-		entity, err := fetchDefaultEntity()
-		if err != nil {
-			HandleError(1002, "Error fetching default entity", w, r)
-			return
-		}
+		keyId := r.Form.Get("sign_as")
+		log.Debugf("Signing key ID: %s", keyId)
 
-		b64key, err := datastore.ActiveDataStore.FetchKey(entity.Uri())
+		// Fetch the default entity
+		// entity, err := fetchDefaultEntity()
+		// if err != nil {
+		// 	HandleError(1002, "Error fetching default entity", w, r)
+		// 	return
+		// }
+		keyUri := assertions.UriFromString(keyId)
+
+		b64key, err := datastore.ActiveDataStore.FetchKey(keyUri)
 		if err != nil {
-			HandleError(1003, "Error fetching default entity private key", w, r)
+			HandleError(1003, "Error fetching entity private key", w, r)
 			return
 		}
 		privateKey := assertions.StringToPrivateKey(b64key)
+
+		entity, _ := datastore.ActiveDataStore.FetchEntity(keyUri)
 
 		// Create and save the statement
 		statement := assertions.NewStatement(content)

@@ -94,6 +94,7 @@ func setupTestData() {
 
 	initialUser := auth.User{Id: os.Getenv("INITIAL_USER")}
 	initialUser.HashPassword(os.Getenv("INITIAL_PW"))
+	initialUser.AddKeyRef(defaultEntityUri, "Default")
 	datastore.ActiveDataStore.StoreUser(initialUser)
 
 	log.Info("Test data load complete.")

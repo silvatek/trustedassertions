@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"errors"
+	"strings"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
@@ -36,6 +37,7 @@ type InMemoryDataStore struct {
 	keys  map[string]string
 	refs  map[string][]string
 	users map[string]auth.User
+	krefs map[string]auth.KeyRef
 }
 
 var ActiveDataStore DataStore
@@ -46,6 +48,7 @@ func InitInMemoryDataStore() {
 	datastore.keys = make(map[string]string)
 	datastore.refs = make(map[string][]string)
 	datastore.users = make(map[string]auth.User)
+	datastore.krefs = make(map[string]auth.KeyRef)
 	ActiveDataStore = &datastore
 }
 
@@ -126,12 +129,23 @@ func (ds *InMemoryDataStore) FetchRefs(key assertions.HashUri) ([]assertions.Has
 
 func (ds *InMemoryDataStore) StoreUser(user auth.User) {
 	ds.users[user.Id] = user
+	if user.KeyRefs != nil {
+		for _, ref := range user.KeyRefs {
+			ds.krefs[ref.UserId+" "+ref.KeyId] = ref
+		}
+	}
 }
 
 func (ds *InMemoryDataStore) FetchUser(id string) (auth.User, error) {
 	user, ok := ds.users[id]
 	if !ok {
 		return auth.User{}, errors.New("User not found with id " + id)
+	}
+	user.KeyRefs = make([]auth.KeyRef, 0)
+	for key, value := range ds.krefs {
+		if strings.HasPrefix(key, id) {
+			user.KeyRefs = append(user.KeyRefs, value)
+		}
 	}
 	return user, nil
 }

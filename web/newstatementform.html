@@ -8,7 +8,16 @@
                         <textarea id="statement" name="statement" rows="12" cols="80" autofocus></textarea>
                 </div>
                 <div>
+                        <label for="sign_as">Sign as:</label><br>
+                        <select id="sign_as" name="sign_as">
+                                {{range $ref := .Detail.KeyRefs}}
+                                        <option value="{{$ref.KeyId}}">{{$ref.Summary}}</option>
+                                {{end}}
+                        </select>
+                </div>
+                <div>
                         <input id="submit" type="Submit">
                 </div>
         </form>
+
 {{end}}
