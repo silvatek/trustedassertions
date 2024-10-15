@@ -173,17 +173,23 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		issuerUri = issuerUri.WithType("entity")
 	}
 
+	issuer, _ := datastore.ActiveDataStore.FetchEntity(issuerUri)
+
 	subjectUri := assertions.UriFromString(assertion.Subject)
 	if !subjectUri.HasType() {
 		subjectUri = subjectUri.WithType("statement")
 	}
+
+	subject, _ := datastore.ActiveDataStore.FetchStatement(subjectUri)
 
 	data := struct {
 		Uri         string
 		ShortUri    string
 		Assertion   assertions.Assertion
 		IssuerLink  string
+		IssuerName  string
 		SubjectLink string
+		SubjectText string
 		ApiLink     string
 		References  []string
 	}{
@@ -192,7 +198,9 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		Assertion:   assertion,
 		ApiLink:     assertion.Uri().ApiPath(),
 		IssuerLink:  issuerUri.WebPath(),
+		IssuerName:  issuer.CommonName,
 		SubjectLink: subjectUri.WebPath(),
+		SubjectText: subject.Content(),
 		References:  make([]string, 0),
 	}
 

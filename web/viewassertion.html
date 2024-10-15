@@ -10,10 +10,18 @@
             </div>
 
             <div class="fieldprompt">Issuer:</div>
-            <div class="fieldvalue"><a href="{{.Detail.IssuerLink}}">{{.Detail.Assertion.Issuer}}</a></div>
+            <div class="fieldvalue">
+                <a href="{{.Detail.IssuerLink}}">{{.Detail.Assertion.Issuer}}</a>
+                <br>
+                <span id="issuername">{{.Detail.IssuerName}}</span>
+            </div>            
 
             <div class="fieldprompt">Subject:</div>
-            <div class="fieldvalue"><a href="{{.Detail.SubjectLink}}">{{.Detail.Assertion.Subject}}</a></div>
+            <div class="fieldvalue">
+                <a href="{{.Detail.SubjectLink}}">{{.Detail.Assertion.Subject}}</a>
+                <br>
+                <span id="subjecttext">{{.Detail.SubjectText}}</span>
+            </div>
 
             <div class="fieldprompt">Category:</div>
             <div class="fieldvalue" id="category">{{.Detail.Assertion.Category}}</div>

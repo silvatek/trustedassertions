@@ -212,3 +212,29 @@ func TestUrlEncode(t *testing.T) {
 		t.Errorf("Error in round-tripped URI: %s", s1)
 	}
 }
+
+func TestGuessContentType(t *testing.T) {
+	buf := make([]byte, 512)
+	for i := range buf {
+		buf[i] = 'X'
+	}
+	padding := string(buf)
+
+	data := map[string]string{
+		"Testing":                              "Statement",
+		"-----BEGIN CERTIFICATE----" + padding: "Entity",
+		"eyJ" + padding:                        "Assertion",
+		"Some text" + padding:                  "Statement",
+		padding:                                "Statement",
+		padding[0:511]:                         "Statement",
+		"eyJ":                                  "Statement",
+		"":                                     "Statement",
+	}
+
+	for input, expected := range data {
+		output := GuessContentType(input)
+		if output != expected {
+			t.Errorf("Unexpected type for `%s`: %s", input, output)
+		}
+	}
+}

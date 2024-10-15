@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	log "silvatek.uk/trustedassertions/internal/logging"
@@ -108,6 +109,22 @@ func (a *Assertion) SetAssertingEntity(entity Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
 }
 
+func GuessContentType(content string) string {
+	if len(content) < 512 {
+		// Both X509 certificates and JWTs signed by Entities are longer than 512 characters
+		return "Statement"
+	}
+	if strings.HasPrefix(content, "-----BEGIN CERTIFICATE----") {
+		// X509 certificates for Entities are self-describing
+		return "Entity"
+	}
+	if strings.HasPrefix(content, "eyJ") {
+		// Assertion JWTs start with bas64-encoded "{"
+		return "Assertion"
+	}
+	return "Statement"
+}
+
 func PrivateKeyToString(prvKey *rsa.PrivateKey) string {
 	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(prvKey))
 }
@@ -120,5 +137,3 @@ func StringToPrivateKey(base64encoded string) *rsa.PrivateKey {
 	}
 	return privateKey
 }
-
-//============================================//
