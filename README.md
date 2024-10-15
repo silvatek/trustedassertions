@@ -8,11 +8,11 @@ The core data model consists of three main data types:-
 * An `Entity` is an X509 certificate, identified by its serial number, representing an individual or organisation.
 * An `Assertion` is a JSON Web Token, identified by its signature, containing claims made by an Entity about a Statement or another Assertion.
 
-In addition to these primary data types, there is also the `Reference` which is a combination of a target, a source and a reference type. References are identified from within assertions and stored separately as a form of index.
+The data in the core data model is immutable; data is only added, never modified. It is content-addressable; the data should be stored in its plain-text representation, and accessed using a URI built from a hash of that text.
 
-For servers that will be creating new Entities or Assertions, it will also be necessary to store (or at least have access to) the private keys for the signing entities.
+In addition to these core data types, there is also the `Reference` which is a combination of a target, a source and a reference type. References are identified from within assertions and stored separately as a form of index.
 
-The data in the data model is immutable; data is only added, never modified. It is content-addressable; the data should be stored in its plain-text representation, and accessed using a URI built from a hash of that text.
+For servers that will be creating new Entities or Assertions, it will also be necessary to store (or at least have access to) the private keys for the signing entities. The design of this data model is implementation-specific: the reference implementation has `User` objects, each with one or more `KeyReference` objects which link the user to a `SigningKey` object.
 
 
 ### Data URIs
@@ -59,6 +59,7 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Things to Do
 
+* Basic search
 * QR Codes for statement, entity and assertion pages 
 * SubjectType and ObjectType claims in assertions, or auto-detect type
 * Web page for adding assertion to existing statements etc
@@ -66,7 +67,6 @@ Any number of trust models can be created from the same set of assertions, and i
 * Web page to create new entity
 * Secure management of private keys
 * Access control
-* Logout
 * User JWT refresh
 * User management
 
@@ -81,3 +81,4 @@ Any number of trust models can be created from the same set of assertions, and i
 * Error handling
 * Basic stylesheets
 * User authentication
+* Logout page

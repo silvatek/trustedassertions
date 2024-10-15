@@ -16,6 +16,7 @@ var userJwtKey []byte
 
 func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/login", LoginWebHandler)
+	r.HandleFunc("/web/logout", LogoutWebHandler)
 
 	// Make a key for signing JWTs
 	userJwtKey := make([]byte, 10)
@@ -69,4 +70,11 @@ func makeUserJwt(user auth.User) (string, error) {
 	}
 
 	return signed, nil
+}
+
+func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {
+	cookie := http.Cookie{Name: "auth", Path: "/", Value: "", MaxAge: -1, SameSite: http.SameSiteStrictMode}
+	http.SetCookie(w, &cookie)
+
+	RenderWebPage("loggedout", "", w, r)
 }

@@ -13,6 +13,18 @@ body {
 	margin-top: 0.3em;
  }
 
+ .linkset {
+
+ }
+
+.leftlink {
+	float: left;
+}
+
+.rightlink {
+	float: right
+}
+
  .fieldset {
 	display: grid;
 	gap: 1em;

@@ -15,15 +15,17 @@
     </div>
     <div class="footer">
         <hr>
-        <a href="/">Home</a>
-        &nbsp;|&nbsp;
-        {{if .LoggedIn}}
-            <span id="username">{{.AuthUser}}</span>
-        {{else}}
-            <a href="/web/login">Login</a>
-        {{end}}
-        
-
+        <div class="linkset">
+            <span class="leftlink">&nbsp;|&nbsp;<a href="/">Home</a>&nbsp;|&nbsp;</span>
+            <span class="rightlink">
+                {{if .LoggedIn}}
+                    <span id="username">{{.AuthUser}}</span>
+                    &nbsp;|&nbsp;<a href="/web/logout">Logout</a>&nbsp;|&nbsp;
+                {{else}}
+                    &nbsp;|&nbsp;<a href="/web/login">Login</a>&nbsp;|&nbsp;
+                {{end}}
+            </span>
+        </div>
     </div>
 </body>
 </html>
