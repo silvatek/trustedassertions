@@ -82,3 +82,27 @@ Any number of trust models can be created from the same set of assertions, and i
 * Basic stylesheets
 * User authentication
 * Logout page
+
+## Implementation Details
+
+### Build time analysis
+
+Build ID: afb6877e-02e5-4363-84c9-ffc88d4cb818
+
+```
+23:38:42 |     | Start fetching source
+23:38:43 |  2s | Start build
+23:38:45 | 19s | Start docker build
+23:39:04 ! 58s | Start go build (internal)
+23:40:02 |  3s | Start go build (server)
+23:40:05 |  1s | Start building runtime container
+23:40:06 |  2s | Start pulling layers
+23:40:08 |  1s | Layers pulled
+23:40:09 | 27s | Runtime image built, start push
+23:40:36 |  1s | Push complete, start deploy
+23:40:37 | 31s | Start pull
+23:41:08 |  5s | Pull complete
+23:41:13 |  4s | Start deploy
+23:41:17 |  5s | Deploy complete, 2nd push starts
+23:41:22 |     | 2nd push completes
+```

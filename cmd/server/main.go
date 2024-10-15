@@ -73,10 +73,6 @@ func initDataStore() {
 	if datastore.ActiveDataStore.AutoInit() {
 		setupTestData()
 	}
-
-	testUser := auth.User{Id: "test@user.org"}
-	testUser.HashPassword(os.Getenv("TEST_PW"))
-	datastore.ActiveDataStore.StoreUser(testUser)
 }
 
 func initLogging() {
@@ -95,6 +91,10 @@ func setupTestData() {
 
 	loadTestData(testDataDir+"/statements", "statement")
 	loadTestData(testDataDir+"/assertions", "assertion")
+
+	initialUser := auth.User{Id: os.Getenv("INITIAL_USER")}
+	initialUser.HashPassword(os.Getenv("INITIAL_PW"))
+	datastore.ActiveDataStore.StoreUser(initialUser)
 
 	log.Info("Test data load complete.")
 }
