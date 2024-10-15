@@ -254,12 +254,14 @@ func (fs *FireStore) StoreUser(user auth.User) {
 
 	client.Collection(UserCollection).Doc(user.Id).Set(ctx, user)
 
-	if user.KeyRefs != nil {
-		log.Debugf("Found %d key references", len(user.KeyRefs))
-		for _, ref := range user.KeyRefs {
-			client.Collection(UserCollection).Doc(user.Id).Collection("refs").Doc(ref.KeyId).Set(ctx, ref)
-		}
-	}
+	log.Debugf("Stored user %s", user.Id)
+
+	// if user.KeyRefs != nil {
+	// 	log.Debugf("Found %d key references", len(user.KeyRefs))
+	// 	for _, ref := range user.KeyRefs {
+	// 		client.Collection(UserCollection).Doc(user.Id).Collection("refs").Doc(ref.KeyId).Set(ctx, ref)
+	// 	}
+	// }
 }
 
 func (fs *FireStore) FetchUser(id string) (auth.User, error) {
@@ -275,7 +277,7 @@ func (fs *FireStore) FetchUser(id string) (auth.User, error) {
 	}
 	doc.DataTo(&user)
 
-	user.KeyRefs = make([]auth.KeyRef, 0)
+	// user.KeyRefs = make([]auth.KeyRef, 0)
 
 	return user, nil
 }
