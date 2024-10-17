@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -29,7 +30,7 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 		errorCode := r.URL.Query().Get("err")
 
 		data := ""
-		if errorCode == "2001" {
+		if errorCode == strconv.Itoa(ErrorAuthFail) {
 			data = "Unable to verify identity"
 		}
 

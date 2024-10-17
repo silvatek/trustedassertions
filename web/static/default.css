@@ -106,3 +106,13 @@ body {
 	padding-bottom: 4px;
  }
 
+.error {
+	color: brown;
+}
+
+button input[type=button], input[type=submit], input[type=reset] {
+	padding: 8px 16px;
+	text-decoration: none;
+	margin: 4px 2px;
+	cursor: pointer;
+}
