@@ -218,7 +218,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	uri := assertions.MakeUri(key, "entity")
 	entity, err := datastore.ActiveDataStore.FetchEntity(uri)
 	if err != nil {
-		HandleError(1001, "Unable to fetch entity", w, r)
+		HandleError(ErrorEntityFetch, "Unable to fetch entity", w, r)
 		return
 	}
 
@@ -244,10 +244,6 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	RenderWebPage("viewentity", data, w, r)
 }
 
-func fetchDefaultEntity() (assertions.Entity, error) {
-	return datastore.ActiveDataStore.FetchEntity(DefaultEntityUri)
-}
-
 // Error handling for web app.
 //
 // Logs an error with a message, code and unique ID, then redirects to the error page with the error code and ID.
@@ -263,12 +259,12 @@ func HandleError(errorCode int, errorMessage string, w http.ResponseWriter, r *h
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	username := authUser(r)
 	if username == "" {
-		HandleError(1005, "Not logged in", w, r)
+		HandleError(ErrorNoAuth, "Not logged in", w, r)
 		return
 	}
 	user, err := datastore.ActiveDataStore.FetchUser(username)
 	if err != nil {
-		HandleError(1006, "User not found", w, r)
+		HandleError(ErrorUserNotFound, "User not found", w, r)
 		return
 	}
 
@@ -285,9 +281,14 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		keyUri := assertions.UriFromString(keyId)
 
+		if !user.HasKey(keyId) {
+			HandleError(ErrorKeyAccess, "User does not have access to selected signing key", w, r)
+			return
+		}
+
 		b64key, err := datastore.ActiveDataStore.FetchKey(keyUri)
 		if err != nil {
-			HandleError(1003, "Error fetching entity private key", w, r)
+			HandleError(ErrorKeyFetch, "Error fetching entity private key", w, r)
 			return
 		}
 		privateKey := assertions.StringToPrivateKey(b64key)
@@ -346,5 +347,5 @@ func errorMessage(errorCode string) string {
 }
 
 func ErrorTestHandler(w http.ResponseWriter, r *http.Request) {
-	HandleError(9999, "Fake error for testing", w, r)
+	HandleError(ErrorFakeTest, "Fake error for testing", w, r)
 }

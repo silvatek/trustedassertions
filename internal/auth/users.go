@@ -49,3 +49,17 @@ func (u *User) CheckHash(plaintext string) bool {
 	err = bcrypt.CompareHashAndPassword(bytes, []byte(plaintext))
 	return err == nil
 }
+
+func (u *User) HasKey(keyId string) bool {
+	if u.KeyRefs == nil {
+		return false
+	}
+
+	for _, k := range u.KeyRefs {
+		if k.KeyId == keyId {
+			return true
+		}
+	}
+
+	return false
+}

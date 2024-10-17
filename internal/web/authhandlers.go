@@ -2,6 +2,7 @@ package web
 
 import (
 	"crypto/rand"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -40,12 +41,12 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 		user, err := datastore.ActiveDataStore.FetchUser(userId)
 		if err != nil {
 			log.Errorf("User not found in login attempt: `%s`", userId)
-			http.Redirect(w, r, "/web/login?err=2001", http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail), http.StatusSeeOther)
 			return
 		}
 		if !user.CheckHash(r.Form.Get("password")) {
 			log.Errorf("Incorrect password entered for: `%s`", userId)
-			http.Redirect(w, r, "/web/login?err=2001", http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail), http.StatusSeeOther)
 			return
 		}
 
