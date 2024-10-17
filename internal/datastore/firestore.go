@@ -73,18 +73,6 @@ func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	data["updated"] = time.Now().Format(time.RFC3339)
 
 	fs.store(MainCollection, uri.Escaped(), data)
-
-	// ctx := context.TODO()
-	// client := fs.client(ctx)
-	// defer client.Close()
-
-	// result, err := client.Collection(MainCollection).Doc(uri.Escaped()).Set(ctx, data)
-
-	// if err != nil {
-	// 	log.Errorf("Error writing value: %v", err)
-	// } else {
-	// 	log.Debugf("Written: %s %v", uri.Escaped(), result)
-	// }
 }
 
 func (fs *FireStore) Store(value assertions.Referenceable) {
@@ -98,18 +86,6 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	data["updated"] = time.Now().Format(time.RFC3339)
 
 	fs.store(MainCollection, value.Uri().Escaped(), data)
-
-	// ctx := context.TODO()
-	// client := fs.client(ctx)
-	// defer client.Close()
-
-	// result, err := client.Collection(MainCollection).Doc(value.Uri().Escaped()).Set(ctx, data)
-
-	// if err != nil {
-	// 	log.Errorf("Error writing value: %v", err)
-	// } else {
-	// 	log.Debugf("Written: %s %v", value.Uri().Escaped(), result)
-	// }
 }
 
 func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
@@ -119,18 +95,6 @@ func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
 	data["key"] = key
 
 	fs.store(KeyCollection, entityUri.Escaped(), data)
-
-	// ctx := context.TODO()
-	// client := fs.client(ctx)
-	// defer client.Close()
-
-	// result, err := client.Collection(KeyCollection).Doc(entityUri.Escaped()).Set(ctx, data)
-
-	// if err != nil {
-	// 	log.Errorf("Error writing key: %v", err)
-	// } else {
-	// 	log.Debugf("Written: %v", result)
-	// }
 }
 
 func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashUri, refType string) {
@@ -255,13 +219,6 @@ func (fs *FireStore) StoreUser(user auth.User) {
 	client.Collection(UserCollection).Doc(user.Id).Set(ctx, user)
 
 	log.Debugf("Stored user %s", user.Id)
-
-	// if user.KeyRefs != nil {
-	// 	log.Debugf("Found %d key references", len(user.KeyRefs))
-	// 	for _, ref := range user.KeyRefs {
-	// 		client.Collection(UserCollection).Doc(user.Id).Collection("refs").Doc(ref.KeyId).Set(ctx, ref)
-	// 	}
-	// }
 }
 
 func (fs *FireStore) FetchUser(id string) (auth.User, error) {
@@ -276,8 +233,6 @@ func (fs *FireStore) FetchUser(id string) (auth.User, error) {
 		return user, err
 	}
 	doc.DataTo(&user)
-
-	// user.KeyRefs = make([]auth.KeyRef, 0)
 
 	return user, nil
 }
