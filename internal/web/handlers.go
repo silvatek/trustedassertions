@@ -1,9 +1,7 @@
 package web
 
 import (
-	"crypto/rand"
 	"fmt"
-	"math/big"
 	"net/http"
 	"text/template"
 
@@ -244,18 +242,6 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	RenderWebPage("viewentity", data, w, r)
 }
 
-// Error handling for web app.
-//
-// Logs an error with a message, code and unique ID, then redirects to the error page with the error code and ID.
-func HandleError(errorCode int, errorMessage string, w http.ResponseWriter, r *http.Request) {
-	errorInt, _ := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
-	errorId := fmt.Sprintf("%X", errorInt)
-	log.Errorf("%s [%d,%s]", errorMessage, errorCode, errorId)
-	errorMessages[fmt.Sprintf("%d", errorCode)] = errorMessage
-	errorPage := fmt.Sprintf("/web/error?err=%d&id=%s", errorCode, errorId)
-	http.Redirect(w, r, errorPage, http.StatusSeeOther)
-}
-
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	username := authUser(r)
 	if username == "" {
@@ -321,31 +307,4 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 func addAssertionReferences(a assertions.Assertion) {
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Issuer), "Assertion.Issuer:Entity")
-}
-
-func ErrorPageHandler(w http.ResponseWriter, r *http.Request) {
-	errorCode := r.URL.Query().Get("err")
-	errorId := r.URL.Query().Get("id")
-
-	data := struct {
-		ErrorMessage string
-		ErrorID      string
-	}{
-		ErrorMessage: errorMessage(errorCode),
-		ErrorID:      errorId,
-	}
-
-	RenderWebPage("error", data, w, r)
-}
-
-func errorMessage(errorCode string) string {
-	message, ok := errorMessages[errorCode]
-	if !ok {
-		return "Unknown error [" + errorCode + "]"
-	}
-	return message + " [" + errorCode + "]"
-}
-
-func ErrorTestHandler(w http.ResponseWriter, r *http.Request) {
-	HandleError(ErrorFakeTest, "Fake error for testing", w, r)
 }

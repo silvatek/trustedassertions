@@ -32,6 +32,7 @@ func setupTestServer() *httptest.Server {
 	web.DefaultEntityUri = signer.Uri()
 
 	user = auth.User{Id: "admin"}
+	user.KeyRefs = append(user.KeyRefs, auth.KeyRef{UserId: user.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
 	datastore.ActiveDataStore.StoreUser(user)
 
 	return httptest.NewServer(setupHandlers())
@@ -144,7 +145,7 @@ func TestPostNewStatement(t *testing.T) {
 
 	data := url.Values{
 		"statement": {"Test statement"},
-		"sign_as":   {web.DefaultEntityUri.String()},
+		"sign_as":   {user.KeyRefs[0].KeyId},
 	}
 	response, err := postFormData(server.URL+"/web/newstatement", data)
 	if err != nil {
