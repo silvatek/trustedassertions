@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"text/template"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,6 +25,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/broken", ErrorTestHandler)
 	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
+	r.HandleFunc("/web/search", SearchWebHandler)
 
 	addAuthHandlers(r)
 
@@ -307,4 +309,22 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 func addAssertionReferences(a assertions.Assertion) {
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Issuer), "Assertion.Issuer:Entity")
+}
+
+func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query")
+
+	query, _ = url.QueryUnescape(query)
+
+	results, _ := datastore.ActiveDataStore.Search(query)
+
+	data := struct {
+		Query   string
+		Results []datastore.SearchResult
+	}{
+		Query:   query,
+		Results: results,
+	}
+
+	RenderWebPage("searchresults", data, w, r)
 }

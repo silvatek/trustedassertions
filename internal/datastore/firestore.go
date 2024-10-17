@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -235,4 +236,33 @@ func (fs *FireStore) FetchUser(id string) (auth.User, error) {
 	doc.DataTo(&user)
 
 	return user, nil
+}
+
+func (fs *FireStore) Search(query string) ([]SearchResult, error) {
+	results := make([]SearchResult, 0)
+
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	refs := client.Collection(MainCollection).Documents(ctx)
+	for {
+		doc, err := refs.Next()
+		if err == iterator.Done {
+			break
+		}
+		record := DbRecord{}
+		doc.DataTo(&record)
+
+		if strings.Contains(strings.ToLower(record.Content), query) {
+			result := SearchResult{
+				Uri:       assertions.UriFromString(record.Uri),
+				Content:   record.Content,
+				Relevance: 0.8,
+			}
+			results = append(results, result)
+		}
+	}
+
+	return results, nil
 }

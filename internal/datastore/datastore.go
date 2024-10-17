@@ -23,6 +23,13 @@ type DataStore interface {
 	FetchKey(entityUri assertions.HashUri) (string, error)
 	FetchRefs(key assertions.HashUri) ([]assertions.HashUri, error)
 	FetchUser(id string) (auth.User, error)
+	Search(query string) ([]SearchResult, error)
+}
+
+type SearchResult struct {
+	Uri       assertions.HashUri
+	Content   string
+	Relevance float32
 }
 
 type KeyNotFoundError struct {
@@ -148,4 +155,19 @@ func (ds *InMemoryDataStore) FetchUser(id string) (auth.User, error) {
 		}
 	}
 	return user, nil
+}
+
+func (ds *InMemoryDataStore) Search(query string) ([]SearchResult, error) {
+	results := make([]SearchResult, 0)
+	for key, value := range ds.data {
+		if strings.Contains(strings.ToLower(value), query) {
+			result := SearchResult{
+				Uri:       assertions.UnescapeUri(key, "statement"),
+				Content:   value,
+				Relevance: 0.8,
+			}
+			results = append(results, result)
+		}
+	}
+	return results, nil
 }
