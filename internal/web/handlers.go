@@ -60,6 +60,11 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *
 		Detail:   data,
 	}
 
+	if pageName == "error" {
+		// TODO: handle different error codes
+		w.WriteHeader(500)
+	}
+
 	if err := t.ExecuteTemplate(w, "base", pageData); err != nil {
 		msg := http.StatusText(http.StatusInternalServerError)
 		log.Errorf("template.Execute: %v", err)
@@ -261,7 +266,11 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		HandleError(1005, "Not logged in", w, r)
 		return
 	}
-	user, _ := datastore.ActiveDataStore.FetchUser(username)
+	user, err := datastore.ActiveDataStore.FetchUser(username)
+	if err != nil {
+		HandleError(1006, "User not found", w, r)
+		return
+	}
 
 	if r.Method == "GET" {
 		RenderWebPage("newstatementform", user, w, r)
@@ -274,12 +283,6 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		keyId := r.Form.Get("sign_as")
 		log.Debugf("Signing key ID: %s", keyId)
 
-		// Fetch the default entity
-		// entity, err := fetchDefaultEntity()
-		// if err != nil {
-		// 	HandleError(1002, "Error fetching default entity", w, r)
-		// 	return
-		// }
 		keyUri := assertions.UriFromString(keyId)
 
 		b64key, err := datastore.ActiveDataStore.FetchKey(keyUri)

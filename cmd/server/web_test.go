@@ -12,6 +12,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	"silvatek.uk/trustedassertions/internal/web"
 )
@@ -30,8 +31,13 @@ func setupTestServer() *httptest.Server {
 	datastore.ActiveDataStore.StoreKey(signer.Uri(), assertions.PrivateKeyToString(privateKey))
 	web.DefaultEntityUri = signer.Uri()
 
+	user = auth.User{Id: "admin"}
+	datastore.ActiveDataStore.StoreUser(user)
+
 	return httptest.NewServer(setupHandlers())
 }
+
+var user auth.User
 
 type WebPage struct {
 	t            *testing.T
@@ -58,6 +64,15 @@ func getWebPage(url string, t *testing.T) *WebPage {
 	page.html, page.htmlError = goquery.NewDocumentFromReader(page.response.Body)
 
 	return &page
+}
+
+func postFormData(url string, data url.Values) (*http.Response, error) {
+	req, _ := http.NewRequest("POST", url, strings.NewReader(data.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	cookie, _ := web.MakeAuthCookie(user)
+	req.AddCookie(&cookie)
+
+	return http.DefaultClient.Do(req)
 }
 
 func (page *WebPage) ok() bool {
@@ -129,16 +144,23 @@ func TestPostNewStatement(t *testing.T) {
 
 	data := url.Values{
 		"statement": {"Test statement"},
+		"sign_as":   {web.DefaultEntityUri.String()},
 	}
-
-	response, err := http.Post(server.URL+"/web/newstatement", "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	response, err := postFormData(server.URL+"/web/newstatement", data)
 	if err != nil {
 		t.Errorf("Error posting to %s : %v", "/web/newstatement", err)
+		return
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		t.Errorf("Error posting to %s : %d", "/web/newstatement", response.StatusCode)
+		return
+	}
+
 	html, _ := goquery.NewDocumentFromReader(response.Body)
 
-	newUri := assertions.UriFromString(html.Find("#uri").Text())
+	newUri := assertions.UriFromString(strings.TrimSpace(html.Find("#uri").Text()))
 
 	// Make sure the new assertion is really in the datastore
 	_, err = datastore.ActiveDataStore.FetchAssertion(newUri)
