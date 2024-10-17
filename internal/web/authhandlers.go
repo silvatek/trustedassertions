@@ -49,16 +49,21 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		jwt, _ := makeUserJwt(user)
-		expiration := time.Now().Add(1 * time.Hour)
-		cookie := http.Cookie{Name: "auth", Path: "/", Value: jwt, Expires: expiration, SameSite: http.SameSiteStrictMode}
+		cookie, _ := MakeAuthCookie(user)
 		http.SetCookie(w, &cookie)
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
-func makeUserJwt(user auth.User) (string, error) {
+func MakeAuthCookie(user auth.User) (http.Cookie, error) {
+	jwt, err := MakeUserJwt(user)
+	expiration := time.Now().Add(1 * time.Hour)
+	cookie := http.Cookie{Name: "auth", Path: "/", Value: jwt, Expires: expiration, SameSite: http.SameSiteStrictMode}
+	return cookie, err
+}
+
+func MakeUserJwt(user auth.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"iss": "trustedassertions",
