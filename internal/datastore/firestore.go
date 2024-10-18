@@ -254,7 +254,14 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 		record := DbRecord{}
 		doc.DataTo(&record)
 
-		if contentMatches(record.Content, query) {
+		content := record.Summary
+		if content == "" && record.DataType == "Statement" {
+			content = record.Content
+		} else if content == "" && record.DataType == "Entity" {
+			content = assertions.ParseCertificate(record.Content).CommonName
+		}
+
+		if contentMatches(content, query) {
 			uri := assertions.UriFromString(record.Uri)
 			if !uri.HasType() {
 				uri = uri.WithType(assertions.GuessContentType(record.Content))
