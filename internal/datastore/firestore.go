@@ -254,14 +254,15 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 		record := DbRecord{}
 		doc.DataTo(&record)
 
-		content := record.Summary
-		if content == "" && record.DataType == "Statement" {
-			content = record.Content
-		} else if content == "" && record.DataType == "Entity" {
-			content = assertions.ParseCertificate(record.Content).CommonName
+		summary := record.Summary
+		if summary == "" && record.DataType == "Statement" {
+			summary = record.Content
+		} else if summary == "" && record.DataType == "Entity" {
+			summary = assertions.ParseCertificate(record.Content).CommonName
 		}
+		log.Debugf("Searching %s => %s", record.Uri, summary)
 
-		if contentMatches(content, query) {
+		if contentMatches(summary, query) {
 			uri := assertions.UriFromString(record.Uri)
 			if !uri.HasType() {
 				uri = uri.WithType(assertions.GuessContentType(record.Content))
@@ -269,7 +270,7 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 
 			result := SearchResult{
 				Uri:       uri,
-				Content:   record.Content,
+				Content:   summary,
 				Relevance: 0.8,
 			}
 
