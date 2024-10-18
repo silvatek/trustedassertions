@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"text/template"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -38,6 +39,7 @@ func AddHandlers(r *mux.Router) {
 
 type PageData struct {
 	AuthUser string
+	AuthName string
 	LoggedIn bool
 	Detail   interface{}
 }
@@ -56,6 +58,7 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *
 	username := authUser(r)
 	pageData := PageData{
 		AuthUser: username,
+		AuthName: nameOnly(username),
 		LoggedIn: username != "",
 		Detail:   data,
 	}
@@ -69,6 +72,15 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *
 		msg := http.StatusText(http.StatusInternalServerError)
 		log.Errorf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
+	}
+}
+
+func nameOnly(username string) string {
+	n := strings.Index(username, "@")
+	if n == -1 {
+		return username
+	} else {
+		return username[0:n]
 	}
 }
 

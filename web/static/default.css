@@ -64,6 +64,19 @@ body {
 	margin-bottom: 0;
 }
 
+.homecontainer {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.homepanel {
+	border: #cccccc solid 1px;
+	border-radius: 1rem;
+	padding: 1rem;
+	flex-grow: 1;
+}
+
  .linkset {
 
  }
@@ -117,6 +130,11 @@ body {
 button input[type=button], input[type=submit], input[type=reset] {
 	padding: 8px 16px;
 	text-decoration: none;
+	color: darkblue;
 	margin: 4px 2px;
 	cursor: pointer;
+}
+
+#username {
+	font-style: italic;
 }
