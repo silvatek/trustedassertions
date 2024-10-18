@@ -254,15 +254,25 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 		record := DbRecord{}
 		doc.DataTo(&record)
 
-		if strings.Contains(strings.ToLower(record.Content), query) {
+		if contentMatches(record.Content, query) {
+			uri := assertions.UriFromString(record.Uri)
+			if !uri.HasType() {
+				uri = uri.WithType(assertions.GuessContentType(record.Content))
+			}
+
 			result := SearchResult{
-				Uri:       assertions.UriFromString(record.Uri),
+				Uri:       uri,
 				Content:   record.Content,
 				Relevance: 0.8,
 			}
+
 			results = append(results, result)
 		}
 	}
 
 	return results, nil
+}
+
+func contentMatches(content string, query string) bool {
+	return strings.Contains(strings.ToLower(content), strings.ToLower(query))
 }
