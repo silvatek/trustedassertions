@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -304,10 +305,12 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		su := statement.Uri()
 
+		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
+
 		// Create and save an assertion by the default entity that the statement is probably true
 		assertion := assertions.NewAssertion("IsTrue")
 		assertion.Subject = su.String()
-		assertion.Confidence = 0.8
+		assertion.Confidence = float32(confidence)
 		assertion.SetAssertingEntity(entity)
 		assertion.MakeJwt(privateKey)
 		datastore.ActiveDataStore.Store(&assertion)

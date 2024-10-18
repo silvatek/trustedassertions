@@ -16,7 +16,7 @@ var TYPE_QUERY = "?type="
 func MakeUri(hash string, kind string) HashUri {
 	uri := "hash://sha256/" + hash
 	if kind != "" {
-		uri = uri + TYPE_QUERY + kind
+		uri = uri + TYPE_QUERY + strings.ToLower(kind)
 	}
 	return HashUri{uri: uri}
 }
@@ -123,7 +123,7 @@ func (u HashUri) Len() int {
 }
 
 func (u HashUri) WithType(kind string) HashUri {
-	u2 := HashUri{uri: u.uri + TYPE_QUERY + kind}
+	u2 := HashUri{uri: u.uri + TYPE_QUERY + strings.ToLower(kind)}
 	return u2
 }
 

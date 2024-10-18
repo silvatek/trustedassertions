@@ -82,15 +82,15 @@ func initLogging() {
 func setupTestData() {
 	log.Infof("Loading test data into %s", datastore.ActiveDataStore.Name())
 
-	loadTestData(testDataDir+"/entities", "entity")
+	loadTestData(testDataDir+"/entities", "Entity")
 
 	if defaultEntityUri != "" {
 		uri := assertions.UriFromString(defaultEntityUri)
 		datastore.ActiveDataStore.StoreKey(uri, defaultEntityKey)
 	}
 
-	loadTestData(testDataDir+"/statements", "statement")
-	loadTestData(testDataDir+"/assertions", "assertion")
+	loadTestData(testDataDir+"/statements", "Statement")
+	loadTestData(testDataDir+"/assertions", "Assertion")
 
 	initialUser := auth.User{Id: os.Getenv("INITIAL_USER")}
 	initialUser.HashPassword(os.Getenv("INITIAL_PW"))
