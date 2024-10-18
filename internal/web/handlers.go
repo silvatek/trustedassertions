@@ -1,6 +1,8 @@
 package web
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -26,6 +28,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/broken", ErrorTestHandler)
 	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
+	r.HandleFunc("/web/newentity", NewEntityWebHandler)
 	r.HandleFunc("/web/search", SearchWebHandler)
 
 	addAuthHandlers(r)
@@ -339,4 +342,42 @@ func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RenderWebPage("searchresults", data, w, r)
+}
+
+func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
+	username := authUser(r)
+	if username == "" {
+		HandleError(ErrorNoAuth, "Not logged in", w, r)
+		return
+	}
+	user, err := datastore.ActiveDataStore.FetchUser(username)
+	if err != nil {
+		HandleError(ErrorUserNotFound, "User not found", w, r)
+		return
+	}
+
+	if r.Method == "GET" {
+		RenderWebPage("newentityform", user, w, r)
+	} else if r.Method == "POST" {
+		log.Info("Creating new entity and signing key")
+		r.ParseForm()
+		commonName := r.Form.Get("commonname")
+		log.Debugf("Common name: %s", commonName)
+
+		privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+		entity := assertions.Entity{CommonName: commonName}
+		entity.MakeCertificate(privateKey)
+
+		datastore.ActiveDataStore.Store(&entity)
+
+		datastore.ActiveDataStore.StoreKey(entity.Uri(), assertions.PrivateKeyToString(privateKey))
+
+		user.AddKeyRef(entity.Uri().Escaped(), entity.CommonName)
+		datastore.ActiveDataStore.StoreUser(user)
+
+		// Redirect the user to the assertion
+		http.Redirect(w, r, entity.Uri().WebPath(), http.StatusSeeOther)
+
+		log.Infof("Redirecting to %s", entity.Uri().WebPath())
+	}
 }

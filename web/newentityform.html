@@ -1,0 +1,15 @@
+{{define "content"}}		
+        <h2>New Entity</h2>
+        <div>Create a new Entity, including a signing key.</div>
+
+        <form method="POST" action="/web/newentity">
+                <div>
+                        <label for="commonname">Entity name:</label><br>
+                        <input id="commonname" name="commonname" type="text" autofocus>                        
+                </div>
+                <div>
+                        <input id="submit" type="Submit">
+                </div>
+        </form>
+
+{{end}}
