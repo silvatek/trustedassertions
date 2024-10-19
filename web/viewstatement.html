@@ -5,7 +5,7 @@
             <div class="fieldprompt">ID:</div>
             <div id="uri" class="fieldvalue">
                 <span class="fulluri">{{.Detail.Uri}}</span>
-                <span class="shorturi">{{.Detail.ShortUri}}</span>
+                <span class="shorturi">{{.Detail.Uri.Short}}</span>
             </div>
 
             <div class="fieldprompt">Text:</div>
@@ -18,6 +18,13 @@
                 <li><a href="{{$ref.Uri.WebPath}}">{{$ref.Summary}} [{{$ref.Uri.Short}}]</a></li>
             {{end}}
         </ul>
+
+        {{if .LoggedIn}}
+        <div>
+            <a href="./{{.Detail.Uri.Hash}}/addassertion">Add a new assertion for this statement.</a>
+        </div>
+        {{end}}
+
         <hr/>
         <div>
             <a href="{{.Detail.ApiLink}}">Raw Data</a>

@@ -13,6 +13,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
@@ -30,6 +31,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 	r.HandleFunc("/web/newentity", NewEntityWebHandler)
+	r.HandleFunc("/web/statements/{key}/addassertion", AddStatementAssertionWebHandler)
 	r.HandleFunc("/web/search", SearchWebHandler)
 
 	addAuthHandlers(r)
@@ -168,13 +170,13 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	refs := enrichReferences(refUris, statement.Uri())
 
 	data := struct {
-		Uri        string
+		Uri        assertions.HashUri
 		ShortUri   string
 		Content    string
 		ApiLink    string
 		References []ReferenceSummary
 	}{
-		Uri:        statement.Uri().String(),
+		Uri:        statement.Uri(),
 		ShortUri:   statement.Uri().Short(),
 		Content:    statement.Content(),
 		ApiLink:    statement.Uri().ApiPath(),
@@ -382,5 +384,80 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, entity.Uri().WebPath(), http.StatusSeeOther)
 
 		log.Infof("Redirecting to %s", entity.Uri().WebPath())
+	}
+}
+
+func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
+	username := authUser(r)
+	if username == "" {
+		HandleError(ErrorNoAuth, "Not logged in", w, r)
+		return
+	}
+	user, err := datastore.ActiveDataStore.FetchUser(username)
+	if err != nil {
+		HandleError(ErrorUserNotFound, "User not found", w, r)
+		return
+	}
+
+	statementHash := mux.Vars(r)["key"]
+
+	if r.Method == "GET" {
+		statement, err := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(statementHash, "statement"))
+		if err != nil {
+			log.Errorf("Error fetching statement: %v", err)
+		} else {
+			log.Debugf("Statement content = %s", statement.Content())
+		}
+
+		data := struct {
+			Statement assertions.Statement
+			User      auth.User
+		}{
+			Statement: statement,
+			User:      user,
+		}
+
+		RenderWebPage("addassertionform", data, w, r)
+	} else if r.Method == "POST" {
+		log.Info("Creating new assertion for statement")
+		r.ParseForm()
+
+		keyId := r.Form.Get("sign_as")
+		log.Debugf("Signing key ID: %s", keyId)
+
+		keyUri := assertions.UriFromString(keyId)
+
+		if !user.HasKey(keyId) {
+			HandleError(ErrorKeyAccess, "User does not have access to selected signing key", w, r)
+			return
+		}
+
+		b64key, err := datastore.ActiveDataStore.FetchKey(keyUri)
+		if err != nil {
+			HandleError(ErrorKeyFetch, "Error fetching entity private key", w, r)
+			return
+		}
+		privateKey := assertions.StringToPrivateKey(b64key)
+
+		entity, _ := datastore.ActiveDataStore.FetchEntity(keyUri)
+
+		su := assertions.MakeUri(statementHash, "statement")
+
+		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
+
+		// Create and save an assertion by the default entity that the statement is probably true
+		assertion := assertions.NewAssertion(r.Form.Get("assertion_type"))
+		assertion.Subject = su.String()
+		assertion.Confidence = float32(confidence)
+		assertion.SetAssertingEntity(entity)
+		assertion.MakeJwt(privateKey)
+		datastore.ActiveDataStore.Store(&assertion)
+
+		addAssertionReferences(assertion)
+
+		// Redirect the user to the assertion
+		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)
+
+		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
 	}
 }

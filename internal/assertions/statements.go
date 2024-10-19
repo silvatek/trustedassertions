@@ -22,14 +22,14 @@ func (s *Statement) Uri() HashUri {
 	return s.uri
 }
 
-func (s *Statement) Type() string {
+func (s Statement) Type() string {
 	return "Statement"
 }
 
-func (s *Statement) Content() string {
+func (s Statement) Content() string {
 	return s.content
 }
 
-func (s *Statement) Summary() string {
+func (s Statement) Summary() string {
 	return s.content
 }

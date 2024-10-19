@@ -1,0 +1,33 @@
+{{define "content"}}		
+        <h2>Add Assertion</h2>
+
+        <form method="POST" action="./addassertion">
+                <div class="fieldset">
+                        <div class="fieldprompt">Statement text:</div><br>
+                        <div id="content" class="fieldvalue" disabled>{{.Detail.Statement.Content}}</div>   
+                </div>
+                <div>
+                        <label for="assertion_type" class="fieldprompt">Assertion:</label><br>
+                        <select id="assertion_type" name="assertion_type">
+                                <option value="IsTrue" selected>Statement is true</option>
+                                <option value="IsFalse">Statement is false</option>
+                        </select>
+                </div>        
+                <div>
+                        <label for="confidence" class="fieldprompt">Confidence:</label><br>
+                        <input id="confidence" name="confidence" type="number" step="0.1" min="0" max="1.0" value="0.5" autofocus>
+                </div>
+                <div>
+                        <label for="sign_as">Sign as:</label><br>
+                        <select id="sign_as" name="sign_as">
+                                {{range $ref := .Detail.User.KeyRefs}}
+                                        <option value="{{$ref.KeyId}}">{{$ref.Summary}}</option>
+                                {{end}}
+                        </select>
+                </div>
+                <div>
+                        <input id="submit" type="Submit">
+                </div>
+        </form>
+
+{{end}}

@@ -29,7 +29,7 @@ func UriFromString(u string) HashUri {
 	return HashUri{uri: u}
 }
 
-func (u *HashUri) Hash() string {
+func (u HashUri) Hash() string {
 	hash := strings.TrimPrefix(u.String(), "hash://sha256/")
 	index := strings.Index(hash, TYPE_QUERY)
 	if index > -1 {
@@ -38,7 +38,7 @@ func (u *HashUri) Hash() string {
 	return hash
 }
 
-func (u *HashUri) Alg() string {
+func (u HashUri) Alg() string {
 	return "sha256"
 }
 
