@@ -130,7 +130,11 @@ body {
 
 button input[type=button], input[type=submit], input[type=reset] {
 	padding: 8px 16px;
+	border-radius: 8px;
+	border-width: 2px;
+	border-color: #222222;
 	text-decoration: none;
+	font-weight: bold;
 	color: darkblue;
 	margin: 4px 2px;
 	cursor: pointer;
