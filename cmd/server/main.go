@@ -117,7 +117,7 @@ func loadTestData(dirName string, dataType string) {
 			datastore.ActiveDataStore.StoreRaw(uri, string(content))
 		}
 
-		if dataType == "assertion" {
+		if strings.ToLower(dataType) == "assertion" {
 			addAssertionReferences(string(content))
 		}
 	}
