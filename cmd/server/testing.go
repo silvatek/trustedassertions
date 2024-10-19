@@ -21,6 +21,7 @@ type WebTest struct {
 	t      *testing.T
 	user   *auth.User
 	server *httptest.Server
+	passwd string
 }
 
 func NewWebTest(t *testing.T) *WebTest {
@@ -48,6 +49,8 @@ func (wt *WebTest) setupTestServer() {
 	web.DefaultEntityUri = signer.Uri()
 
 	wt.user = &auth.User{Id: "admin"}
+	wt.passwd = "testing"
+	wt.user.HashPassword(wt.passwd)
 	wt.user.KeyRefs = append(wt.user.KeyRefs, auth.KeyRef{UserId: wt.user.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
 	datastore.ActiveDataStore.StoreUser(*wt.user)
 
@@ -82,19 +85,41 @@ func (wt *WebTest) getPage(path string) *WebPage {
 	return &page
 }
 
-func postFormData(url string, data url.Values, user *auth.User) (*http.Response, error) {
+func (wt *WebTest) postFormData(path string, data url.Values) *WebPage {
+	url := wt.server.URL + path
 	req, _ := http.NewRequest("POST", url, strings.NewReader(data.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	if user != nil {
-		cookie, _ := web.MakeAuthCookie(*user)
+	if wt.user != nil {
+		cookie, _ := web.MakeAuthCookie(*wt.user)
 		req.AddCookie(&cookie)
 	}
 
-	return http.DefaultClient.Do(req)
+	page := WebPage{url: url, wt: wt}
+
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		page.requestError = err
+		return &page
+	}
+
+	page.response = response
+	page.statusCode = response.StatusCode
+	if page.statusCode >= 400 {
+		return &page
+	}
+
+	defer page.response.Body.Close()
+	page.html, page.htmlError = goquery.NewDocumentFromReader(page.response.Body)
+
+	return &page
 }
 
 func (page *WebPage) ok() bool {
 	return (page.requestError == nil) && (page.statusCode < 400) && (page.htmlError == nil)
+}
+
+func (page *WebPage) Find(q string) string {
+	return page.html.Find(q).Text()
 }
 
 func (page *WebPage) assertHtmlQuery(query string, expected string) {

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PuerkitoBio/goquery"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/datastore"
 )
@@ -67,27 +66,27 @@ func TestPostNewStatement(t *testing.T) {
 		"statement": {"Test statement"},
 		"sign_as":   {wt.user.KeyRefs[0].KeyId},
 	}
-	response, err := postFormData(wt.server.URL+"/web/newstatement", data, wt.user)
-	if err != nil {
-		t.Errorf("Error posting to %s : %v", "/web/newstatement", err)
-		return
-	}
-	defer response.Body.Close()
+	page := wt.postFormData("/web/newstatement", data)
 
-	if response.StatusCode >= 400 {
-		t.Errorf("Error posting to %s : %d", "/web/newstatement", response.StatusCode)
-		return
-	}
-
-	html, _ := goquery.NewDocumentFromReader(response.Body)
-
-	newUri := assertions.UriFromString(strings.TrimSpace(html.Find("#uri").Text()))
+	newUri := assertions.UriFromString(strings.TrimSpace(page.Find("#uri")))
 
 	// Make sure the new assertion is really in the datastore
-	_, err = datastore.ActiveDataStore.FetchAssertion(newUri)
+	_, err := datastore.ActiveDataStore.FetchAssertion(newUri)
 	if err != nil {
 		t.Errorf("Error fetching new assertion: %v", err)
 	}
+}
+
+func TestSearch(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.getPage("/")
+	page.assertHtmlQuery("#searchform", "Search for")
+
+	page = wt.postFormData("/web/search", url.Values{"query": {"universe"}})
+	page.assertHtmlQuery("h2", "Search results")
+	page.assertHtmlQuery("#content", "The universe exists")
 }
 
 func TestLoginLogout(t *testing.T) {
@@ -98,6 +97,17 @@ func TestLoginLogout(t *testing.T) {
 
 	page.assertHtmlQuery("h2", "Login")
 
+	data := url.Values{
+		"user_id":  {wt.user.Id},
+		"password": {wt.passwd},
+	}
+	page = wt.postFormData("/web/login", data)
+	if page.statusCode != 200 {
+		t.Errorf("Login POST failed: %d", page.statusCode)
+	}
+	page.assertHtmlQuery("#username", wt.user.Id)
+
 	page = wt.getPage("/web/logout")
 	page.assertHtmlQuery("#message", "You have been logged out")
+
 }
