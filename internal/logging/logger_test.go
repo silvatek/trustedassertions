@@ -32,6 +32,28 @@ func TestErrorLogging(t *testing.T) {
 	}
 }
 
+func TestFatalLogging(t *testing.T) {
+	var buf bytes.Buffer
+	LogWriter = &buf
+	StructureLogs = false
+
+	exitCode := 99999
+
+	exitHandler = func(code int) {
+		exitCode = code
+	}
+
+	Fatal(errors.New("Bang"))
+
+	output := buf.String()
+	if output != "ERROR Fatal error: Bang\n" {
+		t.Errorf("Did not find expected log entry: %s", output)
+	}
+	if exitCode != 1 {
+		t.Errorf("Unexpected exit code %d", exitCode)
+	}
+}
+
 func TestDebugLogging(t *testing.T) {
 	var buf bytes.Buffer
 	LogWriter = &buf

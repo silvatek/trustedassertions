@@ -92,6 +92,26 @@ func TestEscaped(t *testing.T) {
 	if u1.String() != "hash://sha256/12345678?type=statement" {
 		t.Errorf("Unexpected round-tripped URI: %s", u1.String())
 	}
+
+	if UnescapeUri("%ZZZ", "statement") != EMPTY_URI {
+		t.Error("Bad escaped URI did not return empty URI")
+	}
+}
+
+func TestUriFromString(t *testing.T) {
+	data := map[string]string{
+		"12345678":                              "hash://sha256/12345678",
+		"hash://sha256/12345678":                "hash://sha256/12345678",
+		"hash:%2F%2Fsha256%2F12345678":          "hash://sha256/12345678",
+		"hash://sha256/12345678?type=statement": "hash://sha256/12345678?type=statement",
+	}
+
+	for input, expected := range data {
+		output := UriFromString(input)
+		if output.String() != expected {
+			t.Errorf("Unexpected output for %s: %s", input, output)
+		}
+	}
 }
 
 func TestUriType(t *testing.T) {
@@ -103,6 +123,32 @@ func TestUriType(t *testing.T) {
 	uri = uri.WithType("statement")
 	if uri.Kind() != "statement" {
 		t.Errorf("Unexpected URI type: %s", uri.Kind())
+	}
+
+	if kind("hash://sha256/123456") != "unknown" {
+		t.Error("Kind of unknown type is not empty")
+	}
+
+	if mapPathType("unknown") != "error" {
+		t.Error("Kind of unknown type is not empty")
+	}
+}
+
+func TestMapPathType(t *testing.T) {
+	data := map[string]string{
+		"unknown":    "error",
+		"":           "error",
+		"entity":     "entities",
+		"statement":  "statements",
+		"assertion":  "assertions",
+		"programmer": "programmers",
+	}
+
+	for input, expected := range data {
+		output := mapPathType(input)
+		if output != expected {
+			t.Errorf("Unexpected path type for %s : %s", input, output)
+		}
 	}
 }
 

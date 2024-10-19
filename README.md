@@ -86,6 +86,16 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Implementation Details
 
+### Package hierarchy
+
+Packages can only depend on other packages lower than them in the hierarchy.
+
+1. `main`
+2. `api` `web`
+3. `datastore`
+4. `assertions` `auth`
+5. `logging`
+
 ### Build time analysis
 
 Build ID: afb6877e-02e5-4363-84c9-ffc88d4cb818

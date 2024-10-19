@@ -30,6 +30,8 @@ var LogWriter io.Writer = os.Stderr
 var StructureLogs bool
 var encoder *json.Encoder
 
+var exitHandler = os.Exit
+
 func Print(text string) {
 	Printf(text)
 }
@@ -93,5 +95,5 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 
 func Fatal(err error) {
 	Errorf("Fatal error: %v", err)
-	os.Exit(1)
+	exitHandler(1)
 }
