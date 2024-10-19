@@ -25,8 +25,19 @@ func MakeUriB(hash []byte, kind string) HashUri {
 	return MakeUri(fmt.Sprintf("%x", hash), kind)
 }
 
-func UriFromString(u string) HashUri {
-	return HashUri{uri: u}
+// Create a HashUri from a string.
+//
+// The string can be a hash, a raw URI or an escaped URI.
+func UriFromString(str string) HashUri {
+	if strings.HasPrefix(str, "hash://sha256/") {
+		// Is a raw URI string
+		return HashUri{uri: str}
+	}
+	if strings.HasPrefix(str, "hash:%2F%2Fsha256%2F") {
+		// It is an escaped URI string
+		return UnescapeUri(str, "")
+	}
+	return MakeUri(str, "") // Assume it is just a hash
 }
 
 func (u HashUri) Hash() string {
@@ -55,13 +66,17 @@ func (u HashUri) Short() string {
 	}
 }
 
-func (u *HashUri) Kind() string {
-	index := strings.Index(u.uri, TYPE_QUERY)
+func kind(uri string) string {
+	index := strings.Index(uri, TYPE_QUERY)
 	if index == -1 {
 		return "unknown"
 	} else {
-		return u.uri[index+6:]
+		return uri[index+6:]
 	}
+}
+
+func (u HashUri) Kind() string {
+	return kind(u.uri)
 }
 
 func (u HashUri) HasType() bool {
