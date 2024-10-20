@@ -254,6 +254,11 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 		record := DbRecord{}
 		doc.DataTo(&record)
 
+		if record.DataType == "assertion" {
+			// Don't bother searching assertions as they don't have textual content
+			continue
+		}
+
 		summary := record.Summary
 		if summary == "" && record.DataType == "Statement" {
 			summary = record.Content

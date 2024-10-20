@@ -55,7 +55,7 @@ func TestNewStatementPage(t *testing.T) {
 	defer wt.Close()
 
 	page := wt.getPage("/web/newstatement")
-	page.assertHtmlQuery("h1", "New Statement")
+	page.assertHtmlQuery("h2", "New Statement")
 }
 
 func TestPostNewStatement(t *testing.T) {
@@ -81,6 +81,49 @@ func TestPostNewStatement(t *testing.T) {
 func TestNewEntity(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()
+
+	page := wt.getPage("/web/newentity")
+	page.assertSuccessResponse()
+	page.assertHtmlQuery("label", "Entity name")
+
+	page = wt.postFormData("/web/newentity", url.Values{"commonname": {"Test entity"}})
+	page.assertSuccessResponse()
+	uri := assertions.UriFromString(page.Find("span.fulluri"))
+
+	newEntity, err := datastore.ActiveDataStore.FetchEntity(uri)
+	if err != nil {
+		t.Errorf("Unable to fetch new entity: %v", err)
+	}
+	if newEntity.CommonName != "Test entity" {
+		t.Errorf("Could not find new entity with correct name")
+	}
+}
+
+func TestAddAssertion(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.getPage("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f")
+	page.assertHtmlQuery("a", "Add a new assertion for this statement.")
+
+	page = wt.getPage("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f/addassertion")
+	page.assertSuccessResponse()
+	page.assertHtmlQuery("label", "Assertion:")
+
+	values := url.Values{
+		"assertion_type": {"IsTrue"},
+		"confidence":     {"0.75"},
+		"sign_as":        {wt.user.KeyRefs[0].KeyId},
+	}
+	page = wt.postFormData("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f/addassertion", values)
+	page.assertSuccessResponse()
+
+	uri := assertions.UriFromString(page.Find("span.fulluri"))
+	_, err := datastore.ActiveDataStore.FetchAssertion(uri)
+	if err != nil {
+		t.Errorf("Error fetching new assertion")
+	}
+
 }
 
 func TestSearch(t *testing.T) {

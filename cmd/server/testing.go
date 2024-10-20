@@ -79,7 +79,10 @@ func (wt *WebTest) getPage(path string) *WebPage {
 	url := wt.server.URL + path
 	page := WebPage{url: url, wt: wt}
 
-	page.response, page.requestError = wt.client.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	addAuthCookie(wt.user, req)
+
+	page.response, page.requestError = wt.client.Do(req)
 
 	if page.requestError != nil {
 		wt.t.Errorf("Error fetching %s, %v", url, page.requestError)
@@ -94,14 +97,18 @@ func (wt *WebTest) getPage(path string) *WebPage {
 	return &page
 }
 
+func addAuthCookie(user *auth.User, req *http.Request) {
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	if user != nil {
+		cookie, _ := web.MakeAuthCookie(*user)
+		req.AddCookie(&cookie)
+	}
+}
+
 func (wt *WebTest) postFormData(path string, data url.Values) *WebPage {
 	url := wt.server.URL + path
 	req, _ := http.NewRequest("POST", url, strings.NewReader(data.Encode()))
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	if wt.user != nil {
-		cookie, _ := web.MakeAuthCookie(*wt.user)
-		req.AddCookie(&cookie)
-	}
+	addAuthCookie(wt.user, req)
 
 	page := WebPage{url: url, wt: wt}
 
