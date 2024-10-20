@@ -91,24 +91,11 @@ func contentDataMap(value assertions.Referenceable) map[string]string {
 func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	log.Debugf("Writing to datastore: %s", uri)
 
-	// data := make(map[string]string)
-	// data["uri"] = uri.String()
-	// data["content"] = content
-	// data["datatype"] = uri.Kind()
-	// data["updated"] = time.Now().Format(time.RFC3339)
-
 	fs.store(MainCollection, uri.Escaped(), rawDataMap(uri, content, ""))
 }
 
 func (fs *FireStore) Store(value assertions.Referenceable) {
 	log.Debugf("Writing to datastore: %s", value.Uri())
-
-	// data := make(map[string]string)
-	// data["uri"] = value.Uri().Unadorned()
-	// data["content"] = value.Content()
-	// data["datatype"] = value.Type()
-	// data["summary"] = value.Summary()
-	// data["updated"] = time.Now().Format(time.RFC3339)
 
 	fs.store(MainCollection, value.Uri().Escaped(), contentDataMap(value))
 }
