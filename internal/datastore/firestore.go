@@ -238,21 +238,56 @@ func (fs *FireStore) FetchUser(id string) (auth.User, error) {
 	return user, nil
 }
 
-func (fs *FireStore) Search(query string) ([]SearchResult, error) {
-	results := make([]SearchResult, 0)
+// Thin wrapper around firestore.DocumentIterator that allows for mocking.
+type DocFetcher struct {
+	testData  []DbRecord
+	testIndex int
+	iterator  *firestore.DocumentIterator
+}
 
+func (df *DocFetcher) Next() *DbRecord {
+	if df.testData != nil {
+		if df.testIndex >= len(df.testData) {
+			return nil
+		}
+		next := df.testData[df.testIndex]
+		df.testIndex++
+		return &next
+	}
+
+	doc, err := df.iterator.Next()
+	if err == iterator.Done {
+		return nil
+	}
+	record := DbRecord{}
+	doc.DataTo(&record)
+	return &record
+}
+
+func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
 	defer client.Close()
 
-	refs := client.Collection(MainCollection).Documents(ctx)
+	df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
+	results := doSearch(df, query)
+
+	return results, nil
+}
+
+func doSearch(docs DocFetcher, query string) []SearchResult {
+	results := make([]SearchResult, 0)
 	for {
-		doc, err := refs.Next()
-		if err == iterator.Done {
+		// doc, err := docs.Next()
+		// if err == iterator.Done {
+		// 	break
+		// }
+		// record := DbRecord{}
+		// doc.DataTo(&record)
+		record := docs.Next()
+		if record == nil {
 			break
 		}
-		record := DbRecord{}
-		doc.DataTo(&record)
 
 		if record.DataType == "assertion" {
 			// Don't bother searching assertions as they don't have textual content
@@ -282,8 +317,7 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 			results = append(results, result)
 		}
 	}
-
-	return results, nil
+	return results
 }
 
 func contentMatches(content string, query string) bool {
