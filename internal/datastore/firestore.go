@@ -64,29 +64,53 @@ func (fs *FireStore) store(collection string, id string, data map[string]string)
 	}
 }
 
-func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
-	log.Debugf("Writing to datastore: %s", uri)
-
+func rawDataMap(uri assertions.HashUri, content string, summary string) map[string]string {
 	data := make(map[string]string)
+
 	data["uri"] = uri.String()
 	data["content"] = content
 	data["datatype"] = uri.Kind()
 	data["updated"] = time.Now().Format(time.RFC3339)
 
-	fs.store(MainCollection, uri.Escaped(), data)
+	if summary != "" {
+		data["summary"] = summary
+	}
+
+	return data
+}
+
+func contentDataMap(value assertions.Referenceable) map[string]string {
+	uri := value.Uri()
+	if value.Type() != "" && !uri.HasType() {
+		uri = uri.WithType(value.Type())
+	}
+	data := rawDataMap(uri, value.Content(), value.Summary())
+	return data
+}
+
+func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
+	log.Debugf("Writing to datastore: %s", uri)
+
+	// data := make(map[string]string)
+	// data["uri"] = uri.String()
+	// data["content"] = content
+	// data["datatype"] = uri.Kind()
+	// data["updated"] = time.Now().Format(time.RFC3339)
+
+	fs.store(MainCollection, uri.Escaped(), rawDataMap(uri, content, ""))
 }
 
 func (fs *FireStore) Store(value assertions.Referenceable) {
 	log.Debugf("Writing to datastore: %s", value.Uri())
 
-	data := make(map[string]string)
-	data["uri"] = value.Uri().Unadorned()
-	data["content"] = value.Content()
-	data["datatype"] = value.Type()
-	data["summary"] = value.Summary()
-	data["updated"] = time.Now().Format(time.RFC3339)
+	// data := make(map[string]string)
+	// data["uri"] = value.Uri().Unadorned()
+	// data["content"] = value.Content()
+	// data["datatype"] = value.Type()
+	// data["summary"] = value.Summary()
+	// data["updated"] = time.Now().Format(time.RFC3339)
 
-	fs.store(MainCollection, value.Uri().Escaped(), data)
+	fs.store(MainCollection, value.Uri().Escaped(), contentDataMap(value))
 }
 
 func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
@@ -270,34 +294,29 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 	defer client.Close()
 
 	df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
-	results := doSearch(df, query)
+
+	results := searchDocs(df, query)
 
 	return results, nil
 }
 
-func doSearch(docs DocFetcher, query string) []SearchResult {
+func searchDocs(docs DocFetcher, query string) []SearchResult {
 	results := make([]SearchResult, 0)
 	for {
-		// doc, err := docs.Next()
-		// if err == iterator.Done {
-		// 	break
-		// }
-		// record := DbRecord{}
-		// doc.DataTo(&record)
 		record := docs.Next()
 		if record == nil {
 			break
 		}
 
-		if record.DataType == "assertion" {
+		if strings.ToLower(record.DataType) == "assertion" {
 			// Don't bother searching assertions as they don't have textual content
 			continue
 		}
 
 		summary := record.Summary
-		if summary == "" && record.DataType == "Statement" {
+		if summary == "" && strings.ToLower(record.DataType) == "statement" {
 			summary = record.Content
-		} else if summary == "" && record.DataType == "Entity" {
+		} else if summary == "" && strings.ToLower(record.DataType) == "entity" {
 			summary = assertions.ParseCertificate(record.Content).CommonName
 		}
 		log.Debugf("Searching %s => %s", record.Uri, summary)
