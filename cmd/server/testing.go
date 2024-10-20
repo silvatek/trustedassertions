@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"math/big"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -22,11 +23,18 @@ type WebTest struct {
 	user   *auth.User
 	server *httptest.Server
 	passwd string
+	client *http.Client
 }
 
 func NewWebTest(t *testing.T) *WebTest {
 	wt := WebTest{t: t}
 	wt.setupTestServer()
+
+	jar, _ := cookiejar.New(nil)
+	wt.client = &http.Client{
+		Jar: jar,
+	}
+
 	return &wt
 }
 
@@ -70,7 +78,8 @@ type WebPage struct {
 func (wt *WebTest) getPage(path string) *WebPage {
 	url := wt.server.URL + path
 	page := WebPage{url: url, wt: wt}
-	page.response, page.requestError = http.Get(url)
+
+	page.response, page.requestError = wt.client.Get(url)
 
 	if page.requestError != nil {
 		wt.t.Errorf("Error fetching %s, %v", url, page.requestError)
@@ -96,7 +105,7 @@ func (wt *WebTest) postFormData(path string, data url.Values) *WebPage {
 
 	page := WebPage{url: url, wt: wt}
 
-	response, err := http.DefaultClient.Do(req)
+	response, err := wt.client.Do(req)
 	if err != nil {
 		page.requestError = err
 		return &page
@@ -119,7 +128,16 @@ func (page *WebPage) ok() bool {
 }
 
 func (page *WebPage) Find(q string) string {
+	if !page.ok() {
+		return ""
+	}
 	return page.html.Find(q).Text()
+}
+
+func (page *WebPage) assertSuccessResponse() {
+	if page.statusCode >= 400 {
+		page.wt.t.Errorf("Response code indicates error: %d", page.statusCode)
+	}
 }
 
 func (page *WebPage) assertHtmlQuery(query string, expected string) {
@@ -130,4 +148,33 @@ func (page *WebPage) assertHtmlQuery(query string, expected string) {
 	if !strings.Contains(results.Text(), expected) {
 		page.wt.t.Errorf("Did not find `%s` in [%s]", expected, query)
 	}
+}
+
+func (page *WebPage) assertHasCookie(name string) {
+	if !page.ok() {
+		return
+	}
+	url, _ := url.Parse(page.wt.server.URL + "/")
+
+	for _, cookie := range page.wt.client.Jar.Cookies(url) {
+		if cookie.Name == name {
+			return // cookie found, no error
+		}
+	}
+
+	page.wt.t.Errorf("`%s` cookie not found", name)
+}
+
+func (page *WebPage) assertNoCookie(name string) {
+	if !page.ok() {
+		return
+	}
+	url, _ := url.Parse(page.wt.server.URL + "/")
+
+	for _, cookie := range page.wt.client.Jar.Cookies(url) {
+		if cookie.Name == name {
+			page.wt.t.Errorf("`%s` cookie found", name)
+		}
+	}
+
 }

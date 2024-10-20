@@ -67,6 +67,7 @@ func TestPostNewStatement(t *testing.T) {
 		"sign_as":   {wt.user.KeyRefs[0].KeyId},
 	}
 	page := wt.postFormData("/web/newstatement", data)
+	page.assertSuccessResponse()
 
 	newUri := assertions.UriFromString(strings.TrimSpace(page.Find("#uri")))
 
@@ -77,6 +78,11 @@ func TestPostNewStatement(t *testing.T) {
 	}
 }
 
+func TestNewEntity(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+}
+
 func TestSearch(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()
@@ -85,6 +91,7 @@ func TestSearch(t *testing.T) {
 	page.assertHtmlQuery("#searchform", "Search for")
 
 	page = wt.postFormData("/web/search", url.Values{"query": {"universe"}})
+	page.assertSuccessResponse()
 	page.assertHtmlQuery("h2", "Search results")
 	page.assertHtmlQuery("#content", "The universe exists")
 }
@@ -94,20 +101,15 @@ func TestLoginLogout(t *testing.T) {
 	defer wt.Close()
 
 	page := wt.getPage("/web/login")
-
+	page.assertNoCookie("auth")
 	page.assertHtmlQuery("h2", "Login")
 
-	data := url.Values{
-		"user_id":  {wt.user.Id},
-		"password": {wt.passwd},
-	}
-	page = wt.postFormData("/web/login", data)
-	if page.statusCode != 200 {
-		t.Errorf("Login POST failed: %d", page.statusCode)
-	}
+	page = wt.postFormData("/web/login", url.Values{"user_id": {wt.user.Id}, "password": {wt.passwd}})
+	page.assertSuccessResponse()
 	page.assertHtmlQuery("#username", wt.user.Id)
+	page.assertHasCookie("auth")
 
 	page = wt.getPage("/web/logout")
 	page.assertHtmlQuery("#message", "You have been logged out")
-
+	page.assertNoCookie("auth")
 }
