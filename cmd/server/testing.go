@@ -147,6 +147,12 @@ func (page *WebPage) assertSuccessResponse() {
 	}
 }
 
+func (page *WebPage) assertErrorResponse() {
+	if page.statusCode < 400 {
+		page.wt.t.Errorf("Response code does not indicate error: %d", page.statusCode)
+	}
+}
+
 func (page *WebPage) assertHtmlQuery(query string, expected string) {
 	if !page.ok() {
 		return

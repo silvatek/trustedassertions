@@ -156,3 +156,14 @@ func TestLoginLogout(t *testing.T) {
 	page.assertHtmlQuery("#message", "You have been logged out")
 	page.assertNoCookie("auth")
 }
+
+func TestBadLogin(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.postFormData("/web/login", url.Values{"user_id": {"jkdshffkdjshdskfjhd"}, "password": {wt.passwd}})
+	page.assertHtmlQuery(".error", "Unable to verify identity")
+
+	page = wt.postFormData("/web/login", url.Values{"user_id": {wt.user.Id}, "password": {"jkdfhskjfdshfk"}})
+	page.assertHtmlQuery(".error", "Unable to verify identity")
+}
