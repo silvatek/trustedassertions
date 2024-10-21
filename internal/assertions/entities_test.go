@@ -24,6 +24,15 @@ func TestEntityUri(t *testing.T) {
 	if !strings.HasPrefix(uri.String(), "hash://sha256/") {
 		t.Errorf("Entity URI does not have correct prefix: %s", uri)
 	}
+	if entity.Type() != "Entity" {
+		t.Errorf("Unexpected entity type: %s", entity.Type())
+	}
+	if entity.Summary() != "Tester" {
+		t.Errorf("Unexpected entity summary: %s", entity.Summary())
+	}
+	if entity.Content() == "" {
+		t.Error("Entity content is empty after making certificate")
+	}
 }
 
 func TestCreateCertificate(t *testing.T) {
