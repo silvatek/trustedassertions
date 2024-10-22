@@ -1,9 +1,11 @@
 package assertions
 
 import (
+	"errors"
 	"fmt"
 )
 
+// Referenceable is a core data type that can be referenced by an assertion.
 type Referenceable interface {
 	Uri() HashUri
 	Type() string
@@ -11,12 +13,37 @@ type Referenceable interface {
 	Summary() string
 }
 
+// Resolver is responsible for fetching the data associated with a Hash URI.
 type Resolver interface {
 	FetchStatement(key HashUri) (Statement, error)
 	FetchEntity(key HashUri) (Entity, error)
 	FetchAssertion(key HashUri) (Assertion, error)
 	FetchKey(entityUri HashUri) (string, error)
 	FetchRefs(key HashUri) ([]HashUri, error)
+}
+
+type NullResolver struct{}
+
+var ErrNotImplemented = errors.New("not implemented")
+
+func (r NullResolver) FetchStatement(key HashUri) (Statement, error) {
+	return Statement{}, ErrNotImplemented
+}
+
+func (r NullResolver) FetchEntity(key HashUri) (Entity, error) {
+	return Entity{}, ErrNotImplemented
+}
+
+func (r NullResolver) FetchAssertion(key HashUri) (Assertion, error) {
+	return Assertion{}, ErrNotImplemented
+}
+
+func (r NullResolver) FetchKey(key HashUri) (string, error) {
+	return "", ErrNotImplemented
+}
+
+func (r NullResolver) FetchRefs(key HashUri) ([]HashUri, error) {
+	return []HashUri{}, ErrNotImplemented
 }
 
 type ReferenceSummary struct {

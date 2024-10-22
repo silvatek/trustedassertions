@@ -84,12 +84,13 @@ func TestJwtAsymmetric(t *testing.T) {
 	}
 }
 
-type TestEntityFetcher struct {
+type TestResolver struct {
 	entity Entity
+	NullResolver
 }
 
-func (f TestEntityFetcher) FetchEntity(key HashUri) (Entity, error) {
-	return f.entity, nil
+func (r TestResolver) FetchEntity(key HashUri) (Entity, error) {
+	return r.entity, nil
 }
 
 func TestAssertionClaims(t *testing.T) {
@@ -98,7 +99,7 @@ func TestAssertionClaims(t *testing.T) {
 	entity := NewEntity("Test entity", *big.NewInt(123456))
 	entity.MakeCertificate(privateKey)
 
-	ActiveEntityFetcher = TestEntityFetcher{entity: entity}
+	PublicKeyResolver = TestResolver{entity: entity} // TestEntityFetcher{entity: entity}
 
 	assertion1 := NewAssertion("IsFalse")
 	assertion1.Subject = "hash://sha256/12345678"
