@@ -81,11 +81,13 @@ func RenderWebPageWithStatus(pageName string, data interface{}, menu []PageMenuI
 		leftMenu.AddItem(&item)
 	}
 
-	//leftMenu.AddLink("Testing", "/")
 	pageData.LeftMenu = leftMenu
 
 	rightMenu := PageMenu{}
-	if username == "" {
+
+	if pageName == "loggedout" || pageName == "loginform" {
+		//
+	} else if username == "" {
 		rightMenu.AddRightLink("Login", "/web/login")
 	} else {
 		rightMenu.AddRightText(nameOnly(username))
