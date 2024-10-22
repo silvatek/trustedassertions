@@ -10,18 +10,12 @@
             <div class="fieldprompt">Name:</div>
             <div class="fieldvalue" id="common_name">{{.Detail.CommonName}}</div>
         </div>
-        
-        <hr>
-        
+            
         <h3>References</h3>
         <ul>
             {{range $ref := .Detail.References}}
             <li><a href="{{$ref.Uri.WebPath}}">{{$ref.Summary}}</a></li>
             {{end}}
         </ul>
-        <hr/>
-        <div>
-            <a href="{{.Detail.ApiLink}}">Raw Data</a>
-        </div>
 
 {{end}}

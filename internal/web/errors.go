@@ -43,7 +43,7 @@ func ErrorPageHandler(w http.ResponseWriter, r *http.Request) {
 		ErrorID:      errorId,
 	}
 
-	RenderWebPageWithStatus("error", data, w, r, 500)
+	RenderWebPageWithStatus("error", data, nil, w, r, 500)
 }
 
 func errorMessage(errorCode string) string {
@@ -59,5 +59,5 @@ func ErrorTestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func NotFoundWebHandler(w http.ResponseWriter, r *http.Request) {
-	RenderWebPageWithStatus("notfound", "", w, r, 404)
+	RenderWebPageWithStatus("notfound", "", nil, w, r, 404)
 }

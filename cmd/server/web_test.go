@@ -149,7 +149,7 @@ func TestLoginLogout(t *testing.T) {
 
 	page = wt.postFormData("/web/login", url.Values{"user_id": {wt.user.Id}, "password": {wt.passwd}})
 	page.assertSuccessResponse()
-	page.assertHtmlQuery("#username", wt.user.Id)
+	page.assertHtmlQuery("span", wt.user.Id)
 	page.assertHasCookie("auth")
 
 	page = wt.getPage("/web/logout")

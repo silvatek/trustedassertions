@@ -46,13 +46,15 @@ func AddHandlers(r *mux.Router) {
 }
 
 type PageData struct {
-	AuthUser string
-	AuthName string
-	LoggedIn bool
-	Detail   interface{}
+	LeftMenu  PageMenu
+	RightMenu PageMenu
+	AuthUser  string
+	AuthName  string
+	LoggedIn  bool
+	Detail    interface{}
 }
 
-func RenderWebPageWithStatus(pageName string, data interface{}, w http.ResponseWriter, r *http.Request, status int) {
+func RenderWebPageWithStatus(pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request, status int) {
 	dir := TemplateDir
 
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
@@ -71,6 +73,26 @@ func RenderWebPageWithStatus(pageName string, data interface{}, w http.ResponseW
 		Detail:   data,
 	}
 
+	leftMenu := PageMenu{}
+	if pageName != "index" {
+		leftMenu.AddLink("Home", "/")
+	}
+	for _, item := range menu {
+		leftMenu.AddItem(&item)
+	}
+
+	//leftMenu.AddLink("Testing", "/")
+	pageData.LeftMenu = leftMenu
+
+	rightMenu := PageMenu{}
+	if username == "" {
+		rightMenu.AddRightLink("Login", "/web/login")
+	} else {
+		rightMenu.AddRightText(nameOnly(username))
+		rightMenu.AddRightLink("Logout", "/web/logout")
+	}
+	pageData.RightMenu = rightMenu
+
 	if status != 0 {
 		w.WriteHeader(status)
 	}
@@ -82,8 +104,8 @@ func RenderWebPageWithStatus(pageName string, data interface{}, w http.ResponseW
 	}
 }
 
-func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *http.Request) {
-	RenderWebPageWithStatus(pageName, data, w, r, 200)
+func RenderWebPage(pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
+	RenderWebPageWithStatus(pageName, data, menu, w, r, 200)
 }
 
 func nameOnly(username string) string {
@@ -115,7 +137,7 @@ func authUser(r *http.Request) string {
 }
 
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
-	RenderWebPage("index", "", w, r)
+	RenderWebPage("index", "", nil, w, r)
 }
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +161,11 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		References: refs,
 	}
 
-	RenderWebPage("viewstatement", data, w, r)
+	menu := []PageMenuItem{
+		{Text: "Raw", Target: statement.Uri().ApiPath()},
+	}
+
+	RenderWebPage("viewstatement", data, menu, w, r)
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +209,11 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		References:  make([]string, 0),
 	}
 
-	RenderWebPage("viewassertion", data, w, r)
+	menu := []PageMenuItem{
+		{Text: "Raw", Target: assertion.Uri().ApiPath()},
+	}
+
+	RenderWebPage("viewassertion", data, menu, w, r)
 }
 
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -215,7 +245,11 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		References: refs,
 	}
 
-	RenderWebPage("viewentity", data, w, r)
+	menu := []PageMenuItem{
+		{Text: "Raw", Target: entity.Uri().ApiPath()},
+	}
+
+	RenderWebPage("viewentity", data, menu, w, r)
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -231,7 +265,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		RenderWebPage("newstatementform", user, w, r)
+		RenderWebPage("newstatementform", user, nil, w, r)
 	} else if r.Method == "POST" {
 		log.Info("Creating new statement and assertion")
 		r.ParseForm()
@@ -302,7 +336,7 @@ func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
 		Results: results,
 	}
 
-	RenderWebPage("searchresults", data, w, r)
+	RenderWebPage("searchresults", data, nil, w, r)
 }
 
 func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -318,7 +352,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		RenderWebPage("newentityform", user, w, r)
+		RenderWebPage("newentityform", user, nil, w, r)
 	} else if r.Method == "POST" {
 		log.Info("Creating new entity and signing key")
 		r.ParseForm()
@@ -373,7 +407,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 			User:      user,
 		}
 
-		RenderWebPage("addassertionform", data, w, r)
+		RenderWebPage("addassertionform", data, nil, w, r)
 	} else if r.Method == "POST" {
 		log.Info("Creating new assertion for statement")
 		r.ParseForm()

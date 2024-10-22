@@ -12,19 +12,48 @@
 
 <body>
     <div class="header">
-            <div class="pagelogo">
-                <a href="/" aria-label="Return to home page">
-                    <img src="/static/TickSpeech.svg" alt="Site logo" height="32px">
-                </a>
-            </div>
-            <h1 class="pageheading">Trusted Assertions</h1>
+        <div class="pagelogo">
+            <a href="/" aria-label="Return to home page">
+                <img src="/static/TickSpeech.svg" alt="Site logo" height="32px">
+            </a>
+        </div>
+        <h1 class="pageheading">Trusted Assertions</h1>
+    </div>
+    <div id="pagemenu">
+        <hr>
+        <div class="pagemenu">
+            <span class="leftlink">
+                {{range $item := .LeftMenu.Items}}
+                    <span>
+                        {{$item.Separator}}
+                        {{if $item.IsLink}}
+                            <a href="{{$item.Target}}">{{$item.Text}}</a>
+                        {{else}}
+                            {{$item.Text}}
+                        {{end}}                    
+                    </span>
+                {{end}}            
+            </span>
+            <span class="rightlink">
+                {{range $item := .RightMenu.Items}}
+                    <span>
+                        {{$item.Separator}}
+                        {{if $item.IsLink}}
+                            <a href="{{$item.Target}}">{{$item.Text}}</a>
+                        {{else}}
+                            {{$item.Text}}
+                        {{end}}                    
+                    </span>
+                {{end}}            
+            </span>
+        </div>
         <hr>
     </div>
     <div id="content">
     	{{template "content" .}}
     </div>
     <div class="footer">
-        <hr>
+        <!-- <hr>
         <div class="linkset">
             <span class="leftlink">&nbsp;|&nbsp;<a href="/">Home</a>&nbsp;|&nbsp;</span>
             <span class="rightlink">
@@ -35,7 +64,7 @@
                     &nbsp;|&nbsp;<a href="/web/login">Login</a>&nbsp;|&nbsp;
                 {{end}}
             </span>
-        </div>
+        </div> -->
     </div>
 </body>
 </html>
