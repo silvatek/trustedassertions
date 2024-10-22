@@ -34,6 +34,8 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/statements/{key}/addassertion", AddStatementAssertionWebHandler)
 	r.HandleFunc("/web/search", SearchWebHandler)
 
+	r.NotFoundHandler = http.HandlerFunc(NotFoundWebHandler)
+
 	addAuthHandlers(r)
 
 	staticDir := http.Dir(TemplateDir + "/static")
@@ -50,7 +52,7 @@ type PageData struct {
 	Detail   interface{}
 }
 
-func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *http.Request) {
+func RenderWebPageWithStatus(pageName string, data interface{}, w http.ResponseWriter, r *http.Request, status int) {
 	dir := TemplateDir
 
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
@@ -69,9 +71,8 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *
 		Detail:   data,
 	}
 
-	if pageName == "error" {
-		// TODO: handle different error codes
-		w.WriteHeader(500)
+	if status != 0 {
+		w.WriteHeader(status)
 	}
 
 	if err := t.ExecuteTemplate(w, "base", pageData); err != nil {
@@ -79,6 +80,10 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *
 		log.Errorf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
+}
+
+func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *http.Request) {
+	RenderWebPageWithStatus(pageName, data, w, r, 200)
 }
 
 func nameOnly(username string) string {
