@@ -66,7 +66,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * Access control
 * User JWT refresh
 * User management
-* Add NotFoundHandler
+* Resolver interface
 
 ### Done
 
@@ -83,6 +83,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * Basic search
 * Web page to create new entity
 * Web page for adding assertion to existing statements etc
+* Add NotFoundHandler
 
 ## Implementation Details
 
