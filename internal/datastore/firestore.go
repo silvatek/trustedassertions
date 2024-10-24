@@ -22,6 +22,7 @@ type FireStore struct {
 const MainCollection = "Primary"
 const KeyCollection = "Keys"
 const UserCollection = "Users"
+const SearchCollection = "Search"
 
 func InitFireStore() {
 	datastore := &FireStore{
@@ -328,4 +329,43 @@ func searchDocs(docs DocFetcher, query string) []SearchResult {
 
 func contentMatches(content string, query string) bool {
 	return strings.Contains(strings.ToLower(content), strings.ToLower(query))
+}
+
+func (fs *FireStore) Reindex() {
+	log.Info("Reindexing...")
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
+	for {
+		doc := df.Next()
+		if doc == nil {
+			break
+		}
+
+		if strings.ToLower(doc.DataType) == "assertion" {
+			// Don't bother searching assertions as they don't have textual content
+			continue
+		}
+
+		summary := doc.Summary
+		if summary == "" && strings.ToLower(doc.DataType) == "statement" {
+			summary = doc.Content
+		} else if summary == "" && strings.ToLower(doc.DataType) == "entity" {
+			summary = assertions.ParseCertificate(doc.Content).CommonName
+		}
+
+		words := strings.Split(summary, " ")
+
+		key := assertions.UriFromString(doc.Uri).Escaped()
+		_, err := client.Collection(SearchCollection).Doc(key).Set(ctx, words)
+		if err != nil {
+			log.Errorf("Error writing document %v", err)
+		}
+
+		log.Debugf("Indexing %s", doc.Uri)
+	}
+
+	log.Info("Reindex complete.")
 }

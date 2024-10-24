@@ -13,6 +13,8 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/api/v1/statements/{key}", StatementApiHandler)
 	r.HandleFunc("/api/v1/entities/{key}", EntityApiHandler)
 	r.HandleFunc("/api/v1/assertions/{key}", AssertionApiHandler)
+
+	r.HandleFunc("/api/v1/reindex", ReindexApiHandler)
 }
 
 func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,4 +54,14 @@ func AssertionApiHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte(assertion.Content()))
+}
+
+func ReindexApiHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("Reindexing..."))
+
+	datastore.ActiveDataStore.Reindex()
+
+	w.Write([]byte("Done"))
 }

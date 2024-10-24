@@ -24,6 +24,7 @@ type DataStore interface {
 	FetchRefs(key assertions.HashUri) ([]assertions.HashUri, error)
 	FetchUser(id string) (auth.User, error)
 	Search(query string) ([]SearchResult, error)
+	Reindex()
 }
 
 type SearchResult struct {
@@ -170,4 +171,8 @@ func (ds *InMemoryDataStore) Search(query string) ([]SearchResult, error) {
 		}
 	}
 	return results, nil
+}
+
+func (ds *InMemoryDataStore) Reindex() {
+	// NO-OP
 }
