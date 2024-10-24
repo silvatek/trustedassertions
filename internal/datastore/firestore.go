@@ -289,7 +289,7 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 
 	results := make([]SearchResult, 0)
 
-	docs := client.Collection(MainCollection).Where("Words", "array-contains-any", queryWords).Documents(ctx)
+	docs := client.Collection(MainCollection).Where("words", "array-contains-any", queryWords).Documents(ctx)
 	for {
 		doc, err := docs.Next()
 		if err == iterator.Done {
