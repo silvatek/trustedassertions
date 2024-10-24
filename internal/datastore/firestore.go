@@ -12,6 +12,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/search"
 )
 
 type FireStore struct {
@@ -363,7 +364,7 @@ func (fs *FireStore) Reindex() {
 
 		data := SearchData{
 			Uri:   assertions.UriFromString(doc.Uri).Escaped(),
-			Words: strings.Split(summary, " "),
+			Words: search.SearchWords(summary),
 		}
 
 		_, err := client.Collection(SearchCollection).Doc(data.Uri).Set(ctx, data)
