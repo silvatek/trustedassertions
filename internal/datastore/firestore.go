@@ -12,7 +12,6 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	log "silvatek.uk/trustedassertions/internal/logging"
-	"silvatek.uk/trustedassertions/internal/search"
 )
 
 type FireStore struct {
@@ -286,6 +285,13 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 
 	results := searchDocs(df, query)
 
+	// queryWords := search.SearchWords(query)
+
+	// results := make([]SearchResult, 0)
+
+	// di := client.Collection(MainCollection).Where("Words", "array-contains-any", queryWords).Documents(ctx)
+	// df := DocFetcher{iterator: di}
+
 	return results, nil
 }
 
@@ -343,36 +349,52 @@ func (fs *FireStore) Reindex() {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
+	// df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
+	// for {
+	// 	doc := df.Next()
+	// 	if doc == nil {
+	// 		break
+	// 	}
+
+	// 	if strings.ToLower(doc.DataType) == "assertion" {
+	// 		// Don't bother searching assertions as they don't have textual content
+	// 		continue
+	// 	}
+
+	// 	summary := doc.Summary
+	// 	if summary == "" && strings.ToLower(doc.DataType) == "statement" {
+	// 		summary = doc.Content
+	// 	} else if summary == "" && strings.ToLower(doc.DataType) == "entity" {
+	// 		summary = assertions.ParseCertificate(doc.Content).CommonName
+	// 	}
+
+	// 	data := SearchData{
+	// 		Uri:   assertions.UriFromString(doc.Uri).Escaped(),
+	// 		Words: search.SearchWords(summary),
+	// 	}
+
+	// 	_, err := client.Collection(SearchCollection).Doc(data.Uri).Set(ctx, data)
+	// 	if err != nil {
+	// 		log.Errorf("Error writing document %v", err)
+	// 	}
+
+	// 	log.Debugf("Indexing %s", doc.Uri)
+	// }
+
+	docs := client.Collection(MainCollection).Documents(ctx)
 	for {
-		doc := df.Next()
-		if doc == nil {
+		doc, err := docs.Next()
+		if err == iterator.Done {
 			break
 		}
 
-		if strings.ToLower(doc.DataType) == "assertion" {
-			// Don't bother searching assertions as they don't have textual content
-			continue
-		}
+		doc.Ref.Update(ctx, []firestore.Update{
+			{
+				Path:  "words",
+				Value: []string{"red", "white", "blue"},
+			},
+		})
 
-		summary := doc.Summary
-		if summary == "" && strings.ToLower(doc.DataType) == "statement" {
-			summary = doc.Content
-		} else if summary == "" && strings.ToLower(doc.DataType) == "entity" {
-			summary = assertions.ParseCertificate(doc.Content).CommonName
-		}
-
-		data := SearchData{
-			Uri:   assertions.UriFromString(doc.Uri).Escaped(),
-			Words: search.SearchWords(summary),
-		}
-
-		_, err := client.Collection(SearchCollection).Doc(data.Uri).Set(ctx, data)
-		if err != nil {
-			log.Errorf("Error writing document %v", err)
-		}
-
-		log.Debugf("Indexing %s", doc.Uri)
 	}
 
 	log.Info("Reindex complete.")

@@ -52,7 +52,7 @@ func wordRoot(word string) string {
 	return word
 }
 
-var IgnoredWords = []string{"a", "an", "it", "the", "and", "but"}
+var IgnoredWords = []string{"a", "an", "it", "is", "the", "and", "but"}
 
 func ignoredWord(word string) bool {
 	for _, w := range IgnoredWords {
