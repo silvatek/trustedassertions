@@ -23,7 +23,6 @@ type FireStore struct {
 const MainCollection = "Primary"
 const KeyCollection = "Keys"
 const UserCollection = "Users"
-const SearchCollection = "Search"
 
 func InitFireStore() {
 	datastore := &FireStore{
@@ -350,38 +349,6 @@ func (fs *FireStore) Reindex() {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	// df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
-	// for {
-	// 	doc := df.Next()
-	// 	if doc == nil {
-	// 		break
-	// 	}
-
-	// 	if strings.ToLower(doc.DataType) == "assertion" {
-	// 		// Don't bother searching assertions as they don't have textual content
-	// 		continue
-	// 	}
-
-	// 	summary := doc.Summary
-	// 	if summary == "" && strings.ToLower(doc.DataType) == "statement" {
-	// 		summary = doc.Content
-	// 	} else if summary == "" && strings.ToLower(doc.DataType) == "entity" {
-	// 		summary = assertions.ParseCertificate(doc.Content).CommonName
-	// 	}
-
-	// 	data := SearchData{
-	// 		Uri:   assertions.UriFromString(doc.Uri).Escaped(),
-	// 		Words: search.SearchWords(summary),
-	// 	}
-
-	// 	_, err := client.Collection(SearchCollection).Doc(data.Uri).Set(ctx, data)
-	// 	if err != nil {
-	// 		log.Errorf("Error writing document %v", err)
-	// 	}
-
-	// 	log.Debugf("Indexing %s", doc.Uri)
-	// }
-
 	docs := client.Collection(MainCollection).Documents(ctx)
 	for {
 		doc, err := docs.Next()
@@ -391,6 +358,10 @@ func (fs *FireStore) Reindex() {
 
 		record := DbRecord{}
 		doc.DataTo(&record)
+
+		if record.DataType == "assertion" {
+			continue
+		}
 
 		summary := record.Summary
 		words := search.SearchWords(summary)
