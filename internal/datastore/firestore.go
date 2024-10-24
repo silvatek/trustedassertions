@@ -12,6 +12,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/search"
 )
 
 type FireStore struct {
@@ -388,10 +389,16 @@ func (fs *FireStore) Reindex() {
 			break
 		}
 
+		record := DbRecord{}
+		doc.DataTo(&record)
+
+		summary := record.Summary
+		words := search.SearchWords(summary)
+
 		doc.Ref.Update(ctx, []firestore.Update{
 			{
 				Path:  "words",
-				Value: []string{"red", "white", "blue"},
+				Value: words,
 			},
 		})
 
