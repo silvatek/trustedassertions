@@ -59,7 +59,6 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Things to Do
 
-* QR Codes for statement, entity and assertion pages 
 * SubjectType and ObjectType claims in assertions, or auto-detect type
 * Mobile web views
 * Secure management of private keys
@@ -84,6 +83,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * Web page for adding assertion to existing statements etc
 * Add NotFoundHandler
 * Resolver interface
+* QR Codes for statement, entity and assertion pages 
 
 ## Implementation Details
 

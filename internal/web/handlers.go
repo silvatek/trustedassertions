@@ -12,7 +12,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
-	"github.com/skip2/go-qrcode"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
@@ -217,6 +216,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	menu := []PageMenuItem{
 		{Text: "Raw", Target: assertion.Uri().ApiPath()},
+		{Text: "Share", Target: "/web/share?hash=" + assertion.Uri().Hash() + "&type=assertion"},
 	}
 
 	RenderWebPage("viewassertion", data, menu, w, r)
@@ -253,6 +253,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	menu := []PageMenuItem{
 		{Text: "Raw", Target: entity.Uri().ApiPath()},
+		{Text: "Share", Target: "/web/share?hash=" + entity.Uri().Hash() + "&type=entity"},
 	}
 
 	RenderWebPage("viewentity", data, menu, w, r)
@@ -456,51 +457,4 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
 	}
-}
-
-func SharePageWebHandler(w http.ResponseWriter, r *http.Request) {
-	hash := r.URL.Query().Get("hash")
-	kind := r.URL.Query().Get("type")
-
-	var prefix string
-	host := r.Host
-	if strings.Contains(host, "localhost") {
-		prefix = "http://" + host
-	} else {
-		prefix = "https://" + host
-	}
-
-	data := struct {
-		Url     string
-		QrCode  string
-		HashUri string
-	}{
-		Url:     prefix + "/web/" + kind + "s/" + hash,
-		QrCode:  prefix + "/web/qrcode?hash=" + hash + "&type=" + kind,
-		HashUri: "hash://sha256/" + hash + "?type=" + kind,
-	}
-
-	RenderWebPage("sharepage", data, nil, w, r)
-}
-
-func qrCodeGenerator(w http.ResponseWriter, r *http.Request) {
-	hash := r.URL.Query().Get("hash")
-	kind := r.URL.Query().Get("type")
-
-	var prefix string
-	host := r.Host
-	if strings.Contains(host, "localhost") {
-		prefix = "http://" + host
-	} else {
-		prefix = "https://" + host
-	}
-
-	uri := prefix + "/web/" + kind + "s/" + hash
-
-	headers := w.Header()
-	headers.Add("Content-Type", "image/png")
-	w.WriteHeader(http.StatusOK)
-
-	q, _ := qrcode.New(uri, qrcode.High)
-	q.Write(320, w)
 }
