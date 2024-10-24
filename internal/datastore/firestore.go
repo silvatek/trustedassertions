@@ -331,6 +331,11 @@ func contentMatches(content string, query string) bool {
 	return strings.Contains(strings.ToLower(content), strings.ToLower(query))
 }
 
+type SearchData struct {
+	Uri   string   `json:"uri"`
+	Words []string `json:"words"`
+}
+
 func (fs *FireStore) Reindex() {
 	log.Info("Reindexing...")
 	ctx := context.TODO()
@@ -356,10 +361,12 @@ func (fs *FireStore) Reindex() {
 			summary = assertions.ParseCertificate(doc.Content).CommonName
 		}
 
-		words := strings.Split(summary, " ")
+		data := SearchData{
+			Uri:   assertions.UriFromString(doc.Uri).Escaped(),
+			Words: strings.Split(summary, " "),
+		}
 
-		key := assertions.UriFromString(doc.Uri).Escaped()
-		_, err := client.Collection(SearchCollection).Doc(key).Set(ctx, words)
+		_, err := client.Collection(SearchCollection).Doc(data.Uri).Set(ctx, data)
 		if err != nil {
 			log.Errorf("Error writing document %v", err)
 		}
