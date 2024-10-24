@@ -281,16 +281,31 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 	client := fs.client(ctx)
 	defer client.Close()
 
-	df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
+	// df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
 
-	results := searchDocs(df, query)
+	// results := searchDocs(df, query)
 
-	// queryWords := search.SearchWords(query)
+	queryWords := search.SearchWords(query)
 
-	// results := make([]SearchResult, 0)
+	results := make([]SearchResult, 0)
 
-	// di := client.Collection(MainCollection).Where("Words", "array-contains-any", queryWords).Documents(ctx)
-	// df := DocFetcher{iterator: di}
+	docs := client.Collection(MainCollection).Where("Words", "array-contains-any", queryWords).Documents(ctx)
+	for {
+		doc, err := docs.Next()
+		if err == iterator.Done {
+			break
+		}
+
+		record := DbRecord{}
+		doc.DataTo(&record)
+
+		result := SearchResult{
+			Uri:       assertions.UriFromString(record.Uri),
+			Content:   record.Summary,
+			Relevance: 0.8,
+		}
+		results = append(results, result)
+	}
 
 	return results, nil
 }
