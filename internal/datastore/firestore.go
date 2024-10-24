@@ -51,7 +51,7 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 	return client
 }
 
-func (fs *FireStore) store(collection string, id string, data map[string]string) {
+func (fs *FireStore) store(collection string, id string, data map[string]interface{}) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
 	defer client.Close()
@@ -65,8 +65,8 @@ func (fs *FireStore) store(collection string, id string, data map[string]string)
 	}
 }
 
-func rawDataMap(uri assertions.HashUri, content string, summary string) map[string]string {
-	data := make(map[string]string)
+func rawDataMap(uri assertions.HashUri, content string, summary string) map[string]interface{} {
+	data := make(map[string]interface{})
 
 	data["uri"] = uri.String()
 	data["content"] = content
@@ -75,12 +75,16 @@ func rawDataMap(uri assertions.HashUri, content string, summary string) map[stri
 
 	if summary != "" {
 		data["summary"] = summary
+
+		if uri.Kind() != "assertion" {
+			data["words"] = search.SearchWords(summary)
+		}
 	}
 
 	return data
 }
 
-func contentDataMap(value assertions.Referenceable) map[string]string {
+func contentDataMap(value assertions.Referenceable) map[string]interface{} {
 	uri := value.Uri()
 	if value.Type() != "" && !uri.HasType() {
 		uri = uri.WithType(value.Type())
@@ -102,7 +106,7 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 }
 
 func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
-	data := make(map[string]string)
+	data := make(map[string]interface{})
 	data["entity"] = entityUri.Unadorned()
 	data["encoding"] = "base64"
 	data["key"] = key
@@ -299,8 +303,13 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 		record := DbRecord{}
 		doc.DataTo(&record)
 
+		uri := assertions.UriFromString(record.Uri)
+		if !uri.HasType() {
+			uri = uri.WithType(record.DataType)
+		}
+
 		result := SearchResult{
-			Uri:       assertions.UriFromString(record.Uri),
+			Uri:       uri,
 			Content:   record.Summary,
 			Relevance: 0.8,
 		}

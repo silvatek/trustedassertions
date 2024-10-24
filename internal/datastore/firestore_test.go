@@ -25,7 +25,7 @@ func TestDataMap(t *testing.T) {
 
 	data := contentDataMap(&statement)
 
-	if !strings.HasPrefix(data["uri"], "hash://sha256/") {
+	if !strings.HasPrefix(data["uri"].(string), "hash://sha256/") {
 		t.Errorf("Did not map URI as expected: %s", data["uri"])
 	}
 	if data["content"] != "Testing" {
