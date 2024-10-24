@@ -34,7 +34,7 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 			data = "Unable to verify identity"
 		}
 
-		RenderWebPage("loginform", data, w, r)
+		RenderWebPage("loginform", data, nil, w, r)
 	} else if r.Method == "POST" {
 		r.ParseForm()
 		userId := r.Form.Get("user_id")
@@ -83,5 +83,5 @@ func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := http.Cookie{Name: "auth", Path: "/", Value: "", MaxAge: -1, SameSite: http.SameSiteStrictMode}
 	http.SetCookie(w, &cookie)
 
-	RenderWebPage("loggedout", "", w, r)
+	RenderWebPage("loggedout", "", nil, w, r)
 }

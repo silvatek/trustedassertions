@@ -66,7 +66,7 @@ func TestAssertionApi(t *testing.T) {
 	statement := assertions.NewStatement("test")
 
 	datastore.InitInMemoryDataStore()
-	assertions.ActiveEntityFetcher = datastore.ActiveDataStore
+	assertions.PublicKeyResolver = datastore.ActiveDataStore
 
 	datastore.ActiveDataStore.Store(&entity)
 	datastore.ActiveDataStore.Store(&statement)

@@ -1,0 +1,23 @@
+{{define "content"}}		
+        <h2>Share Item</h2>
+
+        <div class="fieldset">
+            <div class="fieldprompt">
+                Item URI:
+            </div>
+            <div class="fieldvalue">
+                {{.Detail.HashUri}}
+            </div>
+            <div class="fieldprompt">
+                Web URL:
+            </div>
+            <div class="fieldvalue">
+                <a href="{{.Detail.Url}}">{{.Detail.Url}}</a>
+            </div>            
+        </div>
+
+        <div>
+            <img src="{{.Detail.QrCode}}">
+        </div>
+        
+{{end}}

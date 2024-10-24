@@ -24,11 +24,8 @@ type Assertion struct {
 	uri        HashUri `json:"-"`
 }
 
-type EntityFetcher interface {
-	FetchEntity(key HashUri) (Entity, error)
-}
-
-var ActiveEntityFetcher EntityFetcher
+// Resolver used to fetch public keys for entities.
+var PublicKeyResolver Resolver
 
 func NewAssertion(category string) Assertion {
 	return Assertion{
@@ -41,10 +38,10 @@ func NewAssertion(category string) Assertion {
 }
 
 // Returns the public key to be used to verify the specified JWT token.
-// The token issuer should be the URI of an entity, and that entity is fetched from the data store.
+// The token issuer should be the URI of an entity, and that entity is fetched using the PublicKeyResolver.
 func verificationKey(token *jwt.Token) (interface{}, error) {
 	entityUri, _ := token.Claims.GetIssuer()
-	entity, err := ActiveEntityFetcher.FetchEntity(HashUri{uri: entityUri})
+	entity, err := PublicKeyResolver.FetchEntity(HashUri{uri: entityUri})
 	return entity.PublicKey, err
 }
 

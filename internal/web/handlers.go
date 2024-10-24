@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
+	"github.com/skip2/go-qrcode"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
@@ -33,6 +34,10 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/newentity", NewEntityWebHandler)
 	r.HandleFunc("/web/statements/{key}/addassertion", AddStatementAssertionWebHandler)
 	r.HandleFunc("/web/search", SearchWebHandler)
+	r.HandleFunc("/web/share", SharePageWebHandler)
+	r.HandleFunc("/web/qrcode", qrCodeGenerator)
+
+	r.NotFoundHandler = http.HandlerFunc(NotFoundWebHandler)
 
 	addAuthHandlers(r)
 
@@ -44,13 +49,15 @@ func AddHandlers(r *mux.Router) {
 }
 
 type PageData struct {
-	AuthUser string
-	AuthName string
-	LoggedIn bool
-	Detail   interface{}
+	LeftMenu  PageMenu
+	RightMenu PageMenu
+	AuthUser  string
+	AuthName  string
+	LoggedIn  bool
+	Detail    interface{}
 }
 
-func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *http.Request) {
+func RenderWebPageWithStatus(pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request, status int) {
 	dir := TemplateDir
 
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
@@ -69,9 +76,30 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *
 		Detail:   data,
 	}
 
-	if pageName == "error" {
-		// TODO: handle different error codes
-		w.WriteHeader(500)
+	leftMenu := PageMenu{}
+	if pageName != "index" {
+		leftMenu.AddLink("Home", "/")
+	}
+	for _, item := range menu {
+		leftMenu.AddItem(&item)
+	}
+
+	pageData.LeftMenu = leftMenu
+
+	rightMenu := PageMenu{}
+
+	if pageName == "loggedout" || pageName == "loginform" {
+		//
+	} else if username == "" {
+		rightMenu.AddRightLink("Login", "/web/login")
+	} else {
+		rightMenu.AddRightText(nameOnly(username))
+		rightMenu.AddRightLink("Logout", "/web/logout")
+	}
+	pageData.RightMenu = rightMenu
+
+	if status != 0 {
+		w.WriteHeader(status)
 	}
 
 	if err := t.ExecuteTemplate(w, "base", pageData); err != nil {
@@ -79,6 +107,10 @@ func RenderWebPage(pageName string, data interface{}, w http.ResponseWriter, r *
 		log.Errorf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
+}
+
+func RenderWebPage(pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
+	RenderWebPageWithStatus(pageName, data, menu, w, r, 200)
 }
 
 func nameOnly(username string) string {
@@ -110,56 +142,7 @@ func authUser(r *http.Request) string {
 }
 
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
-	RenderWebPage("index", "", w, r)
-}
-
-type ReferenceSummary struct {
-	Uri     assertions.HashUri
-	Summary string
-}
-
-func summariseAssertion(assertion assertions.Assertion, currentUri assertions.HashUri) string {
-	if assertion.Issuer == "" {
-		var err error
-		assertion, err = assertions.ParseAssertionJwt(assertion.Content())
-		if err != nil {
-			return "Error parsing JWT"
-		}
-	}
-
-	subjectUri := assertions.UriFromString(assertion.Subject)
-	if subjectUri.Equals(currentUri) {
-		issuer, _ := datastore.ActiveDataStore.FetchEntity(assertions.UriFromString(assertion.Issuer))
-		return fmt.Sprintf("%s asserts this %s", issuer.CommonName, assertion.Category)
-	}
-
-	issuerUri := assertions.UriFromString(assertion.Issuer)
-	if issuerUri.Equals(currentUri) {
-		statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.UriFromString(assertion.Subject))
-		return fmt.Sprintf("This entity asserts that statement %s %s", statement.Uri().Short(), assertion.Category)
-	}
-
-	return "Some kind of assertion"
-}
-
-func enrichReferences(uris []assertions.HashUri, currentUri assertions.HashUri) []ReferenceSummary {
-	summaries := make([]ReferenceSummary, 0)
-
-	for _, uri := range uris {
-		var summary string
-		switch uri.Kind() {
-		case "assertion":
-			assertion, _ := datastore.ActiveDataStore.FetchAssertion(uri)
-
-			summary = summariseAssertion(assertion, currentUri)
-		default:
-			summary = "unknown " + uri.Kind()
-		}
-		ref := ReferenceSummary{Uri: uri, Summary: summary}
-		summaries = append(summaries, ref)
-	}
-
-	return summaries
+	RenderWebPage("index", "", nil, w, r)
 }
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -167,14 +150,14 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(key, "statement"))
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(statement.Uri())
-	refs := enrichReferences(refUris, statement.Uri())
+	refs := assertions.EnrichReferences(refUris, statement.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
 		Uri        assertions.HashUri
 		ShortUri   string
 		Content    string
 		ApiLink    string
-		References []ReferenceSummary
+		References []assertions.ReferenceSummary
 	}{
 		Uri:        statement.Uri(),
 		ShortUri:   statement.Uri().Short(),
@@ -183,7 +166,12 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		References: refs,
 	}
 
-	RenderWebPage("viewstatement", data, w, r)
+	menu := []PageMenuItem{
+		{Text: "Raw", Target: statement.Uri().ApiPath()},
+		{Text: "Share", Target: "/web/share?hash=" + statement.Uri().Hash() + "&type=statement"},
+	}
+
+	RenderWebPage("viewstatement", data, menu, w, r)
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -227,7 +215,11 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		References:  make([]string, 0),
 	}
 
-	RenderWebPage("viewassertion", data, w, r)
+	menu := []PageMenuItem{
+		{Text: "Raw", Target: assertion.Uri().ApiPath()},
+	}
+
+	RenderWebPage("viewassertion", data, menu, w, r)
 }
 
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -241,7 +233,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(entity.Uri())
-	refs := enrichReferences(refUris, entity.Uri())
+	refs := assertions.EnrichReferences(refUris, entity.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
 		Uri        string
@@ -249,7 +241,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		CommonName string
 		ApiLink    string
 		PublicKey  string
-		References []ReferenceSummary
+		References []assertions.ReferenceSummary
 	}{
 		Uri:        uri.String(),
 		ShortUri:   uri.Short(),
@@ -259,7 +251,11 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		References: refs,
 	}
 
-	RenderWebPage("viewentity", data, w, r)
+	menu := []PageMenuItem{
+		{Text: "Raw", Target: entity.Uri().ApiPath()},
+	}
+
+	RenderWebPage("viewentity", data, menu, w, r)
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -275,7 +271,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		RenderWebPage("newstatementform", user, w, r)
+		RenderWebPage("newstatementform", user, nil, w, r)
 	} else if r.Method == "POST" {
 		log.Info("Creating new statement and assertion")
 		r.ParseForm()
@@ -346,7 +342,7 @@ func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
 		Results: results,
 	}
 
-	RenderWebPage("searchresults", data, w, r)
+	RenderWebPage("searchresults", data, nil, w, r)
 }
 
 func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -362,7 +358,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		RenderWebPage("newentityform", user, w, r)
+		RenderWebPage("newentityform", user, nil, w, r)
 	} else if r.Method == "POST" {
 		log.Info("Creating new entity and signing key")
 		r.ParseForm()
@@ -417,7 +413,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 			User:      user,
 		}
 
-		RenderWebPage("addassertionform", data, w, r)
+		RenderWebPage("addassertionform", data, nil, w, r)
 	} else if r.Method == "POST" {
 		log.Info("Creating new assertion for statement")
 		r.ParseForm()
@@ -460,4 +456,51 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
 	}
+}
+
+func SharePageWebHandler(w http.ResponseWriter, r *http.Request) {
+	hash := r.URL.Query().Get("hash")
+	kind := r.URL.Query().Get("type")
+
+	var prefix string
+	host := r.Host
+	if strings.Contains(host, "localhost") {
+		prefix = "http://" + host
+	} else {
+		prefix = "https://" + host
+	}
+
+	data := struct {
+		Url     string
+		QrCode  string
+		HashUri string
+	}{
+		Url:     prefix + "/web/" + kind + "s/" + hash,
+		QrCode:  prefix + "/web/qrcode?hash=" + hash + "&type=" + kind,
+		HashUri: "hash://sha256/" + hash + "?type=" + kind,
+	}
+
+	RenderWebPage("sharepage", data, nil, w, r)
+}
+
+func qrCodeGenerator(w http.ResponseWriter, r *http.Request) {
+	hash := r.URL.Query().Get("hash")
+	kind := r.URL.Query().Get("type")
+
+	var prefix string
+	host := r.Host
+	if strings.Contains(host, "localhost") {
+		prefix = "http://" + host
+	} else {
+		prefix = "https://" + host
+	}
+
+	uri := prefix + "/web/" + kind + "s/" + hash
+
+	headers := w.Header()
+	headers.Add("Content-Type", "image/png")
+	w.WriteHeader(http.StatusOK)
+
+	q, _ := qrcode.New(uri, qrcode.High)
+	q.Write(320, w)
 }
