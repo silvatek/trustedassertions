@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"crypto/rand"
@@ -13,25 +13,24 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
-	"silvatek.uk/trustedassertions/internal/web"
+	"silvatek.uk/trustedassertions/internal/testdata"
 	"silvatek.uk/trustedassertions/internal/webtest"
 )
 
 func setup(t *testing.T) *webtest.WebTest {
-	initLogging()
+	TemplateDir = "../../web"
 
-	web.TemplateDir = "../../web"
-	testDataDir = "../../testdata"
 	datastore.InitInMemoryDataStore()
 	assertions.PublicKeyResolver = datastore.ActiveDataStore
-	setupTestData()
 
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 	signer := assertions.NewEntity("Signing entity", *big.NewInt(123456))
 	signer.MakeCertificate(privateKey)
 	datastore.ActiveDataStore.Store(&signer)
 	datastore.ActiveDataStore.StoreKey(signer.Uri(), assertions.PrivateKeyToString(privateKey))
-	web.DefaultEntityUri = signer.Uri()
+	DefaultEntityUri = signer.Uri()
+
+	testdata.SetupTestData("../../testdata", signer.Uri().String(), assertions.PrivateKeyToString(privateKey))
 
 	wt := webtest.MakeWebTest(t)
 
@@ -39,10 +38,11 @@ func setup(t *testing.T) *webtest.WebTest {
 	wt.Passwd = "testing"
 	wt.User.HashPassword(wt.Passwd)
 	wt.User.KeyRefs = append(wt.User.KeyRefs, auth.KeyRef{UserId: wt.User.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
+	wt.AuthCookie, _ = MakeAuthCookie(*wt.User)
 	datastore.ActiveDataStore.StoreUser(*wt.User)
 
 	router := mux.NewRouter()
-	web.AddHandlers(router)
+	AddHandlers(router)
 
 	wt.Server = httptest.NewServer(router)
 

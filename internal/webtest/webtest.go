@@ -10,15 +10,15 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"silvatek.uk/trustedassertions/internal/auth"
-	"silvatek.uk/trustedassertions/internal/web"
 )
 
 type WebTest struct {
-	t      *testing.T
-	User   *auth.User
-	Server *httptest.Server
-	Passwd string
-	Client *http.Client
+	t          *testing.T
+	User       *auth.User
+	Server     *httptest.Server
+	Passwd     string
+	AuthCookie http.Cookie
+	Client     *http.Client
 }
 
 func (wt *WebTest) Close() {
@@ -51,7 +51,7 @@ func (wt *WebTest) GetPage(path string) *WebPage {
 	page := WebPage{url: url, wt: wt}
 
 	req, _ := http.NewRequest("GET", url, nil)
-	addAuthCookie(wt.User, req)
+	req.AddCookie(&wt.AuthCookie)
 
 	page.response, page.requestError = wt.Client.Do(req)
 
@@ -68,18 +68,11 @@ func (wt *WebTest) GetPage(path string) *WebPage {
 	return &page
 }
 
-func addAuthCookie(user *auth.User, req *http.Request) {
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	if user != nil {
-		cookie, _ := web.MakeAuthCookie(*user)
-		req.AddCookie(&cookie)
-	}
-}
-
 func (wt *WebTest) PostFormData(path string, data url.Values) *WebPage {
 	url := wt.Server.URL + path
 	req, _ := http.NewRequest("POST", url, strings.NewReader(data.Encode()))
-	addAuthCookie(wt.User, req)
+	req.AddCookie(&wt.AuthCookie)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	page := WebPage{url: url, wt: wt}
 
