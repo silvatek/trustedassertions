@@ -167,3 +167,14 @@ func TestBadLogin(t *testing.T) {
 	page = wt.postFormData("/web/login", url.Values{"user_id": {wt.user.Id}, "password": {"jkdfhskjfdshfk"}})
 	page.assertHtmlQuery(".error", "Unable to verify identity")
 }
+
+func TestQrCode(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.getPage("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f")
+	page.assertHtmlQuery("#content", "The universe exists")
+
+	page = wt.getPage("/web/share?hash=33fe9d5eedb329c5a662d3c206d8938a33f94795c3f715be0bcd53fbdcadc7e8&type=entity")
+	page.assertHtmlQuery("h2", "Share Item")
+}
