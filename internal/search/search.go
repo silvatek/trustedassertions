@@ -6,9 +6,6 @@ func SearchWords(text string) []string {
 	searchWords := make([]string, 0)
 	allWords := strings.Fields(text)
 	for _, word := range allWords {
-		if word == "" {
-			continue
-		}
 		word := strings.ToLower(word)
 		word = stripPunctuation(word)
 		if ignoredWord(word) {
@@ -42,12 +39,15 @@ func stripPunctuation(word string) string {
 	return stripped.String()
 }
 
+var roots = map[string]string{
+	"universal": "universe",
+	"exports":   "exports",
+}
+
 func wordRoot(word string) string {
-	if word == "universal" {
-		return "universe"
-	}
-	if word == "exports" {
-		return "export"
+	root, ok := roots[word]
+	if ok {
+		return root
 	}
 	return word
 }
