@@ -2,6 +2,7 @@ package webtest
 
 import (
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -32,6 +33,17 @@ type WebPage struct {
 	statusCode   int
 	htmlError    error
 	html         *goquery.Document
+}
+
+func MakeWebTest(t *testing.T) *WebTest {
+	wt := WebTest{}
+
+	jar, _ := cookiejar.New(nil)
+	wt.Client = &http.Client{
+		Jar: jar,
+	}
+
+	return &wt
 }
 
 func (wt *WebTest) GetPage(path string) *WebPage {

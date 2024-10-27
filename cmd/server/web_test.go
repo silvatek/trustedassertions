@@ -4,13 +4,12 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"math/big"
-	"net/http"
-	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
@@ -23,7 +22,9 @@ func setup(t *testing.T) *webtest.WebTest {
 
 	web.TemplateDir = "../../web"
 	testDataDir = "../../testdata"
-	initDataStore()
+	datastore.InitInMemoryDataStore()
+	assertions.PublicKeyResolver = datastore.ActiveDataStore
+	setupTestData()
 
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 	signer := assertions.NewEntity("Signing entity", *big.NewInt(123456))
@@ -32,12 +33,7 @@ func setup(t *testing.T) *webtest.WebTest {
 	datastore.ActiveDataStore.StoreKey(signer.Uri(), assertions.PrivateKeyToString(privateKey))
 	web.DefaultEntityUri = signer.Uri()
 
-	wt := webtest.WebTest{}
-
-	jar, _ := cookiejar.New(nil)
-	wt.Client = &http.Client{
-		Jar: jar,
-	}
+	wt := webtest.MakeWebTest(t)
 
 	wt.User = &auth.User{Id: "admin"}
 	wt.Passwd = "testing"
@@ -45,9 +41,12 @@ func setup(t *testing.T) *webtest.WebTest {
 	wt.User.KeyRefs = append(wt.User.KeyRefs, auth.KeyRef{UserId: wt.User.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
 	datastore.ActiveDataStore.StoreUser(*wt.User)
 
-	wt.Server = httptest.NewServer(setupHandlers())
+	router := mux.NewRouter()
+	web.AddHandlers(router)
 
-	return &wt
+	wt.Server = httptest.NewServer(router)
+
+	return wt
 }
 
 func TestHomePage(t *testing.T) {
