@@ -1,13 +1,11 @@
 package web
 
 import (
-	"crypto/rand"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
@@ -20,9 +18,7 @@ func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/login", LoginWebHandler)
 	r.HandleFunc("/web/logout", LogoutWebHandler)
 
-	// Make a key for signing JWTs
-	userJwtKey := make([]byte, 10)
-	rand.Reader.Read(userJwtKey)
+	userJwtKey = auth.MakeJwtKey()
 }
 
 func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -59,24 +55,10 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MakeAuthCookie(user auth.User) (http.Cookie, error) {
-	jwt, err := MakeUserJwt(user)
+	jwt, err := auth.MakeUserJwt(user, userJwtKey)
 	expiration := time.Now().Add(1 * time.Hour)
 	cookie := http.Cookie{Name: "auth", Path: "/", Value: jwt, Expires: expiration, SameSite: http.SameSiteStrictMode}
 	return cookie, err
-}
-
-func MakeUserJwt(user auth.User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"iss": "trustedassertions",
-			"sub": user.Id,
-		})
-	signed, err := token.SignedString(userJwtKey)
-	if err != nil {
-		return "", err
-	}
-
-	return signed, nil
 }
 
 func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {

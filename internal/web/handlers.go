@@ -10,7 +10,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
@@ -127,16 +126,11 @@ func authUser(r *http.Request) string {
 	if err != nil {
 		return ""
 	}
-	userToken, err := jwt.Parse(cookie.Value,
-		func(token *jwt.Token) (interface{}, error) {
-			return userJwtKey, nil
-		},
-	)
+	userName, err := auth.ParseUserJwt(cookie.Value, userJwtKey)
 	if err != nil {
 		log.Errorf("Error parsing user JWT: %v", err)
 		return ""
 	}
-	userName, _ := userToken.Claims.GetSubject()
 	return userName
 }
 
