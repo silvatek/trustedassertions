@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/auth"
@@ -47,23 +46,17 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		cookie, _ := MakeAuthCookie(user)
-		http.SetCookie(w, &cookie)
+		SetAuthCookie(userId, w)
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
-func MakeAuthCookie(user auth.User) (http.Cookie, error) {
-	jwt, err := auth.MakeUserJwt(user, userJwtKey)
-	expiration := time.Now().Add(1 * time.Hour)
-	cookie := http.Cookie{Name: "auth", Path: "/", Value: jwt, Expires: expiration, SameSite: http.SameSiteStrictMode}
-	return cookie, err
-}
-
 func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := http.Cookie{Name: "auth", Path: "/", Value: "", MaxAge: -1, SameSite: http.SameSiteStrictMode}
 	http.SetCookie(w, &cookie)
+
+	log.Debug("Cleared auth cookie")
 
 	RenderWebPage("loggedout", "", nil, w, r)
 }

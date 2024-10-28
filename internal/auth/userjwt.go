@@ -16,13 +16,13 @@ func MakeJwtKey() []byte {
 	return key
 }
 
-func MakeUserJwt(user User, jwtKey []byte) (string, error) {
+func MakeUserJwt(userId string, jwtKey []byte) (string, error) {
 	ttl := 1 * time.Hour
 
 	claims := jwt.MapClaims{
 		"iss": ISSUER,
 		"aud": ISSUER,
-		"sub": user.Id,
+		"sub": userId,
 		"iat": time.Now().UTC().Unix(),
 		"exp": time.Now().UTC().Add(ttl).Unix(),
 	}

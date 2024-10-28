@@ -3,10 +3,9 @@ package auth
 import "testing"
 
 func TestJwtRoundTrip(t *testing.T) {
-	user := User{Id: "Tester"}
 	key := MakeJwtKey()
 
-	jwt, err := MakeUserJwt(user, key)
+	jwt, err := MakeUserJwt("Tester", key)
 	if err != nil {
 		t.Errorf("Error making JWT: %v", err)
 	}

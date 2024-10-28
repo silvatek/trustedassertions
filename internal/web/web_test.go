@@ -34,15 +34,15 @@ func setup(t *testing.T) *webtest.WebTest {
 
 	wt := webtest.MakeWebTest(t)
 
+	router := mux.NewRouter()
+	AddHandlers(router)
+
 	wt.User = &auth.User{Id: "admin"}
 	wt.Passwd = "testing"
 	wt.User.HashPassword(wt.Passwd)
 	wt.User.KeyRefs = append(wt.User.KeyRefs, auth.KeyRef{UserId: wt.User.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
-	wt.AuthCookie, _ = MakeAuthCookie(*wt.User)
+	wt.AuthCookie = MakeAuthCookie(wt.User.Id)
 	datastore.ActiveDataStore.StoreUser(*wt.User)
-
-	router := mux.NewRouter()
-	AddHandlers(router)
 
 	wt.Server = httptest.NewServer(router)
 
@@ -182,6 +182,8 @@ func TestSearch(t *testing.T) {
 func TestLoginLogout(t *testing.T) {
 	wt := setup(t)
 	defer wt.Close()
+
+	wt.AuthCookie = nil
 
 	page := wt.GetPage("/web/login")
 	page.AssertNoCookie("auth")

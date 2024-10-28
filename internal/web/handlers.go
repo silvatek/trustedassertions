@@ -74,6 +74,10 @@ func RenderWebPageWithStatus(pageName string, data interface{}, menu []PageMenuI
 		Detail:   data,
 	}
 
+	if username != "" && pageName != "loggedout" {
+		SetAuthCookie(username, w) // Refresh the auth cookie
+	}
+
 	leftMenu := PageMenu{}
 	if pageName != "index" {
 		leftMenu.AddLink("Home", "/")

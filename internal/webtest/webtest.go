@@ -17,7 +17,7 @@ type WebTest struct {
 	User       *auth.User
 	Server     *httptest.Server
 	Passwd     string
-	AuthCookie http.Cookie
+	AuthCookie *http.Cookie
 	Client     *http.Client
 }
 
@@ -36,7 +36,7 @@ type WebPage struct {
 }
 
 func MakeWebTest(t *testing.T) *WebTest {
-	wt := WebTest{}
+	wt := WebTest{t: t}
 
 	jar, _ := cookiejar.New(nil)
 	wt.Client = &http.Client{
@@ -51,7 +51,9 @@ func (wt *WebTest) GetPage(path string) *WebPage {
 	page := WebPage{url: url, wt: wt}
 
 	req, _ := http.NewRequest("GET", url, nil)
-	req.AddCookie(&wt.AuthCookie)
+	if wt.AuthCookie != nil {
+		req.AddCookie(wt.AuthCookie)
+	}
 
 	page.response, page.requestError = wt.Client.Do(req)
 
@@ -71,7 +73,9 @@ func (wt *WebTest) GetPage(path string) *WebPage {
 func (wt *WebTest) PostFormData(path string, data url.Values) *WebPage {
 	url := wt.Server.URL + path
 	req, _ := http.NewRequest("POST", url, strings.NewReader(data.Encode()))
-	req.AddCookie(&wt.AuthCookie)
+	if wt.AuthCookie != nil {
+		req.AddCookie(wt.AuthCookie)
+	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	page := WebPage{url: url, wt: wt}
@@ -150,7 +154,9 @@ func (page *WebPage) AssertNoCookie(name string) {
 
 	for _, cookie := range page.wt.Client.Jar.Cookies(url) {
 		if cookie.Name == name {
-			page.wt.t.Errorf("`%s` cookie found", name)
+			if cookie.Value != "" {
+				page.wt.t.Errorf("`%s` cookie found", name)
+			}
 		}
 	}
 
