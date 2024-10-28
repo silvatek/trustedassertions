@@ -63,7 +63,6 @@ Any number of trust models can be created from the same set of assertions, and i
 * Mobile web views
 * Secure management of private keys
 * Access control
-* User JWT refresh
 * User management
 
 ### Done
@@ -84,6 +83,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * Add NotFoundHandler
 * Resolver interface
 * QR Codes for statement, entity and assertion pages 
+* User JWT refresh
 
 ## Implementation Details
 
