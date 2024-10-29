@@ -1,6 +1,7 @@
 package docs
 
 import (
+	"crypto/sha256"
 	"encoding/xml"
 	"os"
 
@@ -8,9 +9,11 @@ import (
 )
 
 type Document struct {
-	XMLName  xml.Name  `xml:"document"`
-	Metadata MetaData  `xml:"metadata"`
-	Sections []Section `xml:"section"`
+	uri      assertions.HashUri `xml:"-"`
+	text     string             `xml:"-"`
+	XMLName  xml.Name           `xml:"document"`
+	Metadata MetaData           `xml:"metadata"`
+	Sections []Section          `xml:"section"`
 }
 
 type MetaData struct {
@@ -44,13 +47,36 @@ type Span struct {
 func LoadDocument(filename string) (*Document, error) {
 	var doc Document
 
-	text, err := os.ReadFile(filename)
+	buf, err := os.ReadFile(filename)
+
+	doc.text = string(buf)
 
 	if err == nil {
-		err = xml.Unmarshal([]byte(text), &doc)
+		err = xml.Unmarshal(buf, &doc)
 	}
 
 	return &doc, err
+}
+
+func (d *Document) Uri() assertions.HashUri {
+	if d.uri.IsEmpty() {
+		hash := sha256.New()
+		hash.Write([]byte(d.text))
+		d.uri = assertions.MakeUriB(hash.Sum(nil), "document")
+	}
+	return d.uri
+}
+
+func (d Document) Type() string {
+	return "Document"
+}
+
+func (d Document) Content() string {
+	return d.text
+}
+
+func (d Document) Summary() string {
+	return "Test Document"
 }
 
 func (doc *Document) ToHtml() string {
