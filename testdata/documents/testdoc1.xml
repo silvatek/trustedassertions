@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+	<metadata>
+		<author entity="hash://sha256/177ed36580cf1ed395e1d0d3a7709993ac1599ee844dc4cf5b9573a1265df2db?type=entity">Mr Tester</author>
+        <title>Universal Truths</title>
+	</metadata>
+	<section>
+        <title>About the Universe</title>
+		<paragraph>
+			<span>What do we know about the universe? </span>
+			<span statement="hash://sha256/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f?type=statement">The universe exists</span>
+            <span>, as far as we can tell.</span>
+		</paragraph>
+		<paragraph>
+			<span>This may seem obvious, but we need to start somewhere.</span>
+		</paragraph>
+	</section>
+</document>

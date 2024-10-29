@@ -14,6 +14,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
+	"silvatek.uk/trustedassertions/internal/docs"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
@@ -34,6 +35,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/search", SearchWebHandler)
 	r.HandleFunc("/web/share", SharePageWebHandler)
 	r.HandleFunc("/web/qrcode", qrCodeGenerator)
+	r.HandleFunc("/web/doc", DocumentWebHandler)
 
 	r.NotFoundHandler = http.HandlerFunc(NotFoundWebHandler)
 
@@ -455,4 +457,18 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
 	}
+}
+
+func DocumentWebHandler(w http.ResponseWriter, r *http.Request) {
+	doc, _ := docs.LoadDocument("testdata/documents/testdoc1.xml")
+
+	docData := struct {
+		Title   string
+		DocHtml string
+	}{
+		Title:   "Testing",
+		DocHtml: doc.ToHtml(),
+	}
+
+	RenderWebPage("viewdocument", docData, nil, w, r)
 }
