@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/xml"
 	"os"
+	"strings"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 )
@@ -18,6 +19,7 @@ type Document struct {
 
 type MetaData struct {
 	XMLName xml.Name `xml:"metadata"`
+	Title   string   `xml:"title"`
 }
 
 type Section struct {
@@ -83,7 +85,7 @@ func (d Document) Content() string {
 }
 
 func (d Document) Summary() string {
-	return "Test Document"
+	return d.Metadata.Title
 }
 
 func (doc *Document) ToHtml() string {
@@ -109,4 +111,25 @@ func (doc *Document) ToHtml() string {
 		html = html + "\n</div>"
 	}
 	return html
+}
+
+func (doc *Document) TextContent() string {
+	var sb strings.Builder
+
+	sb.WriteString(doc.Metadata.Title)
+	sb.WriteString(" ")
+
+	for _, sect := range doc.Sections {
+		if sect.Title != nil {
+			sb.WriteString(sect.Title.Text)
+			sb.WriteString(" ")
+		}
+		for _, para := range sect.Paragraphs {
+			for _, span := range para.Spans {
+				sb.WriteString(span.Body)
+				sb.WriteString(" ")
+			}
+		}
+	}
+	return sb.String()
 }

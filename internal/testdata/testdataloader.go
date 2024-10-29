@@ -2,7 +2,6 @@ package testdata
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"os"
 	"strings"
 
@@ -48,21 +47,39 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 			continue
 		}
 
-		var uri assertions.HashUri
-		if calcHash {
-			content := NormalizeNewlines(content)
-			hash := sha256.New()
-			hash.Write(content)
-			uri = assertions.MakeUriB(hash.Sum(nil), dataType)
-			if dataType == "Document" {
-				docs.DefaultDocumentUri = uri
-			}
-		} else {
-			hash := strings.TrimSuffix(file.Name(), ".txt")
-			uri = assertions.MakeUri(hash, dataType)
+		var item assertions.Referenceable
+		switch dataType {
+		case "Statement":
+			item = assertions.NewStatement(string(content))
+		case "Entity":
+			e := assertions.ParseCertificate(string(content))
+			item = &e
+		case "Assertion":
+			a, _ := assertions.ParseAssertionJwt(string(content))
+			item = &a
+		case "Document":
+			item, _ = docs.MakeDocument(string(content))
+		default:
+			panic(-1)
 		}
 
-		datastore.ActiveDataStore.StoreRaw(uri, string(content))
+		datastore.ActiveDataStore.Store(item)
+
+		// var uri assertions.HashUri
+		// if calcHash {
+		// 	content := NormalizeNewlines(content)
+		// 	hash := sha256.New()
+		// 	hash.Write(content)
+		// 	uri = assertions.MakeUriB(hash.Sum(nil), dataType)
+		// 	if dataType == "Document" {
+		// 		docs.DefaultDocumentUri = uri
+		// 	}
+		// } else {
+		// 	hash := strings.TrimSuffix(file.Name(), ".txt")
+		// 	uri = assertions.MakeUri(hash, dataType)
+		// }
+
+		//datastore.ActiveDataStore.StoreRaw(uri, string(content))
 
 		if strings.ToLower(dataType) == "assertion" {
 			addAssertionReferences(string(content))

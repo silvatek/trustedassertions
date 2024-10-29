@@ -13,7 +13,7 @@ func NewStatement(content string) Statement {
 	return Statement{content: content}
 }
 
-func (s *Statement) Uri() HashUri {
+func (s Statement) Uri() HashUri {
 	if s.uri.IsEmpty() {
 		hash := sha256.New()
 		hash.Write([]byte(s.content))
@@ -31,5 +31,9 @@ func (s Statement) Content() string {
 }
 
 func (s Statement) Summary() string {
+	return s.content
+}
+
+func (s Statement) TextContent() string {
 	return s.content
 }

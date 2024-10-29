@@ -24,31 +24,21 @@ func TestStripPunctuation(t *testing.T) {
 
 func TestSearchWords(t *testing.T) {
 	data := map[string][]string{
-		"":               {},
-		" \t\n ":         {},
-		"test":           {"test"},
-		"Test":           {"test"},
-		"Test Words":     {"test", "words"},
-		"But nothing":    {"nothing"},
-		"Universal jobs": {"universe", "jobs"},
-		"Question? Mark": {"question", "mark"},
+		"":                {},
+		" \t\n ":          {},
+		"test":            {"test"},
+		"Test":            {"test"},
+		"Test Words":      {"test", "words"},
+		"But nothing":     {"nothing"},
+		"Universal jobs":  {"jobs", "universe"},
+		"Question? Mark":  {"mark", "question"},
+		"Question ? Mark": {"mark", "question"},
+		"Red Blue Red":    {"blue", "red"},
 	}
 	for input, expected := range data {
 		output := SearchWords(input)
-		if !equal(output, expected) {
+		if !WordsEqual(output, expected) {
 			t.Errorf("Unexpected output for `%s`: %v", input, output)
 		}
 	}
-}
-
-func equal(a []string, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, val := range a {
-		if b[i] != val {
-			return false
-		}
-	}
-	return true
 }

@@ -102,6 +102,10 @@ func (a *Assertion) Summary() string {
 	return a.Category + " Assertion"
 }
 
+func (a *Assertion) TextContent() string {
+	return "" // Assertions aren't directly searchable
+}
+
 func (a *Assertion) SetAssertingEntity(entity Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
 }

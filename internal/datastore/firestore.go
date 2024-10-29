@@ -66,7 +66,7 @@ func (fs *FireStore) store(collection string, id string, data map[string]interfa
 	}
 }
 
-func rawDataMap(uri assertions.HashUri, content string, summary string) map[string]interface{} {
+func rawDataMap(uri assertions.HashUri, content string, summary string, searchText string) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["uri"] = uri.String()
@@ -76,10 +76,9 @@ func rawDataMap(uri assertions.HashUri, content string, summary string) map[stri
 
 	if summary != "" {
 		data["summary"] = summary
-
-		if uri.Kind() != "assertion" {
-			data["words"] = search.SearchWords(summary)
-		}
+	}
+	if searchText != "" {
+		data["words"] = search.SearchWords(searchText)
 	}
 
 	return data
@@ -90,14 +89,14 @@ func contentDataMap(value assertions.Referenceable) map[string]interface{} {
 	if value.Type() != "" && !uri.HasType() {
 		uri = uri.WithType(value.Type())
 	}
-	data := rawDataMap(uri, value.Content(), value.Summary())
+	data := rawDataMap(uri, value.Content(), value.Summary(), value.TextContent())
 	return data
 }
 
 func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	log.Debugf("Writing to datastore: %s", uri)
 
-	fs.store(MainCollection, uri.Escaped(), rawDataMap(uri, content, ""))
+	fs.store(MainCollection, uri.Escaped(), rawDataMap(uri, content, "", ""))
 }
 
 func (fs *FireStore) Store(value assertions.Referenceable) {

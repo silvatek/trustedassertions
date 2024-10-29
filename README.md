@@ -7,8 +7,9 @@ The core data model consists of three main data types:-
 * A `Statement` is some text, identified by a hash of its content, about which assertions can be made by entities.
 * An `Entity` is an X509 certificate, identified by its serial number, representing an individual or organisation.
 * An `Assertion` is a JSON Web Token, identified by its signature, containing claims made by an Entity about a Statement or another Assertion.
+* A `Document` is structured XML that links a set of assertions into a single coherent narritive.
 
-The data in the core data model is immutable; data is only added, never modified. It is content-addressable; the data should be stored in its plain-text representation, and accessed using a URI built from a hash of that text.
+The data in the core data model is immutable; data is only added, never modified. It is content-addressable; the data should be stored in its plain-text (UTF-8, Unix newlines) representation, and accessed using a URI built from a hash of that text.
 
 In addition to these core data types, there is also the `Reference` which is a combination of a target, a source and a reference type. References are identified from within assertions and stored separately as a form of index.
 
@@ -59,31 +60,36 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Things to Do
 
-* SubjectType and ObjectType claims in assertions, or auto-detect type
 * Mobile web views
 * Secure management of private keys
 * Access control
 * User management
+* Add new document
+* Documents reference assertion not statement
+* Auto-create statements and assertions from documents
+* Document schema
+* Document search
+* Web tests for documents
 
 ### Done
 
-* Initial framework
-* Minimal API
-* Firestore data store
-* Structured logging
-* Initial web UI
-* Web UI to create statement & assertion
-* Error handling
-* Basic stylesheets
-* User authentication
-* Logout page
-* Basic search
-* Web page to create new entity
-* Web page for adding assertion to existing statements etc
-* Add NotFoundHandler
-* Resolver interface
-* QR Codes for statement, entity and assertion pages 
-* User JWT refresh
+* ~~Initial framework~~
+* ~~Minimal API~~
+* ~~Firestore data store~~
+* ~~Structured logging~~
+* ~~Initial web UI~~
+* ~~Web UI to create statement & assertion~~
+* ~~Error handling~~
+* ~~Basic stylesheets~~
+* ~~User authentication~~
+* ~~Logout page~~
+* ~~Basic search~~
+* ~~Web page to create new entity~~
+* ~~Web page for adding assertion to existing statements etc~~
+* ~~Add NotFoundHandler~~
+* ~~Resolver interface~~
+* ~~QR Codes for statement entity, and assertion pages~~
+* ~~User JWT refresh~~
 
 ## Implementation Details
 
