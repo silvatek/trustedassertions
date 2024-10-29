@@ -45,18 +45,25 @@ type Span struct {
 }
 
 func LoadDocument(filename string) (*Document, error) {
-	var doc Document
-
 	buf, err := os.ReadFile(filename)
 
-	doc.text = string(buf)
-
 	if err == nil {
-		err = xml.Unmarshal(buf, &doc)
+		return MakeDocument(string(buf))
+	} else {
+		return nil, err
 	}
+}
+
+func MakeDocument(content string) (*Document, error) {
+	var doc Document
+
+	doc.text = content
+	err := xml.Unmarshal([]byte(content), &doc)
 
 	return &doc, err
 }
+
+var DefaultDocumentUri assertions.HashUri
 
 func (d *Document) Uri() assertions.HashUri {
 	if d.uri.IsEmpty() {

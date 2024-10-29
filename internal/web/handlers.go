@@ -24,14 +24,15 @@ var DefaultEntityUri assertions.HashUri
 
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)
-	r.HandleFunc("/web/statements/{key}", ViewStatementWebHandler)
-	r.HandleFunc("/web/entities/{key}", ViewEntityWebHandler)
-	r.HandleFunc("/web/assertions/{key}", ViewAssertionWebHandler)
+	r.HandleFunc("/web/statements/{hash}", ViewStatementWebHandler)
+	r.HandleFunc("/web/entities/{hash}", ViewEntityWebHandler)
+	r.HandleFunc("/web/assertions/{hash}", ViewAssertionWebHandler)
+	r.HandleFunc("/web/documents/{hash}", ViewDocumentWebHandler)
 	r.HandleFunc("/web/broken", ErrorTestHandler)
 	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 	r.HandleFunc("/web/newentity", NewEntityWebHandler)
-	r.HandleFunc("/web/statements/{key}/addassertion", AddStatementAssertionWebHandler)
+	r.HandleFunc("/web/statements/{hash}/addassertion", AddStatementAssertionWebHandler)
 	r.HandleFunc("/web/search", SearchWebHandler)
 	r.HandleFunc("/web/share", SharePageWebHandler)
 	r.HandleFunc("/web/qrcode", qrCodeGenerator)
@@ -141,11 +142,17 @@ func authUser(r *http.Request) string {
 }
 
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
-	RenderWebPage("index", "", nil, w, r)
+	data := struct {
+		DefaultDocument assertions.HashUri
+	}{
+		DefaultDocument: docs.DefaultDocumentUri,
+	}
+
+	RenderWebPage("index", data, nil, w, r)
 }
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
-	key := mux.Vars(r)["key"]
+	key := mux.Vars(r)["hash"]
 	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(key, "statement"))
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(statement.Uri())
@@ -174,7 +181,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
-	key := mux.Vars(r)["key"]
+	key := mux.Vars(r)["hash"]
 	uri := assertions.MakeUri(key, "assertion")
 	assertion, _ := datastore.ActiveDataStore.FetchAssertion(uri)
 
@@ -223,7 +230,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
-	key := mux.Vars(r)["key"]
+	key := mux.Vars(r)["hash"]
 
 	uri := assertions.MakeUri(key, "entity")
 	entity, err := datastore.ActiveDataStore.FetchEntity(uri)
@@ -257,6 +264,28 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RenderWebPage("viewentity", data, menu, w, r)
+}
+
+func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
+	key := mux.Vars(r)["hash"]
+	document, _ := datastore.ActiveDataStore.FetchDocument(assertions.MakeUri(key, "document"))
+
+	// document, _ := docs.LoadDocument("testdata/documents/testdoc1.xml")
+
+	data := struct {
+		Title   string
+		DocHtml string
+	}{
+		Title:   "Testing",
+		DocHtml: document.ToHtml(),
+	}
+
+	// menu := []PageMenuItem{
+	// 	{Text: "Raw", Target: document.Uri().ApiPath()},
+	// 	{Text: "Share", Target: "/web/share?hash=" + document.Uri().Hash() + "&type=statement"},
+	// }
+
+	RenderWebPage("viewdocument", data, nil, w, r)
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -396,7 +425,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statementHash := mux.Vars(r)["key"]
+	statementHash := mux.Vars(r)["hash"]
 
 	if r.Method == "GET" {
 		statement, err := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(statementHash, "statement"))

@@ -6,6 +6,7 @@ import (
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
+	"silvatek.uk/trustedassertions/internal/docs"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
@@ -20,6 +21,7 @@ type DataStore interface {
 	FetchStatement(key assertions.HashUri) (assertions.Statement, error)
 	FetchEntity(key assertions.HashUri) (assertions.Entity, error)
 	FetchAssertion(key assertions.HashUri) (assertions.Assertion, error)
+	FetchDocument(key assertions.HashUri) (docs.Document, error)
 	FetchKey(entityUri assertions.HashUri) (string, error)
 	FetchRefs(key assertions.HashUri) ([]assertions.HashUri, error)
 	FetchUser(id string) (auth.User, error)
@@ -111,6 +113,12 @@ func (ds *InMemoryDataStore) FetchAssertion(key assertions.HashUri) (assertions.
 		log.Errorf("Error parsing assertion JWT: %v", err)
 	}
 	return assertion, err
+}
+
+func (ds *InMemoryDataStore) FetchDocument(key assertions.HashUri) (docs.Document, error) {
+	content := ds.data[key.Escaped()]
+	doc, _ := docs.MakeDocument(content)
+	return *doc, nil
 }
 
 func (ds *InMemoryDataStore) FetchKey(entityUri assertions.HashUri) (string, error) {

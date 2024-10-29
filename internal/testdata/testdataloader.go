@@ -1,6 +1,7 @@
 package testdata
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"os"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
+	"silvatek.uk/trustedassertions/internal/docs"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
@@ -48,9 +50,13 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 
 		var uri assertions.HashUri
 		if calcHash {
+			content := NormalizeNewlines(content)
 			hash := sha256.New()
 			hash.Write(content)
 			uri = assertions.MakeUriB(hash.Sum(nil), dataType)
+			if dataType == "Document" {
+				docs.DefaultDocumentUri = uri
+			}
 		} else {
 			hash := strings.TrimSuffix(file.Name(), ".txt")
 			uri = assertions.MakeUri(hash, dataType)
@@ -64,6 +70,15 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 	}
 }
 
+// NormalizeNewlines normalizes \r\n (windows) and \r (mac)
+// into \n (unix)
+func NormalizeNewlines(d []byte) []byte {
+	// replace CR LF \r\n (windows) with LF \n (unix)
+	d = bytes.Replace(d, []byte{13, 10}, []byte{10}, -1)
+	// replace CF \r (mac) with LF \n (unix)
+	d = bytes.Replace(d, []byte{13}, []byte{10}, -1)
+	return d
+}
 func addAssertionReferences(content string) {
 	a, _ := assertions.ParseAssertionJwt(content)
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")

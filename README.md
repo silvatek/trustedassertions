@@ -16,7 +16,7 @@ For servers that will be creating new Entities or Assertions, it will also be ne
 
 
 ### Data URIs
-URIs for statements, entities and assertions are based on a digital hash of the content. The content for statements is the text, for entities it is the X509 certificate text, and for assertions it is the JWT text.
+URIs for statements, entities and assertions are based on a digital hash of the content. The content for statements is the text, for entities it is the X509 certificate text, and for assertions it is the JWT text. Newlines are converted to Unix format (`\n`) prior to hashing, and the representation is UTF-8.
 
 See https://github.com/hash-uri/hash-uri
 
