@@ -168,10 +168,11 @@ func (ds *InMemoryDataStore) FetchUser(id string) (auth.User, error) {
 
 func (ds *InMemoryDataStore) Search(query string) ([]SearchResult, error) {
 	results := make([]SearchResult, 0)
+	query = strings.ToLower(query)
 	for key, value := range ds.data {
 		if strings.Contains(strings.ToLower(value), query) {
 			result := SearchResult{
-				Uri:       assertions.UnescapeUri(key, "statement"),
+				Uri:       assertions.UnescapeUri(key, assertions.GuessContentType(value)),
 				Content:   value,
 				Relevance: 0.8,
 			}

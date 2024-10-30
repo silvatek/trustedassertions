@@ -1,6 +1,17 @@
 {{define "content"}}		
         <h2>View Document</h2>
-        <h3>{{.Detail.Title}}</h3>
+        <div class="fieldset">
+                <div class="fieldprompt">Title:</div>
+                <div id="title" class="fieldvalue">{{.Detail.Doc.Metadata.Title}}</div>
+
+                <div class="fieldprompt">Author:</div>
+                <div id="author" class="fieldvalue" disabled>
+                        <a href="{{.Detail.AuthorUri.WebPath}}">{{.Detail.Doc.Metadata.Author.Name}}</a>
+                </div>   
+
+                <div class="fieldprompt">Keywords:</div>
+                <div id="keywords" class="fieldvalue" disabled>{{.Detail.Doc.Metadata.Keywords}}</div>   
+        </div>
         <hr>
         {{.Detail.DocHtml}}
 {{end}}

@@ -36,7 +36,6 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/search", SearchWebHandler)
 	r.HandleFunc("/web/share", SharePageWebHandler)
 	r.HandleFunc("/web/qrcode", qrCodeGenerator)
-	r.HandleFunc("/web/doc", DocumentWebHandler)
 
 	r.NotFoundHandler = http.HandlerFunc(NotFoundWebHandler)
 
@@ -273,11 +272,15 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 	// document, _ := docs.LoadDocument("testdata/documents/testdoc1.xml")
 
 	data := struct {
-		Title   string
-		DocHtml string
+		Doc       docs.Document
+		Title     string
+		DocHtml   string
+		AuthorUri assertions.HashUri
 	}{
-		Title:   "Testing",
-		DocHtml: document.ToHtml(),
+		Doc:       document,
+		Title:     "Testing",
+		DocHtml:   document.ToHtml(),
+		AuthorUri: assertions.UriFromString(document.Metadata.Author.Entity),
 	}
 
 	// menu := []PageMenuItem{
@@ -486,18 +489,4 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
 	}
-}
-
-func DocumentWebHandler(w http.ResponseWriter, r *http.Request) {
-	doc, _ := docs.LoadDocument("testdata/documents/testdoc1.xml")
-
-	docData := struct {
-		Title   string
-		DocHtml string
-	}{
-		Title:   "Testing",
-		DocHtml: doc.ToHtml(),
-	}
-
-	RenderWebPage("viewdocument", docData, nil, w, r)
 }

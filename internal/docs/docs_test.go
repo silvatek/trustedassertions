@@ -40,7 +40,7 @@ func TestTestPoc1(t *testing.T) {
 
 	words := search.SearchWords(doc.TextContent())
 
-	if !search.WordsEqual(words, []string{"about", "appear", "begin", "can", "do", "exist", "far", "know", "may", "need", "obvious", "somewhere", "tell", "truth", "universe", "what"}) {
+	if !search.WordsEqual(words, []string{"about", "appear", "begin", "can", "do", "exist", "far", "gl93j73c", "know", "may", "mr", "need", "obvious", "somewhere", "tell", "tester", "truth", "universe", "what"}) {
 		t.Errorf("Unexpected %v", words)
 	}
 

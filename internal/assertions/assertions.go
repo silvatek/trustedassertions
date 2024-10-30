@@ -123,6 +123,9 @@ func GuessContentType(content string) string {
 		// Assertion JWTs start with bas64-encoded "{"
 		return "Assertion"
 	}
+	if strings.HasPrefix(content, "<?xml") && strings.Contains(content, "<document>") {
+		return "Document"
+	}
 	return "Statement"
 }
 

@@ -18,8 +18,16 @@ type Document struct {
 }
 
 type MetaData struct {
-	XMLName xml.Name `xml:"metadata"`
-	Title   string   `xml:"title"`
+	XMLName  xml.Name `xml:"metadata"`
+	Author   Author   `xml:"author"`
+	Title    string   `xml:"title"`
+	Keywords string   `xml:"keywords"`
+}
+
+type Author struct {
+	XMLName xml.Name `xml:"author"`
+	Entity  string   `xml:"entity,attr"`
+	Name    string   `xml:",chardata"`
 }
 
 type Section struct {
@@ -43,6 +51,7 @@ type Paragraph struct {
 type Span struct {
 	XMLName   xml.Name `xml:"span"`
 	Statement string   `xml:"statement,attr"`
+	Assertion string   `xml:"assertion,attr"`
 	Body      string   `xml:",chardata"`
 }
 
@@ -99,7 +108,10 @@ func (doc *Document) ToHtml() string {
 		for _, para := range sect.Paragraphs {
 			html = html + "\n   <div class='docpara'>\n      "
 			for _, span := range para.Spans {
-				if span.Statement != "" {
+				if span.Assertion != "" {
+					uri := assertions.UriFromString(span.Assertion)
+					html = html + "<a href='" + uri.WebPath() + "'>" + span.Body + "</a>"
+				} else if span.Statement != "" {
 					uri := assertions.UriFromString(span.Statement)
 					html = html + "<a href='" + uri.WebPath() + "'>" + span.Body + "</a>"
 				} else {
@@ -117,6 +129,10 @@ func (doc *Document) TextContent() string {
 	var sb strings.Builder
 
 	sb.WriteString(doc.Metadata.Title)
+	sb.WriteString(" ")
+	sb.WriteString(doc.Metadata.Author.Name)
+	sb.WriteString(" ")
+	sb.WriteString(doc.Metadata.Keywords)
 	sb.WriteString(" ")
 
 	for _, sect := range doc.Sections {

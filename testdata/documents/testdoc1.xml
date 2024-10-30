@@ -3,12 +3,13 @@
 	<metadata>
 		<author entity="hash://sha256/177ed36580cf1ed395e1d0d3a7709993ac1599ee844dc4cf5b9573a1265df2db?type=entity">Mr Tester</author>
         <title>Universal Truths</title>
+		<keywords>GL93J73C</keywords>
 	</metadata>
 	<section>
         <title>About the Universe</title>
 		<paragraph>
 			<span>What do we know about the universe? </span>
-			<span statement="hash://sha256/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f?type=statement">The universe exists</span>
+			<span assertion="hash://sha256/514518bb09d57524bc6b96842721e4c4404cb4a3329aadf1761bb3eddb2832da?type=assertion">The universe exists</span>
             <span>, as far as we can tell.</span>
 		</paragraph>
 		<paragraph>
