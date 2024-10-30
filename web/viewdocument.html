@@ -12,6 +12,8 @@
                 <div class="fieldprompt">Keywords:</div>
                 <div id="keywords" class="fieldvalue" disabled>{{.Detail.Doc.Metadata.Keywords}}</div>   
         </div>
-        <hr>
-        {{.Detail.DocHtml}}
+        
+        <div class="docview">
+                {{.Detail.DocHtml}}
+        </div>
 {{end}}
