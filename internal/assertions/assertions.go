@@ -55,10 +55,13 @@ func ParseAssertionJwt(token string) (Assertion, error) {
 	}
 
 	parsed, err := jwt.ParseWithClaims(token, &template, verificationKey)
+	if err != nil {
+		return template, err
+	}
 
 	if assertion, ok := parsed.Claims.(*Assertion); ok && parsed.Valid {
 		assertion.content = token
-		return *assertion, err
+		return *assertion, nil
 	} else {
 		return *assertion, errors.New("unable to parse JWT claims")
 	}
