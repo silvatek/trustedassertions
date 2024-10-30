@@ -8,7 +8,6 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
-	"silvatek.uk/trustedassertions/internal/docs"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
@@ -58,7 +57,7 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 			a, _ := assertions.ParseAssertionJwt(string(content))
 			item = &a
 		case "Document":
-			item, _ = docs.MakeDocument(string(content))
+			item, _ = assertions.MakeDocument(string(content))
 		default:
 			panic(-1)
 		}

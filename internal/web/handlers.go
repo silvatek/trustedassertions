@@ -14,7 +14,6 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
-	"silvatek.uk/trustedassertions/internal/docs"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
@@ -144,7 +143,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		DefaultDocument assertions.HashUri
 	}{
-		DefaultDocument: docs.DefaultDocumentUri,
+		DefaultDocument: assertions.DefaultDocumentUri,
 	}
 
 	RenderWebPage("index", data, nil, w, r)
@@ -272,10 +271,8 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["hash"]
 	document, _ := datastore.ActiveDataStore.FetchDocument(assertions.MakeUri(key, "document"))
 
-	// document, _ := docs.LoadDocument("testdata/documents/testdoc1.xml")
-
 	data := struct {
-		Doc       docs.Document
+		Doc       assertions.Document
 		Title     string
 		DocHtml   string
 		AuthorUri assertions.HashUri

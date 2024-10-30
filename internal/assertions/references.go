@@ -22,6 +22,7 @@ type Resolver interface {
 	FetchStatement(key HashUri) (Statement, error)
 	FetchEntity(key HashUri) (Entity, error)
 	FetchAssertion(key HashUri) (Assertion, error)
+	FetchDocument(key HashUri) (Document, error)
 	FetchKey(entityUri HashUri) (string, error)
 	FetchRefs(key HashUri) ([]HashUri, error)
 }
@@ -40,6 +41,10 @@ func (r NullResolver) FetchEntity(key HashUri) (Entity, error) {
 
 func (r NullResolver) FetchAssertion(key HashUri) (Assertion, error) {
 	return Assertion{}, ErrNotImplemented
+}
+
+func (r NullResolver) FetchDocument(key HashUri) (Document, error) {
+	return Document{}, ErrNotImplemented
 }
 
 func (r NullResolver) FetchKey(key HashUri) (string, error) {
@@ -92,6 +97,14 @@ func EnrichReferences(uris []HashUri, currentUri HashUri, resolver Resolver) []R
 				summary = "Error fetching assertion"
 			} else {
 				summary = SummariseAssertion(assertion, currentUri, resolver)
+			}
+		case "document":
+			document, err := resolver.FetchDocument(uri)
+			if err != nil {
+				log.Errorf("Error feting document %s %v", uri.String(), err)
+				summary = "Error fetching document"
+			} else {
+				summary = document.Metadata.Title
 			}
 		default:
 			summary = "unknown " + uri.Kind()

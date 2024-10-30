@@ -11,7 +11,6 @@ import (
 	"google.golang.org/api/iterator"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
-	"silvatek.uk/trustedassertions/internal/docs"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	"silvatek.uk/trustedassertions/internal/search"
 )
@@ -199,10 +198,10 @@ func (fs *FireStore) FetchAssertion(uri assertions.HashUri) (assertions.Assertio
 	return assertion, nil
 }
 
-func (fs *FireStore) FetchDocument(uri assertions.HashUri) (docs.Document, error) {
+func (fs *FireStore) FetchDocument(uri assertions.HashUri) (assertions.Document, error) {
 	record, _ := fs.fetch(uri)
 
-	doc, _ := docs.MakeDocument(record.Content)
+	doc, _ := assertions.MakeDocument(record.Content)
 
 	return *doc, nil
 }
