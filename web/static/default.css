@@ -163,3 +163,13 @@ button input[type=button], input[type=submit], input[type=reset] {
 .docpara {
 	margin-bottom: 0.5em;
 }
+
+table.searchresults {
+	border-collapse: collapse;
+	text-align: left;
+}
+
+td, th {
+	vertical-align: top;
+	padding: 1em;
+}

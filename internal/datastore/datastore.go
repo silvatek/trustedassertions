@@ -170,15 +170,40 @@ func (ds *InMemoryDataStore) Search(query string) ([]SearchResult, error) {
 	query = strings.ToLower(query)
 	for key, value := range ds.data {
 		if strings.Contains(strings.ToLower(value), query) {
+			uri := assertions.UnescapeUri(key, assertions.GuessContentType(value))
 			result := SearchResult{
-				Uri:       assertions.UnescapeUri(key, assertions.GuessContentType(value)),
-				Content:   value,
+				Uri:       uri,
+				Content:   summarise(uri, value),
 				Relevance: 0.8,
 			}
 			results = append(results, result)
 		}
 	}
 	return results, nil
+}
+
+func summarise(uri assertions.HashUri, content string) string {
+	kind := strings.ToLower(uri.Kind())
+	switch kind {
+	case "statement":
+		return leftChars(content, 100)
+	case "entity":
+		entity := assertions.ParseCertificate(content)
+		return entity.CommonName
+	case "document":
+		doc, _ := assertions.MakeDocument(content)
+		return doc.Summary()
+	default:
+		return content
+	}
+}
+
+func leftChars(text string, maxChars int) string {
+	if len(text) > maxChars {
+		return text[0 : maxChars-1]
+	} else {
+		return text
+	}
 }
 
 func (ds *InMemoryDataStore) Reindex() {

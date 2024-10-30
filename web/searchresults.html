@@ -3,9 +3,24 @@
 
         <div>Searching for: {{.Detail.Query}}</div>
         
-        <ul>
+        <table class="searchresults">
+            <tr>
+                <th>Type</th>
+                <th>Summary</th>
+                <th>URI</th>
+            </tr>
             {{range $ref := .Detail.Results}}
-            <li><a href="{{$ref.Uri.WebPath}}">{{$ref.Content}}</a></li>
+            <tr>
+                <td>
+                    {{$ref.Uri.Kind}}
+                </td>
+                <td>
+                    {{$ref.Content}}
+                </td>
+                <td>
+                    <a href="{{$ref.Uri.WebPath}}">{{$ref.Uri.Short}}</a>
+                </td>
+            </tr>            
             {{end}}
         </ul>
 
