@@ -12,6 +12,7 @@ type Referenceable interface {
 	Content() string
 	Summary() string
 	TextContent() string
+	References() []HashUri
 }
 
 // Resolver is responsible for fetching the data associated with a Hash URI.

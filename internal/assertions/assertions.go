@@ -106,6 +106,17 @@ func (a *Assertion) TextContent() string {
 	return "" // Assertions aren't directly searchable
 }
 
+func (a Assertion) References() []HashUri {
+	refs := make([]HashUri, 0)
+	if a.RegisteredClaims.Issuer != "" {
+		refs = append(refs, UriFromString(a.RegisteredClaims.Issuer))
+	}
+	if a.RegisteredClaims.Subject != "" {
+		refs = append(refs, UriFromString(a.RegisteredClaims.Subject))
+	}
+	return refs
+}
+
 func (a *Assertion) SetAssertingEntity(entity Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
 }

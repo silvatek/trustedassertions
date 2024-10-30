@@ -72,6 +72,10 @@ func (e *Entity) TextContent() string {
 	return e.CommonName
 }
 
+func (e *Entity) References() []HashUri {
+	return []HashUri{}
+}
+
 func (e *Entity) MakeCertificate(privateKey *rsa.PrivateKey) {
 	if !e.HasSerialNum() {
 		e.AssignSerialNum()

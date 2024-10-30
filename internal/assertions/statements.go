@@ -37,3 +37,7 @@ func (s Statement) Summary() string {
 func (s Statement) TextContent() string {
 	return s.content
 }
+
+func (s Statement) References() []HashUri {
+	return []HashUri{}
+}

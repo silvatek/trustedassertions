@@ -25,6 +25,8 @@ const MainCollection = "Primary"
 const KeyCollection = "Keys"
 const UserCollection = "Users"
 
+var EmptyRefs = []assertions.HashUri{}
+
 func InitFireStore() {
 	datastore := &FireStore{
 		projectId:    os.Getenv("GCLOUD_PROJECT"),
@@ -103,6 +105,13 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 	log.Debugf("Writing to datastore: %s", value.Uri())
 
 	fs.store(MainCollection, value.Uri().Escaped(), contentDataMap(value))
+	fs.storeRefs(value.Uri(), value.References())
+}
+
+func (fs *FireStore) storeRefs(uri assertions.HashUri, refs []assertions.HashUri) {
+	for _, ref := range refs {
+		fs.StoreRef(uri, ref, "unknown")
+	}
 }
 
 func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {

@@ -97,6 +97,33 @@ func (d Document) Summary() string {
 	return d.Metadata.Title
 }
 
+func (d Document) References() []assertions.HashUri {
+	refs := make([]assertions.HashUri, 0)
+	if d.Metadata.Author.Entity != "" {
+		refs = append(refs, assertions.UriFromString(d.Metadata.Author.Entity))
+	}
+	for _, span := range d.allAssertions() {
+		refs = append(refs, assertions.UriFromString(span.Assertion))
+	}
+	return refs
+}
+
+func (d *Document) allAssertions() []Span {
+	assertions := make([]Span, 0)
+
+	for _, sect := range d.Sections {
+		for _, para := range sect.Paragraphs {
+			for _, span := range para.Spans {
+				if span.Assertion != "" {
+					assertions = append(assertions, span)
+				}
+			}
+		}
+	}
+
+	return assertions
+}
+
 func (doc *Document) ToHtml() string {
 	var html string
 
