@@ -229,6 +229,12 @@ func (fs *FireStore) FetchKey(entityUri assertions.HashUri) (string, error) {
 	}
 }
 
+type DbReference struct {
+	Source string `json:"source"`
+	Target string `json:"target"`
+	Type   string `json:"type"`
+}
+
 func (fs *FireStore) FetchRefs(uri assertions.HashUri) ([]assertions.HashUri, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
@@ -242,7 +248,11 @@ func (fs *FireStore) FetchRefs(uri assertions.HashUri) ([]assertions.HashUri, er
 		if err == iterator.Done {
 			break
 		}
-		uri := assertions.UnescapeUri(doc.Ref.ID, "assertion")
+		record := DbReference{}
+		doc.DataTo(&record)
+
+		uri := assertions.UriFromString(record.Source)
+
 		results = append(results, uri)
 	}
 
