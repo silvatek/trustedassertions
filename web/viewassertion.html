@@ -30,4 +30,11 @@
             <div class="fieldvalue">{{.Detail.Assertion.Confidence}}</div>
         </div>
 
+        <h3>References</h3>
+        <ul>
+            {{range $ref := .Detail.References}}
+                <li><a href="{{$ref.Uri.WebPath}}">{{$ref.Summary}} [{{$ref.Uri.Short}}]</a></li>
+            {{end}}
+        </ul>
+
 {{end}}

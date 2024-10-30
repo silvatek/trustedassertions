@@ -198,6 +198,9 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	subject, _ := datastore.ActiveDataStore.FetchStatement(subjectUri)
 
+	refUris, _ := datastore.ActiveDataStore.FetchRefs(uri)
+	refs := assertions.EnrichReferences(refUris, uri, datastore.ActiveDataStore)
+
 	data := struct {
 		Uri         string
 		ShortUri    string
@@ -207,7 +210,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		SubjectLink string
 		SubjectText string
 		ApiLink     string
-		References  []string
+		References  []assertions.ReferenceSummary
 	}{
 		Uri:         assertion.Uri().String(),
 		ShortUri:    assertion.Uri().Short(),
@@ -217,7 +220,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		IssuerName:  issuer.CommonName,
 		SubjectLink: subjectUri.WebPath(),
 		SubjectText: subject.Content(),
-		References:  make([]string, 0),
+		References:  refs,
 	}
 
 	menu := []PageMenuItem{
