@@ -128,6 +128,10 @@ func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashU
 	client := fs.client(ctx)
 	defer client.Close()
 
+	if refType == "" {
+		refType = target.Kind()
+	}
+
 	data := make(map[string]string)
 	data["source"] = source.String()
 	data["target"] = target.String()

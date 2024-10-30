@@ -3,6 +3,8 @@ package assertions
 import (
 	"errors"
 	"fmt"
+
+	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
 // Referenceable is a core data type that can be referenced by an assertion.
@@ -84,9 +86,13 @@ func EnrichReferences(uris []HashUri, currentUri HashUri, resolver Resolver) []R
 		var summary string
 		switch uri.Kind() {
 		case "assertion":
-			assertion, _ := resolver.FetchAssertion(uri)
-
-			summary = SummariseAssertion(assertion, currentUri, resolver)
+			assertion, err := resolver.FetchAssertion(uri)
+			if err != nil {
+				log.Errorf("Error feting assertion %s %v", uri.String(), err)
+				summary = "Error fetching assertion"
+			} else {
+				summary = SummariseAssertion(assertion, currentUri, resolver)
+			}
 		default:
 			summary = "unknown " + uri.Kind()
 		}
