@@ -3,6 +3,7 @@ package assertions
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
@@ -59,6 +60,21 @@ func (r NullResolver) FetchRefs(key HashUri) ([]HashUri, error) {
 type ReferenceSummary struct {
 	Uri     HashUri
 	Summary string
+}
+
+func NewReferenceable(kind string) Referenceable {
+	switch strings.ToLower(kind) {
+	case "statement":
+		return &Statement{}
+	case "entity":
+		return &Entity{}
+	case "assertion":
+		return &Assertion{}
+	case "document":
+		return &Document{}
+	default:
+		return nil
+	}
 }
 
 func SummariseAssertion(assertion Assertion, currentUri HashUri, resolver Resolver) string {

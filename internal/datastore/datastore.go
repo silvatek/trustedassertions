@@ -78,13 +78,17 @@ func (ds *InMemoryDataStore) AutoInit() bool {
 	return true
 }
 
-func (ds *InMemoryDataStore) StoreRaw(uri assertions.HashUri, content string) {
+func (ds *InMemoryDataStore) StoreRecord(uri assertions.HashUri, rec DbRecord) {
 	log.Debugf("Storing %s", uri)
-	ds.data[uri.Escaped()] = DbRecord{Uri: uri.String(), Content: content}
+	ds.data[uri.Escaped()] = rec
+}
+
+func (ds *InMemoryDataStore) StoreRaw(uri assertions.HashUri, content string) {
+	ds.StoreRecord(uri, DbRecord{Uri: uri.String(), Content: content})
 }
 
 func (ds *InMemoryDataStore) Store(value assertions.Referenceable) {
-	ds.StoreRaw(value.Uri(), value.Content())
+	ds.StoreRecord(value.Uri(), DbRecord{Uri: value.Uri().String(), Content: value.Content()})
 }
 
 func (ds *InMemoryDataStore) StoreKey(entityUri assertions.HashUri, key string) {
@@ -101,44 +105,32 @@ func (ds *InMemoryDataStore) StoreRef(source assertions.HashUri, target assertio
 	log.Debugf("Stored reference from %s to %s", source.Short(), target.Short())
 }
 
-func (ds *InMemoryDataStore) FetchStatement(key assertions.HashUri) (assertions.Statement, error) {
-	var statement assertions.Statement
+func (ds *InMemoryDataStore) FetchInto(key assertions.HashUri, item assertions.Referenceable) error {
 	record, ok := ds.data[key.Escaped()]
 	if !ok {
-		return statement, errors.New("statement not found: " + key.String())
+		return errors.New("URI not found: " + key.String())
 	}
-	err := statement.ParseContent(record.Content)
-	return statement, err
+	return item.ParseContent(record.Content)
+}
+
+func (ds *InMemoryDataStore) FetchStatement(key assertions.HashUri) (assertions.Statement, error) {
+	var statement assertions.Statement
+	return statement, ds.FetchInto(key, &statement)
 }
 
 func (ds *InMemoryDataStore) FetchEntity(key assertions.HashUri) (assertions.Entity, error) {
 	var entity assertions.Entity
-	record, ok := ds.data[key.Escaped()]
-	if !ok {
-		return entity, errors.New("entity not found: " + key.String())
-	}
-	err := entity.ParseContent(record.Content)
-	return entity, err
+	return entity, ds.FetchInto(key, &entity)
 }
 
 func (ds *InMemoryDataStore) FetchAssertion(key assertions.HashUri) (assertions.Assertion, error) {
 	var assertion assertions.Assertion
-	record, ok := ds.data[key.Escaped()]
-	if !ok {
-		return assertion, errors.New("assertion not found: " + key.String())
-	}
-	err := assertion.ParseContent(record.Content)
-	return assertion, err
+	return assertion, ds.FetchInto(key, &assertion)
 }
 
 func (ds *InMemoryDataStore) FetchDocument(key assertions.HashUri) (assertions.Document, error) {
 	var doc assertions.Document
-	record, ok := ds.data[key.Escaped()]
-	if !ok {
-		return doc, errors.New("document not found: " + key.String())
-	}
-	err := doc.ParseContent(record.Content)
-	return doc, err
+	return doc, ds.FetchInto(key, &doc)
 }
 
 func (ds *InMemoryDataStore) FetchKey(entityUri assertions.HashUri) (string, error) {
