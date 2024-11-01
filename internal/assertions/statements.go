@@ -9,8 +9,8 @@ type Statement struct {
 	content string
 }
 
-func NewStatement(content string) Statement {
-	return Statement{content: content}
+func NewStatement(content string) *Statement {
+	return &Statement{content: content}
 }
 
 func (s Statement) Uri() HashUri {
@@ -40,4 +40,9 @@ func (s Statement) TextContent() string {
 
 func (s Statement) References() []HashUri {
 	return []HashUri{}
+}
+
+func (s *Statement) ParseContent(content string) error {
+	s.content = content
+	return nil
 }

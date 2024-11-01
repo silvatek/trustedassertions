@@ -23,7 +23,7 @@ func TestContentMatches(t *testing.T) {
 func TestDataMap(t *testing.T) {
 	statement := assertions.NewStatement("Testing")
 
-	data := contentDataMap(&statement)
+	data := contentDataMap(statement)
 
 	if !strings.HasPrefix(data["uri"].(string), "hash://sha256/") {
 		t.Errorf("Did not map URI as expected: %s", data["uri"])

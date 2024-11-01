@@ -332,7 +332,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Create and save the statement
 		statement := assertions.NewStatement(content)
-		datastore.ActiveDataStore.Store(&statement)
+		datastore.ActiveDataStore.Store(statement)
 
 		su := statement.Uri()
 

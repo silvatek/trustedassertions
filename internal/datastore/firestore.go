@@ -160,9 +160,9 @@ func (fs *FireStore) FetchStatement(uri assertions.HashUri) (assertions.Statemen
 	record, err := fs.fetch(uri)
 
 	if err != nil {
-		return assertions.NewStatement("{bad record}"), err
+		return *assertions.NewStatement("{bad record}"), err
 	} else {
-		return assertions.NewStatement(record.Content), nil
+		return *assertions.NewStatement(record.Content), nil
 	}
 }
 

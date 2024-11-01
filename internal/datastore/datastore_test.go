@@ -29,7 +29,7 @@ func TestStoreFetchStatement(t *testing.T) {
 	uri := statement1.Uri()
 	t.Log(uri)
 
-	ActiveDataStore.Store(&statement1)
+	ActiveDataStore.Store(statement1)
 
 	statement2, _ := ActiveDataStore.FetchStatement(uri)
 
@@ -61,11 +61,11 @@ func TestSearch(t *testing.T) {
 	InitInMemoryDataStore()
 
 	s := assertions.NewStatement("Red Green Blue")
-	ActiveDataStore.Store(&s)
+	ActiveDataStore.Store(s)
 	s = assertions.NewStatement("Red Yellow Blue")
-	ActiveDataStore.Store(&s)
+	ActiveDataStore.Store(s)
 	s = assertions.NewStatement("White Green Blue")
-	ActiveDataStore.Store(&s)
+	ActiveDataStore.Store(s)
 
 	matches, err := ActiveDataStore.Search("green")
 	if err != nil {

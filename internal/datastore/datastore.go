@@ -106,7 +106,7 @@ func (ds *InMemoryDataStore) FetchStatement(key assertions.HashUri) (assertions.
 	if !ok {
 		return assertions.Statement{}, errors.New("statement not found: " + key.String())
 	}
-	return assertions.NewStatement(content.Content), nil
+	return *assertions.NewStatement(content.Content), nil
 }
 
 func (ds *InMemoryDataStore) FetchEntity(key assertions.HashUri) (assertions.Entity, error) {

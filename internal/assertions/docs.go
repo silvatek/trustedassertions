@@ -72,6 +72,12 @@ func MakeDocument(content string) (*Document, error) {
 	return &doc, err
 }
 
+func (d *Document) ParseContent(content string) error {
+	d.text = content
+
+	return xml.Unmarshal([]byte(content), d)
+}
+
 var DefaultDocumentUri HashUri
 
 func (d *Document) Uri() HashUri {

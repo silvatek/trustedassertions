@@ -20,7 +20,7 @@ func TestStatmentApi(t *testing.T) {
 	statement := assertions.NewStatement("test")
 
 	datastore.InitInMemoryDataStore()
-	datastore.ActiveDataStore.Store(&statement)
+	datastore.ActiveDataStore.Store(statement)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", statement.Uri().ApiPath(), nil)
@@ -69,7 +69,7 @@ func TestAssertionApi(t *testing.T) {
 	assertions.PublicKeyResolver = datastore.ActiveDataStore
 
 	datastore.ActiveDataStore.Store(&entity)
-	datastore.ActiveDataStore.Store(&statement)
+	datastore.ActiveDataStore.Store(statement)
 
 	assertion := assertions.NewAssertion("IsTrue")
 	assertion.Issuer = entity.Uri().String()

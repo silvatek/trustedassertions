@@ -101,6 +101,22 @@ func (e *Entity) MakeCertificate(privateKey *rsa.PrivateKey) {
 	e.Certificate = string(pem.EncodeToMemory(&b))
 }
 
+func (e *Entity) ParseContent(content string) error {
+	e.Certificate = content
+
+	p, _ := pem.Decode([]byte(content))
+
+	cert, err := x509.ParseCertificate(p.Bytes)
+	if err != nil {
+		return err
+	} else {
+		e.SerialNum = *cert.SerialNumber
+		e.CommonName = cert.Subject.CommonName
+		e.PublicKey = cert.PublicKey.(*rsa.PublicKey)
+		return nil
+	}
+}
+
 func ParseCertificate(content string) Entity {
 	entity := NewEntity("{unknown}", *big.NewInt(0))
 

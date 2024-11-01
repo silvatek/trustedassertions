@@ -45,6 +45,20 @@ func verificationKey(token *jwt.Token) (interface{}, error) {
 	return entity.PublicKey, err
 }
 
+func (a *Assertion) ParseContent(content string) error {
+	a.content = content
+
+	if content == "" {
+		return errors.New("unable to parse empty JWT")
+	}
+
+	a.RegisteredClaims = &jwt.RegisteredClaims{}
+
+	_, err := jwt.ParseWithClaims(content, a, verificationKey)
+
+	return err
+}
+
 func ParseAssertionJwt(token string) (Assertion, error) {
 	template := Assertion{
 		RegisteredClaims: &jwt.RegisteredClaims{},
