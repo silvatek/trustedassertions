@@ -102,31 +102,43 @@ func (ds *InMemoryDataStore) StoreRef(source assertions.HashUri, target assertio
 }
 
 func (ds *InMemoryDataStore) FetchStatement(key assertions.HashUri) (assertions.Statement, error) {
-	content, ok := ds.data[key.Escaped()]
+	var statement assertions.Statement
+	record, ok := ds.data[key.Escaped()]
 	if !ok {
-		return assertions.Statement{}, errors.New("statement not found: " + key.String())
+		return statement, errors.New("statement not found: " + key.String())
 	}
-	return *assertions.NewStatement(content.Content), nil
+	err := statement.ParseContent(record.Content)
+	return statement, err
 }
 
 func (ds *InMemoryDataStore) FetchEntity(key assertions.HashUri) (assertions.Entity, error) {
-	content := ds.data[key.Escaped()]
-	return assertions.ParseCertificate(content.Content), nil
+	var entity assertions.Entity
+	record, ok := ds.data[key.Escaped()]
+	if !ok {
+		return entity, errors.New("entity not found: " + key.String())
+	}
+	err := entity.ParseContent(record.Content)
+	return entity, err
 }
 
 func (ds *InMemoryDataStore) FetchAssertion(key assertions.HashUri) (assertions.Assertion, error) {
-	content := ds.data[key.Escaped()]
-	assertion, err := assertions.ParseAssertionJwt(content.Content)
-	if err != nil {
-		log.Errorf("Error parsing assertion JWT: %v", err)
+	var assertion assertions.Assertion
+	record, ok := ds.data[key.Escaped()]
+	if !ok {
+		return assertion, errors.New("assertion not found: " + key.String())
 	}
+	err := assertion.ParseContent(record.Content)
 	return assertion, err
 }
 
 func (ds *InMemoryDataStore) FetchDocument(key assertions.HashUri) (assertions.Document, error) {
-	content := ds.data[key.Escaped()]
-	doc, _ := assertions.MakeDocument(content.Content)
-	return *doc, nil
+	var doc assertions.Document
+	record, ok := ds.data[key.Escaped()]
+	if !ok {
+		return doc, errors.New("document not found: " + key.String())
+	}
+	err := doc.ParseContent(record.Content)
+	return doc, err
 }
 
 func (ds *InMemoryDataStore) FetchKey(entityUri assertions.HashUri) (string, error) {
