@@ -29,12 +29,12 @@ type DataStore interface {
 }
 
 type DbRecord struct {
-	Uri         string   `json:"uri"`
-	Content     string   `json:"content"`
-	DataType    string   `json:"datatype"`
-	Summary     string   `json:"summary"`
-	Updated     string   `json:"updated"`
-	SearchWords []string `json:"words"`
+	Uri         string   `json:"uri" firestore:"uri"`
+	Content     string   `json:"content" firestore:"content"`
+	DataType    string   `json:"datatype" firestore:"datatype"`
+	Summary     string   `json:"summary" firestore:"summary"`
+	Updated     string   `json:"updated" firestore:"updated"`
+	SearchWords []string `json:"words" firestore:"words"`
 }
 
 type SearchResult struct {
