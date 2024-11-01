@@ -94,6 +94,20 @@ func contentDataMap(value assertions.Referenceable) map[string]interface{} {
 	return data
 }
 
+func (fs *FireStore) StoreRecord(uri assertions.HashUri, rec DbRecord) {
+	ctx := context.TODO()
+	client := fs.client(ctx)
+	defer client.Close()
+
+	result, err := client.Collection(MainCollection).Doc(uri.Escaped()).Set(ctx, rec)
+
+	if err != nil {
+		log.Errorf("Error writing value: %v", err)
+	} else {
+		log.Debugf("Written: %s %v", uri.Escaped(), result)
+	}
+}
+
 func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	log.Debugf("Writing to datastore: %s", uri)
 
@@ -103,7 +117,21 @@ func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 func (fs *FireStore) Store(value assertions.Referenceable) {
 	log.Debugf("Writing to datastore: %s", value.Uri())
 
-	fs.store(MainCollection, value.Uri().Escaped(), contentDataMap(value))
+	uri := value.Uri()
+	if value.Type() != "" && !uri.HasType() {
+		uri = uri.WithType(value.Type())
+	}
+
+	rec := DbRecord{
+		Uri:         uri.String(),
+		Content:     value.Content(),
+		DataType:    value.Type(),
+		Summary:     value.Summary(),
+		Updated:     time.Now().Format(time.RFC3339),
+		SearchWords: search.SearchWords(value.TextContent()),
+	}
+	fs.StoreRecord(uri, rec)
+
 	fs.storeRefs(value.Uri(), value.References())
 }
 
