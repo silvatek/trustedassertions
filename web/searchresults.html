@@ -3,6 +3,7 @@
 
         <div>Searching for: {{.Detail.Query}}</div>
         
+        {{if .Detail.Results}}
         <table class="searchresults">
             <tr>
                 <th>Type</th>
@@ -20,8 +21,13 @@
                 <td>
                     <a href="{{$ref.Uri.WebPath}}">{{$ref.Uri.Short}}</a>
                 </td>
-            </tr>            
-            {{end}}
-        </ul>
+            </tr>           
+            {{end}}    
+        </table>
+        {{else}}
+        <div id="noresults">
+            No matching values found.
+        </div>
+        {{end}}
 
 {{end}}
