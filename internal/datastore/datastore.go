@@ -28,6 +28,15 @@ type DataStore interface {
 	Reindex()
 }
 
+type DbRecord struct {
+	Uri         string   `json:"uri"`
+	Content     string   `json:"content"`
+	DataType    string   `json:"datatype"`
+	Summary     string   `json:"summary"`
+	Updated     string   `json:"updated"`
+	SearchWords []string `json:"words"`
+}
+
 type SearchResult struct {
 	Uri       assertions.HashUri
 	Content   string
@@ -42,7 +51,7 @@ func (e *KeyNotFoundError) Error() string {
 }
 
 type InMemoryDataStore struct {
-	data  map[string]string
+	data  map[string]DbRecord
 	keys  map[string]string
 	refs  map[string][]string
 	users map[string]auth.User
@@ -53,7 +62,7 @@ var ActiveDataStore DataStore
 
 func InitInMemoryDataStore() {
 	datastore := InMemoryDataStore{}
-	datastore.data = make(map[string]string)
+	datastore.data = make(map[string]DbRecord)
 	datastore.keys = make(map[string]string)
 	datastore.refs = make(map[string][]string)
 	datastore.users = make(map[string]auth.User)
@@ -71,7 +80,7 @@ func (ds *InMemoryDataStore) AutoInit() bool {
 
 func (ds *InMemoryDataStore) StoreRaw(uri assertions.HashUri, content string) {
 	log.Debugf("Storing %s", uri)
-	ds.data[uri.Escaped()] = content
+	ds.data[uri.Escaped()] = DbRecord{Uri: uri.String(), Content: content}
 }
 
 func (ds *InMemoryDataStore) Store(value assertions.Referenceable) {
@@ -97,17 +106,17 @@ func (ds *InMemoryDataStore) FetchStatement(key assertions.HashUri) (assertions.
 	if !ok {
 		return assertions.Statement{}, errors.New("statement not found: " + key.String())
 	}
-	return assertions.NewStatement(content), nil
+	return assertions.NewStatement(content.Content), nil
 }
 
 func (ds *InMemoryDataStore) FetchEntity(key assertions.HashUri) (assertions.Entity, error) {
 	content := ds.data[key.Escaped()]
-	return assertions.ParseCertificate(content), nil
+	return assertions.ParseCertificate(content.Content), nil
 }
 
 func (ds *InMemoryDataStore) FetchAssertion(key assertions.HashUri) (assertions.Assertion, error) {
 	content := ds.data[key.Escaped()]
-	assertion, err := assertions.ParseAssertionJwt(content)
+	assertion, err := assertions.ParseAssertionJwt(content.Content)
 	if err != nil {
 		log.Errorf("Error parsing assertion JWT: %v", err)
 	}
@@ -116,7 +125,7 @@ func (ds *InMemoryDataStore) FetchAssertion(key assertions.HashUri) (assertions.
 
 func (ds *InMemoryDataStore) FetchDocument(key assertions.HashUri) (assertions.Document, error) {
 	content := ds.data[key.Escaped()]
-	doc, _ := assertions.MakeDocument(content)
+	doc, _ := assertions.MakeDocument(content.Content)
 	return *doc, nil
 }
 
@@ -169,11 +178,11 @@ func (ds *InMemoryDataStore) Search(query string) ([]SearchResult, error) {
 	results := make([]SearchResult, 0)
 	query = strings.ToLower(query)
 	for key, value := range ds.data {
-		if strings.Contains(strings.ToLower(value), query) {
-			uri := assertions.UnescapeUri(key, assertions.GuessContentType(value))
+		if strings.Contains(strings.ToLower(value.Content), query) {
+			uri := assertions.UnescapeUri(key, assertions.GuessContentType(value.Content))
 			result := SearchResult{
 				Uri:       uri,
-				Content:   summarise(uri, value),
+				Content:   summarise(uri, value.Content),
 				Relevance: 0.8,
 			}
 			results = append(results, result)

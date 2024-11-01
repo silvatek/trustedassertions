@@ -140,13 +140,6 @@ func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashU
 	refs.Doc(source.Escaped()).Set(ctx, data)
 }
 
-type DbRecord struct {
-	Uri      string `json:"uri"`
-	Content  string `json:"content"`
-	DataType string `json:"datatype"`
-	Summary  string `json:"summary"`
-}
-
 func (fs *FireStore) fetch(uri assertions.HashUri) (*DbRecord, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
