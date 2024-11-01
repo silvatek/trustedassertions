@@ -46,21 +46,10 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 			continue
 		}
 
-		var item assertions.Referenceable
-		switch dataType {
-		case "Statement":
-			item = assertions.NewStatement(string(content))
-		case "Entity":
-			e := assertions.ParseCertificate(string(content))
-			item = &e
-		case "Assertion":
-			a, _ := assertions.ParseAssertionJwt(string(content))
-			item = &a
-		case "Document":
-			item, _ = assertions.MakeDocument(string(content))
-		default:
-			panic(-1)
-		}
+		content = NormalizeNewlines(content)
+
+		item := assertions.NewReferenceable(dataType)
+		item.ParseContent(string(content))
 
 		datastore.ActiveDataStore.Store(item)
 
@@ -79,6 +68,7 @@ func NormalizeNewlines(d []byte) []byte {
 	d = bytes.Replace(d, []byte{13}, []byte{10}, -1)
 	return d
 }
+
 func addAssertionReferences(content string) {
 	a, _ := assertions.ParseAssertionJwt(content)
 	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")
