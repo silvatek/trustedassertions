@@ -2,7 +2,9 @@ package datastore
 
 import (
 	"crypto/rsa"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/assertions"
 )
 
@@ -11,6 +13,8 @@ var ActiveDataStore DataStore
 func CreateAssertion(statementUri assertions.HashUri, confidence float64, entity assertions.Entity, privateKey *rsa.PrivateKey, kind string) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
 	assertion.Subject = statementUri.String()
+	assertion.IssuedAt = jwt.NewNumericDate(time.Now())
+	assertion.NotBefore = assertion.IssuedAt
 	assertion.Confidence = float32(confidence)
 	assertion.SetAssertingEntity(entity)
 	assertion.MakeJwt(privateKey)
