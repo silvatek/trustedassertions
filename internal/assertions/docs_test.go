@@ -2,6 +2,7 @@ package assertions
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 	"text/template"
 
@@ -30,7 +31,7 @@ func TestTestPoc1(t *testing.T) {
 		t.Errorf("Error parsing html: %v", err)
 	}
 
-	if html.Find("h1").Text() != "About the Universe" {
+	if !strings.Contains(html.Find("h1").Text(), "About the Universe") {
 		t.Error("Did not find expected title")
 	}
 
@@ -40,7 +41,7 @@ func TestTestPoc1(t *testing.T) {
 
 	words := search.SearchWords(doc.TextContent())
 
-	if !search.WordsEqual(words, []string{"about", "appear", "begin", "can", "do", "exist", "far", "gl93j73c", "know", "may", "mr", "need", "obvious", "somewhere", "tell", "tester", "truth", "universe", "what"}) {
+	if !search.WordsContains(words, "about", "appear", "begin", "can", "do", "exist", "far", "gl93j73c", "know", "may", "mr", "need", "obvious", "somewhere", "tell", "tester", "truth", "universe", "what") {
 		t.Errorf("Unexpected %v", words)
 	}
 

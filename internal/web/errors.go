@@ -10,7 +10,7 @@ import (
 )
 
 const ErrorEntityFetch = 1001
-
+const ErrorMakeAssertion = 2002
 const ErrorNoAuth = 2001
 const ErrorUserNotFound = 2002
 const ErrorKeyFetch = 2003

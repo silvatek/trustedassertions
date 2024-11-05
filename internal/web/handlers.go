@@ -314,6 +314,8 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		keyId := r.Form.Get("sign_as")
 		log.Debugf("Signing key ID: %s", keyId)
 
+		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
+
 		keyUri := assertions.UriFromString(keyId)
 
 		if !user.HasKey(keyId) {
@@ -321,43 +323,17 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b64key, err := datastore.ActiveDataStore.FetchKey(keyUri)
+		assertion, err := datastore.CreateStatementAndAssertion(content, keyUri, confidence)
 		if err != nil {
-			HandleError(ErrorKeyFetch, "Error fetching entity private key", w, r)
+			HandleError(ErrorMakeAssertion, "Error making new statement and assertion", w, r)
 			return
 		}
-		privateKey := assertions.StringToPrivateKey(b64key)
-
-		entity, _ := datastore.ActiveDataStore.FetchEntity(keyUri)
-
-		// Create and save the statement
-		statement := assertions.NewStatement(content)
-		datastore.ActiveDataStore.Store(statement)
-
-		su := statement.Uri()
-
-		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
-
-		// Create and save an assertion by the default entity that the statement is probably true
-		assertion := assertions.NewAssertion("IsTrue")
-		assertion.Subject = su.String()
-		assertion.Confidence = float32(confidence)
-		assertion.SetAssertingEntity(entity)
-		assertion.MakeJwt(privateKey)
-		datastore.ActiveDataStore.Store(&assertion)
-
-		addAssertionReferences(assertion)
 
 		// Redirect the user to the assertion
 		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)
 
 		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
 	}
-}
-
-func addAssertionReferences(a assertions.Assertion) {
-	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")
-	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Issuer), "Assertion.Issuer:Entity")
 }
 
 func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -473,16 +449,9 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		su := assertions.MakeUri(statementHash, "statement")
 
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
+		kind := r.Form.Get("assertion_type")
 
-		// Create and save an assertion by the default entity that the statement is probably true
-		assertion := assertions.NewAssertion(r.Form.Get("assertion_type"))
-		assertion.Subject = su.String()
-		assertion.Confidence = float32(confidence)
-		assertion.SetAssertingEntity(entity)
-		assertion.MakeJwt(privateKey)
-		datastore.ActiveDataStore.Store(&assertion)
-
-		addAssertionReferences(assertion)
+		assertion := datastore.CreateAssertion(su, confidence, entity, privateKey, kind)
 
 		// Redirect the user to the assertion
 		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)

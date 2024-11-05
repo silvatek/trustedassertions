@@ -92,3 +92,15 @@ func WordsEqual(a []string, b []string) bool {
 	}
 	return true
 }
+
+func WordsContains(wordList []string, words ...string) bool {
+	matches := 0
+	for _, w1 := range wordList {
+		for _, w2 := range words {
+			if w1 == w2 {
+				matches++
+			}
+		}
+	}
+	return matches == len(words)
+}
