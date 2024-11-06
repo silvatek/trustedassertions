@@ -6,8 +6,9 @@ import (
 )
 
 type CtxData struct {
-	Dummy   string
-	ReqPath string
+	ReqPath     string
+	ReqMethod   string
+	TraceParent string
 }
 
 type key int
@@ -20,8 +21,11 @@ func NewWebContext(req *http.Request) context.Context {
 
 func WebContext(parent context.Context, req *http.Request) context.Context {
 	var data CtxData
-	data.Dummy = "WebContext"
+
 	data.ReqPath = req.URL.Path
+	data.ReqMethod = req.Method
+	data.TraceParent = req.Header.Get("traceparent")
+
 	return context.WithValue(parent, ctxDataKey, data)
 }
 

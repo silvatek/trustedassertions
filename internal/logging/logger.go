@@ -89,12 +89,12 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 			"appname": "trustedassertions",
 		}
 
-		data, _ := appcontext.ContextData(ctx)
-		if data.ReqPath != "" {
+		data, ok := appcontext.ContextData(ctx)
+		if ok {
 			labels["reqPath"] = data.ReqPath
-		}
-		if data.Dummy != "" {
-			labels["dummy"] = data.Dummy
+			entry.HttpRequest.RequestUrl = data.ReqPath
+			entry.HttpRequest.RequestMethod = data.ReqMethod
+			labels["traceparent"] = data.TraceParent
 		}
 
 		entry.Labels = labels
