@@ -27,7 +27,7 @@ type Resolver interface {
 	FetchAssertion(ctx context.Context, key HashUri) (Assertion, error)
 	FetchDocument(ctx context.Context, key HashUri) (Document, error)
 	FetchKey(entityUri HashUri) (string, error)
-	FetchRefs(key HashUri) ([]HashUri, error)
+	FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error)
 }
 
 type NullResolver struct{}
@@ -54,7 +54,7 @@ func (r NullResolver) FetchKey(key HashUri) (string, error) {
 	return "", ErrNotImplemented
 }
 
-func (r NullResolver) FetchRefs(key HashUri) ([]HashUri, error) {
+func (r NullResolver) FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error) {
 	return []HashUri{}, ErrNotImplemented
 }
 

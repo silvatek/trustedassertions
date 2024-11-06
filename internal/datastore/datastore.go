@@ -21,7 +21,7 @@ type DataStore interface {
 	FetchAssertion(ctx context.Context, key assertions.HashUri) (assertions.Assertion, error)
 	FetchDocument(ctx context.Context, key assertions.HashUri) (assertions.Document, error)
 	FetchKey(entityUri assertions.HashUri) (string, error)
-	FetchRefs(key assertions.HashUri) ([]assertions.HashUri, error)
+	FetchRefs(ctx context.Context, key assertions.HashUri) ([]assertions.HashUri, error)
 	FetchUser(id string) (auth.User, error)
 	Search(query string) ([]SearchResult, error)
 	Reindex()

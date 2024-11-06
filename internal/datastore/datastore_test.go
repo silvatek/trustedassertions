@@ -104,7 +104,7 @@ func TestStoreFetchReference(t *testing.T) {
 
 	ActiveDataStore.StoreRef(source, target, "Test")
 
-	refs, err := ActiveDataStore.FetchRefs(target)
+	refs, err := ActiveDataStore.FetchRefs(context.TODO(), target)
 	if err != nil {
 		t.Errorf("Error fetching references: %v", err)
 	}

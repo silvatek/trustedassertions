@@ -99,7 +99,7 @@ func (ds *InMemoryDataStore) FetchKey(entityUri assertions.HashUri) (string, err
 	return key, nil
 }
 
-func (ds *InMemoryDataStore) FetchRefs(key assertions.HashUri) ([]assertions.HashUri, error) {
+func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key assertions.HashUri) ([]assertions.HashUri, error) {
 	uris := make([]assertions.HashUri, 0)
 	result, ok := ds.refs[key.Escaped()]
 	if !ok {

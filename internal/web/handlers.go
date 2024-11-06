@@ -165,7 +165,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["hash"]
 	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, assertions.MakeUri(key, "statement"))
 
-	refUris, _ := datastore.ActiveDataStore.FetchRefs(statement.Uri())
+	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
 	refs := assertions.EnrichReferences(refUris, statement.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
@@ -211,7 +211,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	subject, _ := datastore.ActiveDataStore.FetchStatement(ctx, subjectUri)
 
-	refUris, _ := datastore.ActiveDataStore.FetchRefs(uri)
+	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, uri)
 	refs := assertions.EnrichReferences(refUris, uri, datastore.ActiveDataStore)
 
 	data := struct {
@@ -256,7 +256,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refUris, _ := datastore.ActiveDataStore.FetchRefs(entity.Uri())
+	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, entity.Uri())
 	refs := assertions.EnrichReferences(refUris, entity.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
