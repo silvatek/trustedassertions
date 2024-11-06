@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
@@ -21,6 +22,8 @@ func addAuthHandlers(r *mux.Router) {
 }
 
 func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
 	if r.Method == "GET" {
 		errorCode := r.URL.Query().Get("err")
 
@@ -29,7 +32,7 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 			data = "Unable to verify identity"
 		}
 
-		RenderWebPage("loginform", data, nil, w, r)
+		RenderWebPage(ctx, "loginform", data, nil, w, r)
 	} else if r.Method == "POST" {
 		r.ParseForm()
 		userId := r.Form.Get("user_id")
@@ -53,10 +56,12 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
 	cookie := http.Cookie{Name: "auth", Path: "/", Value: "", MaxAge: -1, SameSite: http.SameSiteStrictMode}
 	http.SetCookie(w, &cookie)
 
 	log.Debug("Cleared auth cookie")
 
-	RenderWebPage("loggedout", "", nil, w, r)
+	RenderWebPage(ctx, "loggedout", "", nil, w, r)
 }

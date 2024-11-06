@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
@@ -57,7 +58,8 @@ type PageData struct {
 	Detail    interface{}
 }
 
-func RenderWebPageWithStatus(pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request, status int) {
+func RenderWebPageWithStatus(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request, status int) {
+	log.DebugfX(ctx, "Rendering page %s", pageName)
 	dir := TemplateDir
 
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
@@ -67,6 +69,8 @@ func RenderWebPageWithStatus(pageName string, data interface{}, menu []PageMenuI
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
+
+	log.DebugfX(ctx, "Templates parsed")
 
 	username := authUser(r)
 	pageData := PageData{
@@ -111,10 +115,12 @@ func RenderWebPageWithStatus(pageName string, data interface{}, menu []PageMenuI
 		log.Errorf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
+
+	log.DebugfX(ctx, "Page rendered")
 }
 
-func RenderWebPage(pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
-	RenderWebPageWithStatus(pageName, data, menu, w, r, 200)
+func RenderWebPage(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
+	RenderWebPageWithStatus(ctx, pageName, data, menu, w, r, 200)
 }
 
 func nameOnly(username string) string {
@@ -150,7 +156,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 		DefaultDocument: assertions.DefaultDocumentUri,
 	}
 
-	RenderWebPage("index", data, nil, w, r)
+	RenderWebPage(ctx, "index", data, nil, w, r)
 }
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +187,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		{Text: "Share", Target: "/web/share?hash=" + statement.Uri().Hash() + "&type=statement"},
 	}
 
-	RenderWebPage("viewstatement", data, menu, w, r)
+	RenderWebPage(ctx, "viewstatement", data, menu, w, r)
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -235,7 +241,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		{Text: "Share", Target: "/web/share?hash=" + assertion.Uri().Hash() + "&type=assertion"},
 	}
 
-	RenderWebPage("viewassertion", data, menu, w, r)
+	RenderWebPage(ctx, "viewassertion", data, menu, w, r)
 }
 
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -274,7 +280,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		{Text: "Share", Target: "/web/share?hash=" + entity.Uri().Hash() + "&type=entity"},
 	}
 
-	RenderWebPage("viewentity", data, menu, w, r)
+	RenderWebPage(ctx, "viewentity", data, menu, w, r)
 }
 
 func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -299,7 +305,7 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 	// 	{Text: "Share", Target: "/web/share?hash=" + document.Uri().Hash() + "&type=statement"},
 	// }
 
-	RenderWebPage("viewdocument", data, nil, w, r)
+	RenderWebPage(ctx, "viewdocument", data, nil, w, r)
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -317,7 +323,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		RenderWebPage("newstatementform", user, nil, w, r)
+		RenderWebPage(ctx, "newstatementform", user, nil, w, r)
 	} else if r.Method == "POST" {
 		log.InfofX(ctx, "Creating new statement and assertion")
 		r.ParseForm()
@@ -350,6 +356,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
 	query := r.URL.Query().Get("query")
 
 	query, _ = url.QueryUnescape(query)
@@ -364,7 +371,7 @@ func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
 		Results: results,
 	}
 
-	RenderWebPage("searchresults", data, nil, w, r)
+	RenderWebPage(ctx, "searchresults", data, nil, w, r)
 }
 
 func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -381,7 +388,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "GET" {
-		RenderWebPage("newentityform", user, nil, w, r)
+		RenderWebPage(ctx, "newentityform", user, nil, w, r)
 	} else if r.Method == "POST" {
 		log.InfofX(ctx, "Creating new entity and signing key")
 		r.ParseForm()
@@ -438,7 +445,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 			User:      user,
 		}
 
-		RenderWebPage("addassertionform", data, nil, w, r)
+		RenderWebPage(ctx, "addassertionform", data, nil, w, r)
 	} else if r.Method == "POST" {
 		log.InfofX(ctx, "Creating new assertion for statement")
 		r.ParseForm()

@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"net/http"
 
+	"silvatek.uk/trustedassertions/internal/appcontext"
 	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
@@ -32,6 +33,7 @@ func HandleError(errorCode int, errorMessage string, w http.ResponseWriter, r *h
 }
 
 func ErrorPageHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
 	errorCode := r.URL.Query().Get("err")
 	errorId := r.URL.Query().Get("id")
 
@@ -43,7 +45,7 @@ func ErrorPageHandler(w http.ResponseWriter, r *http.Request) {
 		ErrorID:      errorId,
 	}
 
-	RenderWebPageWithStatus("error", data, nil, w, r, 500)
+	RenderWebPageWithStatus(ctx, "error", data, nil, w, r, 500)
 }
 
 func errorMessage(errorCode string) string {
@@ -59,5 +61,6 @@ func ErrorTestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func NotFoundWebHandler(w http.ResponseWriter, r *http.Request) {
-	RenderWebPageWithStatus("notfound", "", nil, w, r, 404)
+	ctx := appcontext.NewWebContext(r)
+	RenderWebPageWithStatus(ctx, "notfound", "", nil, w, r, 404)
 }

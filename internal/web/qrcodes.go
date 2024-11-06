@@ -6,9 +6,12 @@ import (
 	"strings"
 
 	"github.com/skip2/go-qrcode"
+	"silvatek.uk/trustedassertions/internal/appcontext"
 )
 
 func SharePageWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
 	hash := r.URL.Query().Get("hash")
 	kind := r.URL.Query().Get("type")
 
@@ -22,7 +25,7 @@ func SharePageWebHandler(w http.ResponseWriter, r *http.Request) {
 		HashUri: "hash://sha256/" + hash + "?type=" + kind,
 	}
 
-	RenderWebPage("sharepage", data, nil, w, r)
+	RenderWebPage(ctx, "sharepage", data, nil, w, r)
 }
 
 func qrCodeGenerator(w http.ResponseWriter, r *http.Request) {
