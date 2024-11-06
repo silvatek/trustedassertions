@@ -16,7 +16,7 @@ type key int
 const ctxDataKey key = 0
 
 func NewWebContext(req *http.Request) context.Context {
-	return WebContext(context.Background(), req)
+	return WebContext(req.Context(), req)
 }
 
 func WebContext(parent context.Context, req *http.Request) context.Context {
