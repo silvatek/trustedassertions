@@ -138,6 +138,9 @@ func authUser(r *http.Request) string {
 	if err != nil {
 		return ""
 	}
+	if cookie.Value == "" {
+		return ""
+	}
 	userName, err := auth.ParseUserJwt(cookie.Value, userJwtKey)
 	if err != nil {
 		log.Errorf("Error parsing user JWT: %v", err)
@@ -166,7 +169,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, assertions.MakeUri(key, "statement"))
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
-	refs := assertions.EnrichReferences(refUris, statement.Uri(), datastore.ActiveDataStore)
+	refs := assertions.EnrichReferences(ctx, refUris, statement.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
 		Uri        assertions.HashUri
@@ -212,7 +215,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	subject, _ := datastore.ActiveDataStore.FetchStatement(ctx, subjectUri)
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, uri)
-	refs := assertions.EnrichReferences(refUris, uri, datastore.ActiveDataStore)
+	refs := assertions.EnrichReferences(ctx, refUris, uri, datastore.ActiveDataStore)
 
 	data := struct {
 		Uri         string
@@ -257,7 +260,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, entity.Uri())
-	refs := assertions.EnrichReferences(refUris, entity.Uri(), datastore.ActiveDataStore)
+	refs := assertions.EnrichReferences(ctx, refUris, entity.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
 		Uri        string

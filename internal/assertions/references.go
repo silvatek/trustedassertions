@@ -103,9 +103,7 @@ func SummariseAssertion(assertion Assertion, currentUri HashUri, resolver Resolv
 	return "Some kind of assertion"
 }
 
-func EnrichReferences(uris []HashUri, currentUri HashUri, resolver Resolver) []ReferenceSummary {
-	ctx := context.Background()
-
+func EnrichReferences(ctx context.Context, uris []HashUri, currentUri HashUri, resolver Resolver) []ReferenceSummary {
 	summaries := make([]ReferenceSummary, 0)
 
 	for _, uri := range uris {
@@ -114,7 +112,7 @@ func EnrichReferences(uris []HashUri, currentUri HashUri, resolver Resolver) []R
 		case "assertion":
 			assertion, err := resolver.FetchAssertion(ctx, uri)
 			if err != nil {
-				log.Errorf("Error feting assertion %s %v", uri.String(), err)
+				log.ErrorfX(ctx, "Error feting assertion %s %v", uri.String(), err)
 				summary = "Error fetching assertion"
 			} else {
 				summary = SummariseAssertion(assertion, currentUri, resolver)
@@ -122,7 +120,7 @@ func EnrichReferences(uris []HashUri, currentUri HashUri, resolver Resolver) []R
 		case "document":
 			document, err := resolver.FetchDocument(ctx, uri)
 			if err != nil {
-				log.Errorf("Error feting document %s %v", uri.String(), err)
+				log.ErrorfX(ctx, "Error feting document %s %v", uri.String(), err)
 				summary = "Error fetching document"
 			} else {
 				summary = document.Metadata.Title
