@@ -96,7 +96,7 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 			labels["traceparent"] = data.TraceParent
 			entry.HttpRequest.RequestUrl = data.ReqPath
 			entry.HttpRequest.RequestMethod = data.ReqMethod
-			entry.TraceID = traceId(data.TraceParent)
+			entry.TraceID, entry.SpanID = traceId(data.TraceParent)
 			entry.Sampled = "true"
 		}
 
@@ -109,9 +109,9 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 	}
 }
 
-func traceId(traceparent string) string {
+func traceId(traceparent string) (string, string) {
 	parts := strings.Split(traceparent, "-")
-	return "projects/trustedassertions/traces/" + parts[1]
+	return "projects/trustedassertions/traces/" + parts[1], parts[2]
 }
 
 func Fatal(err error) {
