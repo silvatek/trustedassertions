@@ -26,6 +26,8 @@ const UserCollection = "Users"
 
 var EmptyRefs = []assertions.HashUri{}
 
+var client *firestore.Client
+
 func InitFireStore() {
 	datastore := &FireStore{
 		projectId:    os.Getenv("GCLOUD_PROJECT"),
@@ -44,11 +46,14 @@ func (fs *FireStore) AutoInit() bool {
 }
 
 func (fs *FireStore) client(ctx context.Context) *firestore.Client {
-	client, err := firestore.NewClientWithDatabase(ctx, fs.projectId, fs.databaseName)
-	if err != nil {
-		log.ErrorfX(ctx, "Error connecting to database: %v", err)
-	} else {
-		log.DebugfX(ctx, "Connected to Firestore database: %v", client)
+	if client == nil {
+		newClient, err := firestore.NewClientWithDatabase(ctx, fs.projectId, fs.databaseName)
+		if err != nil {
+			log.ErrorfX(ctx, "Error connecting to database: %v", err)
+		} else {
+			log.DebugfX(ctx, "Connected to Firestore database: %v", client)
+			client = newClient
+		}
 	}
 	return client
 }
@@ -185,6 +190,8 @@ func (fs *FireStore) fetch(ctx context.Context, uri assertions.HashUri) (*DbReco
 func (fs *FireStore) FetchStatement(ctx context.Context, uri assertions.HashUri) (assertions.Statement, error) {
 	record, err := fs.fetch(ctx, uri)
 
+	log.DebugfX(ctx, "Fetched statement %s", uri)
+
 	if err != nil {
 		return *assertions.NewStatement("{bad record}"), err
 	} else {
@@ -194,6 +201,8 @@ func (fs *FireStore) FetchStatement(ctx context.Context, uri assertions.HashUri)
 
 func (fs *FireStore) FetchEntity(ctx context.Context, uri assertions.HashUri) (assertions.Entity, error) {
 	record, err := fs.fetch(ctx, uri)
+
+	log.DebugfX(ctx, "Fetched entity %s", uri)
 
 	if err != nil {
 		return assertions.NewEntity("{bad record}", *big.NewInt(0)), err
@@ -209,6 +218,8 @@ func (fs *FireStore) FetchAssertion(ctx context.Context, uri assertions.HashUri)
 		return assertions.NewAssertion("{bad record}"), err
 	}
 
+	log.DebugfX(ctx, "Fetched assertion %s", uri)
+
 	assertion, err := assertions.ParseAssertionJwt(record.Content)
 	if err != nil {
 		log.Errorf("Error parsing JWT: %v", err)
@@ -219,6 +230,8 @@ func (fs *FireStore) FetchAssertion(ctx context.Context, uri assertions.HashUri)
 
 func (fs *FireStore) FetchDocument(ctx context.Context, uri assertions.HashUri) (assertions.Document, error) {
 	record, _ := fs.fetch(ctx, uri)
+
+	log.DebugfX(ctx, "Fetched document %s", uri)
 
 	doc, _ := assertions.MakeDocument(record.Content)
 
