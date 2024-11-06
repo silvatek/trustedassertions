@@ -61,7 +61,7 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 func (fs *FireStore) store(collection string, id string, data map[string]interface{}) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	result, err := client.Collection(collection).Doc(id).Set(ctx, data)
 
@@ -101,7 +101,7 @@ func contentDataMap(value assertions.Referenceable) map[string]interface{} {
 
 func (fs *FireStore) StoreRecord(ctx context.Context, uri assertions.HashUri, rec DbRecord) {
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	result, err := client.Collection(MainCollection).Doc(uri.Escaped()).Set(ctx, rec)
 
@@ -157,7 +157,7 @@ func (fs *FireStore) StoreKey(entityUri assertions.HashUri, key string) {
 func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashUri, refType string) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	if refType == "" {
 		refType = target.Kind()
@@ -174,7 +174,7 @@ func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashU
 
 func (fs *FireStore) fetch(ctx context.Context, uri assertions.HashUri) (*DbRecord, error) {
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	doc, err := client.Collection(MainCollection).Doc(uri.Escaped()).Get(ctx)
 	if err != nil {
@@ -247,7 +247,7 @@ type KeyRecord struct {
 func (fs *FireStore) FetchKey(entityUri assertions.HashUri) (string, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	doc, err := client.Collection(KeyCollection).Doc(entityUri.Escaped()).Get(ctx)
 	if err != nil {
@@ -269,7 +269,7 @@ type DbReference struct {
 func (fs *FireStore) FetchRefs(uri assertions.HashUri) ([]assertions.HashUri, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	results := make([]assertions.HashUri, 0)
 
@@ -293,7 +293,7 @@ func (fs *FireStore) FetchRefs(uri assertions.HashUri) ([]assertions.HashUri, er
 func (fs *FireStore) StoreUser(user auth.User) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	client.Collection(UserCollection).Doc(user.Id).Set(ctx, user)
 
@@ -303,7 +303,7 @@ func (fs *FireStore) StoreUser(user auth.User) {
 func (fs *FireStore) FetchUser(id string) (auth.User, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	user := auth.User{}
 
@@ -345,7 +345,7 @@ func (df *DocFetcher) Next() *DbRecord {
 func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	// df := DocFetcher{iterator: client.Collection(MainCollection).Documents(ctx)}
 
@@ -433,7 +433,7 @@ func (fs *FireStore) Reindex() {
 	log.Info("Reindexing...")
 	ctx := context.TODO()
 	client := fs.client(ctx)
-	defer client.Close()
+	// defer client.Close()
 
 	docs := client.Collection(MainCollection).Documents(ctx)
 	for {
