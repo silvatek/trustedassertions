@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/gorilla/mux"
+	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
@@ -140,6 +141,9 @@ func authUser(r *http.Request) string {
 }
 
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+	log.DebugfX(ctx, "Home page accessed")
+
 	data := struct {
 		DefaultDocument assertions.HashUri
 	}{
@@ -292,6 +296,7 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
 	username := authUser(r)
 	if username == "" {
 		HandleError(ErrorNoAuth, "Not logged in", w, r)
@@ -306,13 +311,13 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		RenderWebPage("newstatementform", user, nil, w, r)
 	} else if r.Method == "POST" {
-		log.Info("Creating new statement and assertion")
+		log.InfofX(ctx, "Creating new statement and assertion")
 		r.ParseForm()
 		content := r.Form.Get("statement")
-		log.Debugf("Web post of new statement: %s", content)
+		log.DebugfX(ctx, "Web post of new statement: %s", content)
 
 		keyId := r.Form.Get("sign_as")
-		log.Debugf("Signing key ID: %s", keyId)
+		log.DebugfX(ctx, "Signing key ID: %s", keyId)
 
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
 
@@ -355,6 +360,7 @@ func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
 	username := authUser(r)
 	if username == "" {
 		HandleError(ErrorNoAuth, "Not logged in", w, r)
@@ -369,10 +375,10 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		RenderWebPage("newentityform", user, nil, w, r)
 	} else if r.Method == "POST" {
-		log.Info("Creating new entity and signing key")
+		log.InfofX(ctx, "Creating new entity and signing key")
 		r.ParseForm()
 		commonName := r.Form.Get("commonname")
-		log.Debugf("Common name: %s", commonName)
+		log.DebugfX(ctx, "Common name: %s", commonName)
 
 		privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 		entity := assertions.Entity{CommonName: commonName}

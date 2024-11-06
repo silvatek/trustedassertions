@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"silvatek.uk/trustedassertions/internal/appcontext"
 )
 
 type LogEntry struct {
@@ -49,7 +51,7 @@ func Debugf(text string, args ...interface{}) {
 }
 
 func DebugfX(ctx context.Context, text string, args ...interface{}) {
-	WriteLog(context.Background(), "DEBUG", text, args...)
+	WriteLog(ctx, "DEBUG", text, args...)
 }
 
 func Info(text string) {
@@ -61,7 +63,7 @@ func Infof(text string, args ...interface{}) {
 }
 
 func InfofX(ctx context.Context, text string, args ...interface{}) {
-	WriteLog(context.Background(), "INFO ", text, args...)
+	WriteLog(ctx, "INFO ", text, args...)
 }
 
 func Errorf(text string, args ...interface{}) {
@@ -69,7 +71,7 @@ func Errorf(text string, args ...interface{}) {
 }
 
 func ErrorfX(ctx context.Context, text string, args ...interface{}) {
-	WriteLog(context.Background(), "ERROR", text, args...)
+	WriteLog(ctx, "ERROR", text, args...)
 }
 
 func WriteLog(ctx context.Context, level string, template string, args ...interface{}) {
@@ -83,9 +85,20 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 			Message:   fmt.Sprintf(template, args...),
 		}
 
-		entry.Labels = map[string]string{
+		labels := map[string]string{
 			"appname": "trustedassertions",
 		}
+
+		data, _ := appcontext.ContextData(ctx)
+		if data.ReqPath != "" {
+			labels["reqPath"] = data.ReqPath
+		}
+		if data.Dummy != "" {
+			labels["dummy"] = data.Dummy
+		}
+
+		entry.Labels = labels
+
 		encoder.Encode(entry)
 
 	} else {
