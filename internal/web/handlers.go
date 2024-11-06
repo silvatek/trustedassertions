@@ -154,8 +154,10 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
 	key := mux.Vars(r)["hash"]
-	statement, _ := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(key, "statement"))
+	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, assertions.MakeUri(key, "statement"))
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(statement.Uri())
 	refs := assertions.EnrichReferences(refUris, statement.Uri(), datastore.ActiveDataStore)
@@ -183,23 +185,25 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
 	key := mux.Vars(r)["hash"]
 	uri := assertions.MakeUri(key, "assertion")
-	assertion, _ := datastore.ActiveDataStore.FetchAssertion(uri)
+	assertion, _ := datastore.ActiveDataStore.FetchAssertion(ctx, uri)
 
 	issuerUri := assertions.UriFromString(assertion.Issuer)
 	if !issuerUri.HasType() {
 		issuerUri = issuerUri.WithType("entity")
 	}
 
-	issuer, _ := datastore.ActiveDataStore.FetchEntity(issuerUri)
+	issuer, _ := datastore.ActiveDataStore.FetchEntity(ctx, issuerUri)
 
 	subjectUri := assertions.UriFromString(assertion.Subject)
 	if !subjectUri.HasType() {
 		subjectUri = subjectUri.WithType("statement")
 	}
 
-	subject, _ := datastore.ActiveDataStore.FetchStatement(subjectUri)
+	subject, _ := datastore.ActiveDataStore.FetchStatement(ctx, subjectUri)
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(uri)
 	refs := assertions.EnrichReferences(refUris, uri, datastore.ActiveDataStore)
@@ -235,10 +239,12 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
 	key := mux.Vars(r)["hash"]
 
 	uri := assertions.MakeUri(key, "entity")
-	entity, err := datastore.ActiveDataStore.FetchEntity(uri)
+	entity, err := datastore.ActiveDataStore.FetchEntity(ctx, uri)
 	if err != nil {
 		HandleError(ErrorEntityFetch, "Unable to fetch entity", w, r)
 		return
@@ -272,8 +278,9 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
 	key := mux.Vars(r)["hash"]
-	document, _ := datastore.ActiveDataStore.FetchDocument(assertions.MakeUri(key, "document"))
+	document, _ := datastore.ActiveDataStore.FetchDocument(ctx, assertions.MakeUri(key, "document"))
 
 	data := struct {
 		Doc       assertions.Document
@@ -416,7 +423,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	statementHash := mux.Vars(r)["hash"]
 
 	if r.Method == "GET" {
-		statement, err := datastore.ActiveDataStore.FetchStatement(assertions.MakeUri(statementHash, "statement"))
+		statement, err := datastore.ActiveDataStore.FetchStatement(ctx, assertions.MakeUri(statementHash, "statement"))
 		if err != nil {
 			log.Errorf("Error fetching statement: %v", err)
 		} else {
@@ -453,7 +460,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		privateKey := assertions.StringToPrivateKey(b64key)
 
-		entity, _ := datastore.ActiveDataStore.FetchEntity(keyUri)
+		entity, _ := datastore.ActiveDataStore.FetchEntity(ctx, keyUri)
 
 		su := assertions.MakeUri(statementHash, "statement")
 

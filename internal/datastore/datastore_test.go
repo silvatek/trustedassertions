@@ -25,6 +25,7 @@ func TestMetadata(t *testing.T) {
 
 func TestStoreFetchStatement(t *testing.T) {
 	InitInMemoryDataStore()
+	ctx := context.Background()
 
 	statement1 := assertions.NewStatement("testing")
 	uri := statement1.Uri()
@@ -32,7 +33,7 @@ func TestStoreFetchStatement(t *testing.T) {
 
 	ActiveDataStore.Store(context.TODO(), statement1)
 
-	statement2, _ := ActiveDataStore.FetchStatement(uri)
+	statement2, _ := ActiveDataStore.FetchStatement(ctx, uri)
 
 	if statement2.Content() != statement1.Content() {
 		t.Errorf("Mismatched content: %s", statement2.Content())
@@ -41,6 +42,8 @@ func TestStoreFetchStatement(t *testing.T) {
 
 func TestStoreFetchEntity(t *testing.T) {
 	InitInMemoryDataStore()
+	ctx := context.Background()
+
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 
 	entity1 := assertions.NewEntity("Test Entity", *big.NewInt(123456))
@@ -49,7 +52,7 @@ func TestStoreFetchEntity(t *testing.T) {
 
 	ActiveDataStore.Store(context.TODO(), &entity1)
 
-	entity2, err := ActiveDataStore.FetchEntity(uri)
+	entity2, err := ActiveDataStore.FetchEntity(ctx, uri)
 	if err != nil {
 		t.Errorf("Unable to fetch new entity: %v", err)
 	}

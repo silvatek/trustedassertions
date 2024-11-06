@@ -46,9 +46,9 @@ func (fs *FireStore) AutoInit() bool {
 func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 	client, err := firestore.NewClientWithDatabase(ctx, fs.projectId, fs.databaseName)
 	if err != nil {
-		log.Errorf("Error connecting to database: %v", err)
+		log.ErrorfX(ctx, "Error connecting to database: %v", err)
 	} else {
-		log.Debugf("Connected to Firestore database: %v", client)
+		log.DebugfX(ctx, "Connected to Firestore database: %v", client)
 	}
 	return client
 }
@@ -167,14 +167,13 @@ func (fs *FireStore) StoreRef(source assertions.HashUri, target assertions.HashU
 	refs.Doc(source.Escaped()).Set(ctx, data)
 }
 
-func (fs *FireStore) fetch(uri assertions.HashUri) (*DbRecord, error) {
-	ctx := context.TODO()
+func (fs *FireStore) fetch(ctx context.Context, uri assertions.HashUri) (*DbRecord, error) {
 	client := fs.client(ctx)
 	defer client.Close()
 
 	doc, err := client.Collection(MainCollection).Doc(uri.Escaped()).Get(ctx)
 	if err != nil {
-		log.Errorf("Error reading value: %v", err)
+		log.ErrorfX(ctx, "Error reading value: %v", err)
 		return nil, err
 	} else {
 		record := DbRecord{}
@@ -183,8 +182,8 @@ func (fs *FireStore) fetch(uri assertions.HashUri) (*DbRecord, error) {
 	}
 }
 
-func (fs *FireStore) FetchStatement(uri assertions.HashUri) (assertions.Statement, error) {
-	record, err := fs.fetch(uri)
+func (fs *FireStore) FetchStatement(ctx context.Context, uri assertions.HashUri) (assertions.Statement, error) {
+	record, err := fs.fetch(ctx, uri)
 
 	if err != nil {
 		return *assertions.NewStatement("{bad record}"), err
@@ -193,8 +192,8 @@ func (fs *FireStore) FetchStatement(uri assertions.HashUri) (assertions.Statemen
 	}
 }
 
-func (fs *FireStore) FetchEntity(uri assertions.HashUri) (assertions.Entity, error) {
-	record, err := fs.fetch(uri)
+func (fs *FireStore) FetchEntity(ctx context.Context, uri assertions.HashUri) (assertions.Entity, error) {
+	record, err := fs.fetch(ctx, uri)
 
 	if err != nil {
 		return assertions.NewEntity("{bad record}", *big.NewInt(0)), err
@@ -203,8 +202,8 @@ func (fs *FireStore) FetchEntity(uri assertions.HashUri) (assertions.Entity, err
 	}
 }
 
-func (fs *FireStore) FetchAssertion(uri assertions.HashUri) (assertions.Assertion, error) {
-	record, err := fs.fetch(uri)
+func (fs *FireStore) FetchAssertion(ctx context.Context, uri assertions.HashUri) (assertions.Assertion, error) {
+	record, err := fs.fetch(ctx, uri)
 
 	if err != nil {
 		return assertions.NewAssertion("{bad record}"), err
@@ -218,8 +217,8 @@ func (fs *FireStore) FetchAssertion(uri assertions.HashUri) (assertions.Assertio
 	return assertion, nil
 }
 
-func (fs *FireStore) FetchDocument(uri assertions.HashUri) (assertions.Document, error) {
-	record, _ := fs.fetch(uri)
+func (fs *FireStore) FetchDocument(ctx context.Context, uri assertions.HashUri) (assertions.Document, error) {
+	record, _ := fs.fetch(ctx, uri)
 
 	doc, _ := assertions.MakeDocument(record.Content)
 

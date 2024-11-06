@@ -36,7 +36,7 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 		return nil, err
 	}
 	privateKey := assertions.StringToPrivateKey(b64key)
-	entity, err := ActiveDataStore.FetchEntity(entityUri)
+	entity, err := ActiveDataStore.FetchEntity(ctx, entityUri)
 	if err != nil {
 		return nil, err
 	}

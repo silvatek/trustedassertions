@@ -71,22 +71,22 @@ func (ds *InMemoryDataStore) FetchInto(key assertions.HashUri, item assertions.R
 	return item.ParseContent(record.Content)
 }
 
-func (ds *InMemoryDataStore) FetchStatement(key assertions.HashUri) (assertions.Statement, error) {
+func (ds *InMemoryDataStore) FetchStatement(ctx context.Context, key assertions.HashUri) (assertions.Statement, error) {
 	var statement assertions.Statement
 	return statement, ds.FetchInto(key, &statement)
 }
 
-func (ds *InMemoryDataStore) FetchEntity(key assertions.HashUri) (assertions.Entity, error) {
+func (ds *InMemoryDataStore) FetchEntity(ctx context.Context, key assertions.HashUri) (assertions.Entity, error) {
 	var entity assertions.Entity
 	return entity, ds.FetchInto(key, &entity)
 }
 
-func (ds *InMemoryDataStore) FetchAssertion(key assertions.HashUri) (assertions.Assertion, error) {
+func (ds *InMemoryDataStore) FetchAssertion(ctx context.Context, key assertions.HashUri) (assertions.Assertion, error) {
 	var assertion assertions.Assertion
 	return assertion, ds.FetchInto(key, &assertion)
 }
 
-func (ds *InMemoryDataStore) FetchDocument(key assertions.HashUri) (assertions.Document, error) {
+func (ds *InMemoryDataStore) FetchDocument(ctx context.Context, key assertions.HashUri) (assertions.Document, error) {
 	var doc assertions.Document
 	return doc, ds.FetchInto(key, &doc)
 }

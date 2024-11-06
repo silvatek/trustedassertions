@@ -1,6 +1,7 @@
 package assertions
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -89,7 +90,7 @@ type TestResolver struct {
 	NullResolver
 }
 
-func (r TestResolver) FetchEntity(key HashUri) (Entity, error) {
+func (r TestResolver) FetchEntity(ctx context.Context, key HashUri) (Entity, error) {
 	return r.entity, nil
 }
 

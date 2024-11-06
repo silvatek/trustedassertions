@@ -1,6 +1,7 @@
 package assertions
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -41,7 +42,7 @@ func NewAssertion(category string) Assertion {
 // The token issuer should be the URI of an entity, and that entity is fetched using the PublicKeyResolver.
 func verificationKey(token *jwt.Token) (interface{}, error) {
 	entityUri, _ := token.Claims.GetIssuer()
-	entity, err := PublicKeyResolver.FetchEntity(HashUri{uri: entityUri})
+	entity, err := PublicKeyResolver.FetchEntity(context.Background(), HashUri{uri: entityUri})
 	return entity.PublicKey, err
 }
 

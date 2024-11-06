@@ -1,6 +1,7 @@
 package assertions
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,10 +22,10 @@ type Referenceable interface {
 
 // Resolver is responsible for fetching the data associated with a Hash URI.
 type Resolver interface {
-	FetchStatement(key HashUri) (Statement, error)
-	FetchEntity(key HashUri) (Entity, error)
-	FetchAssertion(key HashUri) (Assertion, error)
-	FetchDocument(key HashUri) (Document, error)
+	FetchStatement(ctx context.Context, key HashUri) (Statement, error)
+	FetchEntity(ctx context.Context, key HashUri) (Entity, error)
+	FetchAssertion(ctx context.Context, key HashUri) (Assertion, error)
+	FetchDocument(ctx context.Context, key HashUri) (Document, error)
 	FetchKey(entityUri HashUri) (string, error)
 	FetchRefs(key HashUri) ([]HashUri, error)
 }
@@ -33,19 +34,19 @@ type NullResolver struct{}
 
 var ErrNotImplemented = errors.New("not implemented")
 
-func (r NullResolver) FetchStatement(key HashUri) (Statement, error) {
+func (r NullResolver) FetchStatement(ctx context.Context, key HashUri) (Statement, error) {
 	return Statement{}, ErrNotImplemented
 }
 
-func (r NullResolver) FetchEntity(key HashUri) (Entity, error) {
+func (r NullResolver) FetchEntity(ctx context.Context, key HashUri) (Entity, error) {
 	return Entity{}, ErrNotImplemented
 }
 
-func (r NullResolver) FetchAssertion(key HashUri) (Assertion, error) {
+func (r NullResolver) FetchAssertion(ctx context.Context, key HashUri) (Assertion, error) {
 	return Assertion{}, ErrNotImplemented
 }
 
-func (r NullResolver) FetchDocument(key HashUri) (Document, error) {
+func (r NullResolver) FetchDocument(ctx context.Context, key HashUri) (Document, error) {
 	return Document{}, ErrNotImplemented
 }
 
@@ -78,6 +79,7 @@ func NewReferenceable(kind string) Referenceable {
 }
 
 func SummariseAssertion(assertion Assertion, currentUri HashUri, resolver Resolver) string {
+	ctx := context.Background()
 	if assertion.Issuer == "" {
 		var err error
 		assertion, err = ParseAssertionJwt(assertion.Content())
@@ -88,13 +90,13 @@ func SummariseAssertion(assertion Assertion, currentUri HashUri, resolver Resolv
 
 	subjectUri := UriFromString(assertion.Subject)
 	if subjectUri.Equals(currentUri) {
-		issuer, _ := resolver.FetchEntity(UriFromString(assertion.Issuer))
+		issuer, _ := resolver.FetchEntity(ctx, UriFromString(assertion.Issuer))
 		return fmt.Sprintf("%s asserts this %s", issuer.CommonName, assertion.Category)
 	}
 
 	issuerUri := UriFromString(assertion.Issuer)
 	if issuerUri.Equals(currentUri) {
-		statement, _ := resolver.FetchStatement(UriFromString(assertion.Subject))
+		statement, _ := resolver.FetchStatement(ctx, UriFromString(assertion.Subject))
 		return fmt.Sprintf("This entity asserts that statement %s %s", statement.Uri().Short(), assertion.Category)
 	}
 
@@ -102,13 +104,15 @@ func SummariseAssertion(assertion Assertion, currentUri HashUri, resolver Resolv
 }
 
 func EnrichReferences(uris []HashUri, currentUri HashUri, resolver Resolver) []ReferenceSummary {
+	ctx := context.Background()
+
 	summaries := make([]ReferenceSummary, 0)
 
 	for _, uri := range uris {
 		var summary string
 		switch uri.Kind() {
 		case "assertion":
-			assertion, err := resolver.FetchAssertion(uri)
+			assertion, err := resolver.FetchAssertion(ctx, uri)
 			if err != nil {
 				log.Errorf("Error feting assertion %s %v", uri.String(), err)
 				summary = "Error fetching assertion"
@@ -116,7 +120,7 @@ func EnrichReferences(uris []HashUri, currentUri HashUri, resolver Resolver) []R
 				summary = SummariseAssertion(assertion, currentUri, resolver)
 			}
 		case "document":
-			document, err := resolver.FetchDocument(uri)
+			document, err := resolver.FetchDocument(ctx, uri)
 			if err != nil {
 				log.Errorf("Error feting document %s %v", uri.String(), err)
 				summary = "Error fetching document"

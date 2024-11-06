@@ -113,7 +113,7 @@ func TestPostNewStatement(t *testing.T) {
 	newUri := assertions.UriFromString(strings.TrimSpace(page.Find("#uri")))
 
 	// Make sure the new assertion is really in the datastore
-	_, err := datastore.ActiveDataStore.FetchAssertion(newUri)
+	_, err := datastore.ActiveDataStore.FetchAssertion(context.TODO(), newUri)
 	if err != nil {
 		t.Errorf("Error fetching new assertion: %v", err)
 	}
@@ -131,7 +131,7 @@ func TestNewEntity(t *testing.T) {
 	page.AssertSuccessResponse()
 	uri := assertions.UriFromString(page.Find("span.fulluri"))
 
-	newEntity, err := datastore.ActiveDataStore.FetchEntity(uri)
+	newEntity, err := datastore.ActiveDataStore.FetchEntity(context.TODO(), uri)
 	if err != nil {
 		t.Errorf("Unable to fetch new entity: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestAddAssertion(t *testing.T) {
 	page.AssertSuccessResponse()
 
 	uri := assertions.UriFromString(page.Find("span.fulluri"))
-	_, err := datastore.ActiveDataStore.FetchAssertion(uri)
+	_, err := datastore.ActiveDataStore.FetchAssertion(context.TODO(), uri)
 	if err != nil {
 		t.Errorf("Error fetching new assertion")
 	}
