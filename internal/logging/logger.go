@@ -20,7 +20,7 @@ type LogEntry struct {
 	Labels      map[string]string `json:"logging.googleapis.com/labels,omitempty"`
 	TraceID     string            `json:"logging.googleapis.com/trace,omitempty"`
 	SpanID      string            `json:"logging.googleapis.com/spanId,omitempty"`
-	Sampled     string            `json:"logging.googleapis.com/traceSampled,omitempty"`
+	Sampled     bool              `json:"logging.googleapis.com/traceSampled,omitempty"`
 	HttpRequest HttpRequestLog    `json:"httpRequest,omitempty"`
 }
 
@@ -97,7 +97,7 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 			entry.HttpRequest.RequestUrl = data.ReqPath
 			entry.HttpRequest.RequestMethod = data.ReqMethod
 			entry.TraceID, entry.SpanID = traceId(data.TraceParent)
-			entry.Sampled = "true"
+			entry.Sampled = true
 		}
 
 		entry.Labels = labels
