@@ -20,6 +20,7 @@ type LogEntry struct {
 	Labels      map[string]string `json:"logging.googleapis.com/labels,omitempty"`
 	TraceID     string            `json:"logging.googleapis.com/trace,omitempty"`
 	SpanID      string            `json:"logging.googleapis.com/spanId,omitempty"`
+	Sampled     string            `json:"logging.googleapis.com/traceSampled,omitempty"`
 	HttpRequest HttpRequestLog    `json:"httpRequest,omitempty"`
 }
 
@@ -92,9 +93,11 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 		data, ok := appcontext.ContextData(ctx)
 		if ok {
 			labels["reqPath"] = data.ReqPath
+			labels["traceparent"] = data.TraceParent
 			entry.HttpRequest.RequestUrl = data.ReqPath
 			entry.HttpRequest.RequestMethod = data.ReqMethod
-			labels["traceparent"] = data.TraceParent
+			entry.TraceID = traceId(data.TraceParent)
+			entry.Sampled = "true"
 		}
 
 		entry.Labels = labels
@@ -104,6 +107,11 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 	} else {
 		fmt.Fprintf(LogWriter, level+" "+template+"\n", args...)
 	}
+}
+
+func traceId(traceparent string) string {
+	parts := strings.Split(traceparent, "-")
+	return "projects/trustedassertions/traces/" + parts[1]
 }
 
 func Fatal(err error) {
