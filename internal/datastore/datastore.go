@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"context"
 	"strings"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
@@ -10,7 +11,7 @@ import (
 type DataStore interface {
 	Name() string
 	AutoInit() bool
-	Store(value assertions.Referenceable)
+	Store(ctx context.Context, value assertions.Referenceable)
 	StoreRaw(uri assertions.HashUri, content string)
 	StoreKey(entityUri assertions.HashUri, key string)
 	StoreRef(source assertions.HashUri, target assertions.HashUri, refType string)

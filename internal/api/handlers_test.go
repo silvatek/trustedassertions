@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"math/big"
@@ -20,7 +21,7 @@ func TestStatmentApi(t *testing.T) {
 	statement := assertions.NewStatement("test")
 
 	datastore.InitInMemoryDataStore()
-	datastore.ActiveDataStore.Store(statement)
+	datastore.ActiveDataStore.Store(context.TODO(), statement)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", statement.Uri().ApiPath(), nil)
@@ -42,7 +43,7 @@ func TestEntityApi(t *testing.T) {
 	entity.MakeCertificate(privateKey)
 
 	datastore.InitInMemoryDataStore()
-	datastore.ActiveDataStore.Store(&entity)
+	datastore.ActiveDataStore.Store(context.TODO(), &entity)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", entity.Uri().ApiPath(), nil)
@@ -68,14 +69,14 @@ func TestAssertionApi(t *testing.T) {
 	datastore.InitInMemoryDataStore()
 	assertions.PublicKeyResolver = datastore.ActiveDataStore
 
-	datastore.ActiveDataStore.Store(&entity)
-	datastore.ActiveDataStore.Store(statement)
+	datastore.ActiveDataStore.Store(context.TODO(), &entity)
+	datastore.ActiveDataStore.Store(context.TODO(), statement)
 
 	assertion := assertions.NewAssertion("IsTrue")
 	assertion.Issuer = entity.Uri().String()
 	assertion.Subject = statement.Uri().String()
 	assertion.MakeJwt(privateKey)
-	datastore.ActiveDataStore.Store(&assertion)
+	datastore.ActiveDataStore.Store(context.TODO(), &assertion)
 
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", assertion.Uri().ApiPath(), nil)

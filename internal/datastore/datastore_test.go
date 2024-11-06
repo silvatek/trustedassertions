@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"math/big"
@@ -29,7 +30,7 @@ func TestStoreFetchStatement(t *testing.T) {
 	uri := statement1.Uri()
 	t.Log(uri)
 
-	ActiveDataStore.Store(statement1)
+	ActiveDataStore.Store(context.TODO(), statement1)
 
 	statement2, _ := ActiveDataStore.FetchStatement(uri)
 
@@ -46,7 +47,7 @@ func TestStoreFetchEntity(t *testing.T) {
 	entity1.MakeCertificate(privateKey)
 	uri := entity1.Uri()
 
-	ActiveDataStore.Store(&entity1)
+	ActiveDataStore.Store(context.TODO(), &entity1)
 
 	entity2, err := ActiveDataStore.FetchEntity(uri)
 	if err != nil {
@@ -61,11 +62,11 @@ func TestSearch(t *testing.T) {
 	InitInMemoryDataStore()
 
 	s := assertions.NewStatement("Red Green Blue")
-	ActiveDataStore.Store(s)
+	ActiveDataStore.Store(context.TODO(), s)
 	s = assertions.NewStatement("Red Yellow Blue")
-	ActiveDataStore.Store(s)
+	ActiveDataStore.Store(context.TODO(), s)
 	s = assertions.NewStatement("White Green Blue")
-	ActiveDataStore.Store(s)
+	ActiveDataStore.Store(context.TODO(), s)
 
 	matches, err := ActiveDataStore.Search("green")
 	if err != nil {

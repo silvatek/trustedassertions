@@ -297,6 +297,7 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
+
 	username := authUser(r)
 	if username == "" {
 		HandleError(ErrorNoAuth, "Not logged in", w, r)
@@ -328,7 +329,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		assertion, err := datastore.CreateStatementAndAssertion(content, keyUri, confidence)
+		assertion, err := datastore.CreateStatementAndAssertion(ctx, content, keyUri, confidence)
 		if err != nil {
 			HandleError(ErrorMakeAssertion, "Error making new statement and assertion", w, r)
 			return
@@ -384,7 +385,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		entity := assertions.Entity{CommonName: commonName}
 		entity.MakeCertificate(privateKey)
 
-		datastore.ActiveDataStore.Store(&entity)
+		datastore.ActiveDataStore.Store(ctx, &entity)
 
 		datastore.ActiveDataStore.StoreKey(entity.Uri(), assertions.PrivateKeyToString(privateKey))
 
@@ -399,6 +400,8 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
 	username := authUser(r)
 	if username == "" {
 		HandleError(ErrorNoAuth, "Not logged in", w, r)
@@ -430,11 +433,11 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		RenderWebPage("addassertionform", data, nil, w, r)
 	} else if r.Method == "POST" {
-		log.Info("Creating new assertion for statement")
+		log.InfofX(ctx, "Creating new assertion for statement")
 		r.ParseForm()
 
 		keyId := r.Form.Get("sign_as")
-		log.Debugf("Signing key ID: %s", keyId)
+		log.DebugfX(ctx, "Signing key ID: %s", keyId)
 
 		keyUri := assertions.UriFromString(keyId)
 
@@ -457,11 +460,11 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
 		kind := r.Form.Get("assertion_type")
 
-		assertion := datastore.CreateAssertion(su, confidence, entity, privateKey, kind)
+		assertion := datastore.CreateAssertion(ctx, su, confidence, entity, privateKey, kind)
 
 		// Redirect the user to the assertion
 		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)
 
-		log.Infof("Redirecting to %s", assertion.Uri().WebPath())
+		log.DebugfX(ctx, "Redirecting to %s", assertion.Uri().WebPath())
 	}
 }

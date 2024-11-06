@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"math/big"
@@ -26,7 +27,7 @@ func setup(t *testing.T) *webtest.WebTest {
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 	signer := assertions.NewEntity("Signing entity", *big.NewInt(123456))
 	signer.MakeCertificate(privateKey)
-	datastore.ActiveDataStore.Store(&signer)
+	datastore.ActiveDataStore.Store(context.Background(), &signer)
 	datastore.ActiveDataStore.StoreKey(signer.Uri(), assertions.PrivateKeyToString(privateKey))
 	DefaultEntityUri = signer.Uri()
 

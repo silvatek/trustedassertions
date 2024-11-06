@@ -2,6 +2,7 @@ package testdata
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"strings"
 
@@ -51,7 +52,7 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 		item := assertions.NewReferenceable(dataType)
 		item.ParseContent(string(content))
 
-		datastore.ActiveDataStore.Store(item)
+		datastore.ActiveDataStore.Store(context.TODO(), item)
 
 		if strings.ToLower(dataType) == "assertion" {
 			addAssertionReferences(string(content))

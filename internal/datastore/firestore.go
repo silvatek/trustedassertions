@@ -94,17 +94,16 @@ func contentDataMap(value assertions.Referenceable) map[string]interface{} {
 	return data
 }
 
-func (fs *FireStore) StoreRecord(uri assertions.HashUri, rec DbRecord) {
-	ctx := context.TODO()
+func (fs *FireStore) StoreRecord(ctx context.Context, uri assertions.HashUri, rec DbRecord) {
 	client := fs.client(ctx)
 	defer client.Close()
 
 	result, err := client.Collection(MainCollection).Doc(uri.Escaped()).Set(ctx, rec)
 
 	if err != nil {
-		log.Errorf("Error writing value: %v", err)
+		log.ErrorfX(ctx, "Error writing value: %v", err)
 	} else {
-		log.Debugf("Written: %s %v", uri.Escaped(), result)
+		log.DebugfX(ctx, "Written: %s %v", uri.Escaped(), result)
 	}
 }
 
@@ -114,8 +113,8 @@ func (fs *FireStore) StoreRaw(uri assertions.HashUri, content string) {
 	fs.store(MainCollection, uri.Escaped(), rawDataMap(uri, content, "", ""))
 }
 
-func (fs *FireStore) Store(value assertions.Referenceable) {
-	log.Debugf("Writing to datastore: %s", value.Uri())
+func (fs *FireStore) Store(ctx context.Context, value assertions.Referenceable) {
+	log.DebugfX(ctx, "Writing to datastore: %s", value.Uri())
 
 	uri := value.Uri()
 	if value.Type() != "" && !uri.HasType() {
@@ -130,7 +129,7 @@ func (fs *FireStore) Store(value assertions.Referenceable) {
 		Updated:     time.Now().Format(time.RFC3339),
 		SearchWords: search.SearchWords(value.TextContent()),
 	}
-	fs.StoreRecord(uri, rec)
+	fs.StoreRecord(ctx, uri, rec)
 
 	fs.storeRefs(value.Uri(), value.References())
 }

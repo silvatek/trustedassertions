@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -44,7 +45,7 @@ func (ds *InMemoryDataStore) StoreRaw(uri assertions.HashUri, content string) {
 	ds.StoreRecord(uri, DbRecord{Uri: uri.String(), Content: content})
 }
 
-func (ds *InMemoryDataStore) Store(value assertions.Referenceable) {
+func (ds *InMemoryDataStore) Store(ctx context.Context, value assertions.Referenceable) {
 	ds.StoreRecord(value.Uri(), DbRecord{Uri: value.Uri().String(), Content: value.Content()})
 }
 
