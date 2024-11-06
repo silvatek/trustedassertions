@@ -78,8 +78,7 @@ func NewReferenceable(kind string) Referenceable {
 	}
 }
 
-func SummariseAssertion(assertion Assertion, currentUri HashUri, resolver Resolver) string {
-	ctx := context.Background()
+func SummariseAssertion(ctx context.Context, assertion Assertion, currentUri HashUri, resolver Resolver) string {
 	if assertion.Issuer == "" {
 		var err error
 		assertion, err = ParseAssertionJwt(assertion.Content())
@@ -112,15 +111,15 @@ func EnrichReferences(ctx context.Context, uris []HashUri, currentUri HashUri, r
 		case "assertion":
 			assertion, err := resolver.FetchAssertion(ctx, uri)
 			if err != nil {
-				log.ErrorfX(ctx, "Error feting assertion %s %v", uri.String(), err)
+				log.ErrorfX(ctx, "Error fetching assertion %s %v", uri.String(), err)
 				summary = "Error fetching assertion"
 			} else {
-				summary = SummariseAssertion(assertion, currentUri, resolver)
+				summary = SummariseAssertion(ctx, assertion, currentUri, resolver)
 			}
 		case "document":
 			document, err := resolver.FetchDocument(ctx, uri)
 			if err != nil {
-				log.ErrorfX(ctx, "Error feting document %s %v", uri.String(), err)
+				log.ErrorfX(ctx, "Error fetching document %s %v", uri.String(), err)
 				summary = "Error fetching document"
 			} else {
 				summary = document.Metadata.Title
