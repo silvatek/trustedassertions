@@ -80,7 +80,11 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		Detail:   data,
 	}
 
-	SetAuthCookie(username, w) // Refresh the auth cookie
+	if pageName == "loggedout" {
+		SetAuthCookie("", w)
+	} else {
+		SetAuthCookie(username, w) // Refresh the auth cookie
+	}
 
 	leftMenu := PageMenu{}
 	if pageName != "index" {

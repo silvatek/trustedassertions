@@ -46,7 +46,7 @@ func (ds *InMemoryDataStore) StoreRaw(uri assertions.HashUri, content string) {
 }
 
 func (ds *InMemoryDataStore) Store(ctx context.Context, value assertions.Referenceable) {
-	ds.StoreRecord(value.Uri(), DbRecord{Uri: value.Uri().String(), Content: value.Content()})
+	ds.StoreRecord(value.Uri(), DbRecord{Uri: value.Uri().String(), DataType: value.Type(), Content: value.Content()})
 }
 
 func (ds *InMemoryDataStore) StoreKey(entityUri assertions.HashUri, key string) {
@@ -89,6 +89,19 @@ func (ds *InMemoryDataStore) FetchAssertion(ctx context.Context, key assertions.
 func (ds *InMemoryDataStore) FetchDocument(ctx context.Context, key assertions.HashUri) (assertions.Document, error) {
 	var doc assertions.Document
 	return doc, ds.FetchInto(key, &doc)
+}
+
+func (ds *InMemoryDataStore) FetchMany(ctx context.Context, uris []assertions.HashUri) ([]assertions.Referenceable, error) {
+	results := make([]assertions.Referenceable, 0)
+	for _, uri := range uris {
+		rec, ok := ds.data[uri.Escaped()]
+		if ok {
+			value := assertions.NewReferenceable(rec.DataType)
+			value.ParseContent(rec.Content)
+			results = append(results, value)
+		}
+	}
+	return results, nil
 }
 
 func (ds *InMemoryDataStore) FetchKey(entityUri assertions.HashUri) (string, error) {

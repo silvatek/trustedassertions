@@ -11,7 +11,7 @@ func SetAuthCookie(userId string, w http.ResponseWriter) {
 	var cookie *http.Cookie
 	if userId == "" {
 		expiration := time.Now().Add(-24 * time.Hour)
-		cookie = &http.Cookie{Name: "auth", Path: "/", Value: "", Expires: expiration, SameSite: http.SameSiteStrictMode}
+		cookie = &http.Cookie{Name: "auth", Path: "/", Value: "", Expires: expiration, MaxAge: -1, SameSite: http.SameSiteStrictMode}
 	} else {
 		cookie = MakeAuthCookie(userId)
 	}

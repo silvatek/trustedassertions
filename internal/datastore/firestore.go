@@ -233,6 +233,16 @@ func (fs *FireStore) FetchDocument(ctx context.Context, uri assertions.HashUri) 
 	return *doc, nil
 }
 
+func (fs *FireStore) FetchMany(ctx context.Context, keys []assertions.HashUri) ([]assertions.Referenceable, error) {
+	results := make([]assertions.Referenceable, 0)
+
+	// ids := make([]string, len(keys))
+
+	// docs := client.Collection(MainCollection).Where(firestore.DocumentID, "in", ids).Documents(ctx)
+
+	return results, nil
+}
+
 type KeyRecord struct {
 	Entity   string `json:"entity"`
 	Key      string `json:"key"`
@@ -336,21 +346,22 @@ func (df *DocFetcher) Next() *DbRecord {
 
 func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 	ctx := context.TODO()
-	client := fs.client(ctx)
+	// client := fs.client(ctx)
 
 	queryWords := search.SearchWords(query)
 
 	results := make([]SearchResult, 0)
 
-	docs := client.Collection(MainCollection).Where("words", "array-contains-any", queryWords).Documents(ctx)
-	for {
-		doc, err := docs.Next()
-		if err == iterator.Done {
-			break
-		}
+	records, _ := fs.query(ctx, "words", "array-contains-any", queryWords)
+	// docs := client.Collection(MainCollection).Where("words", "array-contains-any", queryWords).Documents(ctx)
+	for _, record := range records {
+		// doc, err := docs.Next()
+		// if err == iterator.Done {
+		// 	break
+		// }
 
-		record := DbRecord{}
-		doc.DataTo(&record)
+		// record := DbRecord{}
+		// doc.DataTo(&record)
 
 		uri := assertions.UriFromString(record.Uri)
 		if !uri.HasType() {
@@ -363,6 +374,26 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 			Relevance: 0.8,
 		}
 		results = append(results, result)
+	}
+
+	return results, nil
+}
+
+func (fs *FireStore) query(ctx context.Context, fieldName string, operator string, values interface{}) ([]DbRecord, error) {
+	client := fs.client(ctx)
+
+	results := make([]DbRecord, 0)
+
+	docs := client.Collection(MainCollection).Where(fieldName, operator, values).Documents(ctx)
+	for {
+		doc, err := docs.Next()
+		if err == iterator.Done {
+			break
+		}
+
+		record := DbRecord{}
+		doc.DataTo(&record)
+		results = append(results, record)
 	}
 
 	return results, nil
