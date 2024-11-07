@@ -390,6 +390,8 @@ func (fs *FireStore) query(ctx context.Context, fieldName string, operator strin
 		doc, err := docs.Next()
 		if err == iterator.Done {
 			break
+		} else if err != nil {
+			return results, err
 		}
 
 		record := DbRecord{}
