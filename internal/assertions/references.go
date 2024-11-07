@@ -26,6 +26,7 @@ type Resolver interface {
 	FetchEntity(ctx context.Context, key HashUri) (Entity, error)
 	FetchAssertion(ctx context.Context, key HashUri) (Assertion, error)
 	FetchDocument(ctx context.Context, key HashUri) (Document, error)
+	FetchMany(ctx context.Context, keys []HashUri) ([]Referenceable, error)
 	FetchKey(entityUri HashUri) (string, error)
 	FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error)
 }
@@ -56,6 +57,10 @@ func (r NullResolver) FetchKey(key HashUri) (string, error) {
 
 func (r NullResolver) FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error) {
 	return []HashUri{}, ErrNotImplemented
+}
+
+func (r NullResolver) FetchMany(ctx context.Context, keys []HashUri) ([]Referenceable, error) {
+	return []Referenceable{}, ErrNotImplemented
 }
 
 type ReferenceSummary struct {
@@ -104,6 +109,8 @@ func SummariseAssertion(ctx context.Context, assertion Assertion, currentUri Has
 
 func EnrichReferences(ctx context.Context, uris []HashUri, currentUri HashUri, resolver Resolver) []ReferenceSummary {
 	summaries := make([]ReferenceSummary, 0)
+
+	resolver.FetchMany(ctx, uris)
 
 	for _, uri := range uris {
 		var summary string

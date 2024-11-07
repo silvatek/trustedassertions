@@ -234,11 +234,22 @@ func (fs *FireStore) FetchDocument(ctx context.Context, uri assertions.HashUri) 
 }
 
 func (fs *FireStore) FetchMany(ctx context.Context, keys []assertions.HashUri) ([]assertions.Referenceable, error) {
+	log.DebugfX(ctx, "Fetching %d keys", len(keys))
 	results := make([]assertions.Referenceable, 0)
 
-	// ids := make([]string, len(keys))
+	ids := make([]string, len(keys))
+	for n, key := range keys {
+		ids[n] = key.Escaped()
+	}
 
-	// docs := client.Collection(MainCollection).Where(firestore.DocumentID, "in", ids).Documents(ctx)
+	records, _ := fs.query(ctx, firestore.DocumentID, "in", ids)
+	for _, record := range records {
+		value := assertions.NewReferenceable(record.DataType)
+		value.ParseContent(record.Content)
+		results = append(results, value)
+	}
+
+	log.DebugfX(ctx, "Fetched %d values", len(results))
 
 	return results, nil
 }
@@ -346,23 +357,13 @@ func (df *DocFetcher) Next() *DbRecord {
 
 func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 	ctx := context.TODO()
-	// client := fs.client(ctx)
 
 	queryWords := search.SearchWords(query)
 
 	results := make([]SearchResult, 0)
 
 	records, _ := fs.query(ctx, "words", "array-contains-any", queryWords)
-	// docs := client.Collection(MainCollection).Where("words", "array-contains-any", queryWords).Documents(ctx)
 	for _, record := range records {
-		// doc, err := docs.Next()
-		// if err == iterator.Done {
-		// 	break
-		// }
-
-		// record := DbRecord{}
-		// doc.DataTo(&record)
-
 		uri := assertions.UriFromString(record.Uri)
 		if !uri.HasType() {
 			uri = uri.WithType(record.DataType)
