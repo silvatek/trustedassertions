@@ -110,7 +110,10 @@ func SummariseAssertion(ctx context.Context, assertion Assertion, currentUri Has
 func EnrichReferences(ctx context.Context, uris []HashUri, currentUri HashUri, resolver Resolver) []ReferenceSummary {
 	summaries := make([]ReferenceSummary, 0)
 
-	resolver.FetchMany(ctx, uris)
+	_, err := resolver.FetchMany(ctx, uris)
+	if err != nil {
+		log.ErrorfX(ctx, "Error fetching many values: %v", err)
+	}
 
 	for _, uri := range uris {
 		var summary string

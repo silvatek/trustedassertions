@@ -242,7 +242,10 @@ func (fs *FireStore) FetchMany(ctx context.Context, keys []assertions.HashUri) (
 		ids[n] = key.Escaped()
 	}
 
-	records, _ := fs.query(ctx, firestore.DocumentID, "in", ids)
+	records, err := fs.query(ctx, firestore.DocumentID, "in", ids)
+	if err != nil {
+		return results, err
+	}
 	for _, record := range records {
 		value := assertions.NewReferenceable(record.DataType)
 		value.ParseContent(record.Content)
