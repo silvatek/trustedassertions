@@ -390,13 +390,6 @@ func (fs *FireStore) query(ctx context.Context, fieldName string, operator strin
 
 	query := client.Collection(MainCollection).Where(fieldName, operator, values).WithRunOptions(firestore.ExplainOptions{Analyze: true})
 	docs := query.Documents(ctx)
-	plan, err := docs.ExplainMetrics()
-	if err == nil {
-		log.ErrorfX(ctx, "Error in query explain: %v", err)
-	} else {
-		log.DebugfX(ctx, "Explain plan: %v", plan)
-	}
-
 	for {
 		doc, err := docs.Next()
 		if err == iterator.Done {
@@ -408,6 +401,12 @@ func (fs *FireStore) query(ctx context.Context, fieldName string, operator strin
 		record := DbRecord{}
 		doc.DataTo(&record)
 		results = append(results, record)
+	}
+	plan, err := docs.ExplainMetrics()
+	if err == nil {
+		log.ErrorfX(ctx, "Error in query explain: %v", err)
+	} else {
+		log.DebugfX(ctx, "Explain plan: %v", plan)
 	}
 
 	return results, nil
