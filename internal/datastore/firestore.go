@@ -2,8 +2,10 @@ package datastore
 
 import (
 	"context"
+	"encoding/json"
 	"math/big"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -406,12 +408,25 @@ func (fs *FireStore) query(ctx context.Context, fieldName string, operator strin
 	if err != nil {
 		log.ErrorfX(ctx, "Error in query explain: %v", err)
 	} else {
-		log.DebugfX(ctx, "Plan summary: %v", plan.PlanSummary)
-		log.DebugfX(ctx, "Indexes: %v", plan.PlanSummary.IndexesUsed)
-		log.DebugfX(ctx, "Execution stats: %v", plan.ExecutionStats)
+		log.DebugfX(ctx, "Plan summary: %s", explainString(plan))
 	}
 
 	return results, nil
+}
+
+func explainString(plan *firestore.ExplainMetrics) string {
+	var sb strings.Builder
+	sb.WriteString("Execution duration=")
+	sb.WriteString(plan.ExecutionStats.ExecutionDuration.String())
+	sb.WriteString("\nRead operations=")
+	sb.WriteString(strconv.Itoa(int(plan.ExecutionStats.ReadOperations)))
+	sb.WriteString("\nIndexes used=")
+	sb.WriteString(strconv.Itoa(len(plan.PlanSummary.IndexesUsed)))
+	sb.WriteString("\nJSON=")
+	bytes, _ := json.Marshal(plan)
+	sb.Write(bytes)
+
+	return sb.String()
 }
 
 func searchDocs(docs DocFetcher, query string) []SearchResult {
