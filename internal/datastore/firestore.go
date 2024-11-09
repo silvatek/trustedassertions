@@ -237,9 +237,9 @@ func (fs *FireStore) FetchMany(ctx context.Context, keys []assertions.HashUri) (
 	log.DebugfX(ctx, "Fetching %d keys", len(keys))
 	results := make([]assertions.Referenceable, 0)
 
-	refs := make([]firestore.DocumentRef, len(keys))
+	refs := make([]*firestore.DocumentRef, len(keys))
 	for n, key := range keys {
-		refs[n] = *client.Collection(MainCollection).Doc(key.Escaped())
+		refs[n] = client.Collection(MainCollection).Doc(key.Escaped())
 	}
 
 	records, err := fs.query(ctx, firestore.DocumentID, "in", refs)
