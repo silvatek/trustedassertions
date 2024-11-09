@@ -110,36 +110,51 @@ func SummariseAssertion(ctx context.Context, assertion Assertion, currentUri Has
 func EnrichReferences(ctx context.Context, uris []HashUri, currentUri HashUri, resolver Resolver) []ReferenceSummary {
 	summaries := make([]ReferenceSummary, 0)
 
-	_, err := resolver.FetchMany(ctx, uris)
+	values, err := resolver.FetchMany(ctx, uris)
 	if err != nil {
 		log.ErrorfX(ctx, "Error fetching many values: %v", err)
 	}
-
-	for _, uri := range uris {
+	for _, value := range values {
 		var summary string
-		switch uri.Kind() {
+		switch strings.ToLower(value.Type()) {
 		case "assertion":
-			assertion, err := resolver.FetchAssertion(ctx, uri)
-			if err != nil {
-				log.ErrorfX(ctx, "Error fetching assertion %s %v", uri.String(), err)
-				summary = "Error fetching assertion"
-			} else {
-				summary = SummariseAssertion(ctx, assertion, currentUri, resolver)
-			}
+			assertion := value.(*Assertion)
+			summary = SummariseAssertion(ctx, *assertion, currentUri, resolver)
 		case "document":
-			document, err := resolver.FetchDocument(ctx, uri)
-			if err != nil {
-				log.ErrorfX(ctx, "Error fetching document %s %v", uri.String(), err)
-				summary = "Error fetching document"
-			} else {
-				summary = document.Metadata.Title
-			}
+			document := value.(*Document)
+			summary = document.Metadata.Title
 		default:
-			summary = "unknown " + uri.Kind()
+			summary = "unknown " + value.Type()
 		}
-		ref := ReferenceSummary{Uri: uri, Summary: summary}
+		ref := ReferenceSummary{Uri: value.Uri(), Summary: summary}
 		summaries = append(summaries, ref)
 	}
+
+	// for _, uri := range uris {
+	// 	var summary string
+	// 	switch uri.Kind() {
+	// 	case "assertion":
+	// 		assertion, err := resolver.FetchAssertion(ctx, uri)
+	// 		if err != nil {
+	// 			log.ErrorfX(ctx, "Error fetching assertion %s %v", uri.String(), err)
+	// 			summary = "Error fetching assertion"
+	// 		} else {
+	// 			summary = SummariseAssertion(ctx, assertion, currentUri, resolver)
+	// 		}
+	// 	case "document":
+	// 		document, err := resolver.FetchDocument(ctx, uri)
+	// 		if err != nil {
+	// 			log.ErrorfX(ctx, "Error fetching document %s %v", uri.String(), err)
+	// 			summary = "Error fetching document"
+	// 		} else {
+	// 			summary = document.Metadata.Title
+	// 		}
+	// 	default:
+	// 		summary = "unknown " + uri.Kind()
+	// 	}
+	// 	ref := ReferenceSummary{Uri: uri, Summary: summary}
+	// 	summaries = append(summaries, ref)
+	// }
 
 	return summaries
 }
