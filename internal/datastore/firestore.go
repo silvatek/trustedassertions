@@ -406,7 +406,9 @@ func (fs *FireStore) query(ctx context.Context, fieldName string, operator strin
 	if err != nil {
 		log.ErrorfX(ctx, "Error in query explain: %v", err)
 	} else {
-		log.DebugfX(ctx, "Explain plan: %v", plan)
+		log.DebugfX(ctx, "Plan summary: %v", plan.PlanSummary)
+		log.DebugfX(ctx, "Indexes: %v", plan.PlanSummary.IndexesUsed)
+		log.DebugfX(ctx, "Execution stats: %v", plan.ExecutionStats)
 	}
 
 	return results, nil
