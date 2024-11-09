@@ -403,7 +403,7 @@ func (fs *FireStore) query(ctx context.Context, fieldName string, operator strin
 		results = append(results, record)
 	}
 	plan, err := docs.ExplainMetrics()
-	if err == nil {
+	if err != nil {
 		log.ErrorfX(ctx, "Error in query explain: %v", err)
 	} else {
 		log.DebugfX(ctx, "Explain plan: %v", plan)
