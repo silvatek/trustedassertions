@@ -101,12 +101,15 @@ func TestStoreFetchUser(t *testing.T) {
 func TestStoreFetchReference(t *testing.T) {
 	InitInMemoryDataStore()
 
-	source := MakeUri("123456", "assertion")
-	target := MakeUri("234567", "statement")
+	ref := Reference{
+		Source:  MakeUri("123456", "assertion"),
+		Target:  MakeUri("234567", "statement"),
+		Summary: "Testing",
+	}
 
-	ActiveDataStore.StoreRef(source, target, "Test")
+	ActiveDataStore.StoreRef(ref)
 
-	refs, err := ActiveDataStore.FetchRefs(context.TODO(), target)
+	refs, err := ActiveDataStore.FetchRefs(context.TODO(), ref.Target)
 	if err != nil {
 		t.Errorf("Error fetching references: %v", err)
 	}

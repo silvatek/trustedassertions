@@ -11,13 +11,14 @@ import (
 	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
+	refs "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 type InMemoryDataStore struct {
 	data  map[string]DbRecord
 	keys  map[string]string
-	refs  map[string][]string
+	refs  map[string][]Reference
 	users map[string]auth.User
 	krefs map[string]auth.KeyRef
 }
@@ -26,7 +27,7 @@ func InitInMemoryDataStore() {
 	datastore := InMemoryDataStore{}
 	datastore.data = make(map[string]DbRecord)
 	datastore.keys = make(map[string]string)
-	datastore.refs = make(map[string][]string)
+	datastore.refs = make(map[string][]Reference)
 	datastore.users = make(map[string]auth.User)
 	datastore.krefs = make(map[string]auth.KeyRef)
 	ActiveDataStore = &datastore
@@ -57,14 +58,14 @@ func (ds *InMemoryDataStore) StoreKey(entityUri HashUri, key string) {
 	ds.keys[entityUri.Escaped()] = key
 }
 
-func (ds *InMemoryDataStore) StoreRef(source HashUri, target HashUri, refType string) {
-	refs, ok := ds.refs[target.Escaped()]
+func (ds *InMemoryDataStore) StoreRef(reference refs.Reference) {
+	targetKey := reference.Target.Escaped()
+	refs, ok := ds.refs[targetKey]
 	if !ok {
-		refs = make([]string, 0)
+		refs = make([]Reference, 0)
 	}
-	refs = append(refs, source.Escaped())
-	ds.refs[target.Escaped()] = refs
-	log.Debugf("Stored reference from %s to %s", source.Short(), target.Short())
+	refs = append(refs, reference)
+	ds.refs[targetKey] = refs
 }
 
 func (ds *InMemoryDataStore) FetchInto(key HashUri, item Referenceable) error {
@@ -117,19 +118,15 @@ func (ds *InMemoryDataStore) FetchKey(entityUri HashUri) (string, error) {
 }
 
 func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key HashUri) ([]Reference, error) {
-	uris := make([]Reference, 0)
+	refs := make([]Reference, 0)
 	result, ok := ds.refs[key.Escaped()]
 	if !ok {
-		return uris, nil
+		return refs, nil
 	}
-	for _, u := range result {
-		reference := Reference{}
-		reference.Target = key
-		reference.Source = UnescapeUri(u, "assertion")
-		reference.Summary = "Example reference"
-		uris = append(uris, reference)
+	for _, ref := range result {
+		refs = append(refs, ref)
 	}
-	return uris, nil
+	return refs, nil
 }
 
 func (ds *InMemoryDataStore) StoreUser(user auth.User) {

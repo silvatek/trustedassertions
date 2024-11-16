@@ -25,10 +25,19 @@ func CreateAssertion(ctx context.Context, statementUri references.HashUri, confi
 	assertion.MakeJwt(privateKey)
 	ActiveDataStore.Store(ctx, &assertion)
 
-	ActiveDataStore.StoreRef(assertion.Uri(), references.UriFromString(assertion.Subject), "Assertion.Subject:Statement")
-	ActiveDataStore.StoreRef(assertion.Uri(), references.UriFromString(assertion.Issuer), "Assertion.Issuer:Entity")
+	StoreReference(assertion.Uri(), references.UriFromString(assertion.Subject), "Assertion.Subject:Statement")
+	StoreReference(assertion.Uri(), references.UriFromString(assertion.Issuer), "Assertion.Issuer:Entity")
 
 	return &assertion
+}
+
+func StoreReference(source references.HashUri, target references.HashUri, summary string) {
+	ref := references.Reference{
+		Source:  source,
+		Target:  target,
+		Summary: summary,
+	}
+	ActiveDataStore.StoreRef(ref)
 }
 
 func CreateStatementAndAssertion(ctx context.Context, content string, entityUri references.HashUri, confidence float64) (*assertions.Assertion, error) {

@@ -144,7 +144,7 @@ func (fs *FireStore) Store(ctx context.Context, value Referenceable) {
 
 func (fs *FireStore) storeRefs(uri HashUri, refs []Reference) {
 	for _, ref := range refs {
-		fs.StoreRef(uri, ref.Source, "unknown")
+		fs.StoreRef(ref)
 	}
 }
 
@@ -157,21 +157,17 @@ func (fs *FireStore) StoreKey(entityUri HashUri, key string) {
 	fs.store(KeyCollection, entityUri.Escaped(), data)
 }
 
-func (fs *FireStore) StoreRef(source HashUri, target HashUri, refType string) {
+func (fs *FireStore) StoreRef(reference Reference) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
 
-	if refType == "" {
-		refType = target.Kind()
-	}
-
 	data := make(map[string]string)
-	data["source"] = source.String()
-	data["target"] = target.String()
-	data["type"] = refType
+	data["source"] = reference.Source.String()
+	data["target"] = reference.Target.String()
+	data["summary"] = reference.Summary
 
-	refs := client.Collection(MainCollection).Doc(target.Escaped()).Collection("refs")
-	refs.Doc(source.Escaped()).Set(ctx, data)
+	refs := client.Collection(MainCollection).Doc(reference.Target.Escaped()).Collection("refs")
+	refs.Doc(reference.Source.Escaped()).Set(ctx, data)
 }
 
 func (fs *FireStore) fetch(ctx context.Context, uri HashUri) (*DbRecord, error) {

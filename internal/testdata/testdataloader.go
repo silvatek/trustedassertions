@@ -73,6 +73,6 @@ func NormalizeNewlines(d []byte) []byte {
 
 func addAssertionReferences(content string) {
 	a, _ := assertions.ParseAssertionJwt(content)
-	datastore.ActiveDataStore.StoreRef(a.Uri(), UriFromString(a.Subject), "Assertion.Subject:Statement")
-	datastore.ActiveDataStore.StoreRef(a.Uri(), UriFromString(a.Issuer), "Assertion.Issuer:Entity")
+	datastore.StoreReference(a.Uri(), UriFromString(a.Subject), "Assertion.Subject:Statement")
+	datastore.StoreReference(a.Uri(), UriFromString(a.Issuer), "Assertion.Issuer:Entity")
 }
