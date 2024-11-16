@@ -8,25 +8,25 @@ import (
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
-	. "silvatek.uk/trustedassertions/internal/references"
+	refs "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 type DataStore interface {
 	Name() string
 	AutoInit() bool
-	Store(ctx context.Context, value Referenceable)
-	StoreRaw(uri HashUri, content string)
-	StoreKey(entityUri HashUri, key string)
-	StoreRef(source HashUri, target HashUri, refType string)
+	Store(ctx context.Context, value refs.Referenceable)
+	StoreRaw(uri refs.HashUri, content string)
+	StoreKey(entityUri refs.HashUri, key string)
+	StoreRef(source refs.HashUri, target refs.HashUri, refType string)
 	StoreUser(user auth.User)
-	FetchMany(ctx context.Context, uris []HashUri) ([]Referenceable, error)
-	FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error)
-	FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error)
-	FetchAssertion(ctx context.Context, key HashUri) (assertions.Assertion, error)
-	FetchDocument(ctx context.Context, key HashUri) (docs.Document, error)
-	FetchKey(entityUri HashUri) (string, error)
-	FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error)
+	FetchMany(ctx context.Context, uris []refs.HashUri) ([]refs.Referenceable, error)
+	FetchStatement(ctx context.Context, key refs.HashUri) (statements.Statement, error)
+	FetchEntity(ctx context.Context, key refs.HashUri) (entities.Entity, error)
+	FetchAssertion(ctx context.Context, key refs.HashUri) (assertions.Assertion, error)
+	FetchDocument(ctx context.Context, key refs.HashUri) (docs.Document, error)
+	FetchKey(entityUri refs.HashUri) (string, error)
+	FetchRefs(ctx context.Context, key refs.HashUri) ([]refs.Reference, error)
 	FetchUser(id string) (auth.User, error)
 	Search(query string) ([]SearchResult, error)
 	Reindex()
@@ -42,7 +42,7 @@ type DbRecord struct {
 }
 
 type SearchResult struct {
-	Uri       HashUri
+	Uri       refs.HashUri
 	Content   string
 	Relevance float32
 }
@@ -54,7 +54,7 @@ func (e *KeyNotFoundError) Error() string {
 	return "Key not found"
 }
 
-func summarise(uri HashUri, content string) string {
+func summarise(uri refs.HashUri, content string) string {
 	kind := strings.ToLower(uri.Kind())
 	switch kind {
 	case "statement":

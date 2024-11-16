@@ -174,15 +174,15 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["hash"]
 	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, MakeUri(key, "statement"))
 
-	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
-	refs := assertions.EnrichReferences(ctx, refUris, statement.Uri(), datastore.ActiveDataStore)
+	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
+	refs = assertions.EnrichReferences(ctx, refs, statement.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
 		Uri        HashUri
 		ShortUri   string
 		Content    string
 		ApiLink    string
-		References []assertions.ReferenceSummary
+		References []Reference
 	}{
 		Uri:        statement.Uri(),
 		ShortUri:   statement.Uri().Short(),
@@ -220,8 +220,8 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	subject, _ := datastore.ActiveDataStore.FetchStatement(ctx, subjectUri)
 
-	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, uri)
-	refs := assertions.EnrichReferences(ctx, refUris, uri, datastore.ActiveDataStore)
+	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, uri)
+	refs = assertions.EnrichReferences(ctx, refs, assertion.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
 		Uri         string
@@ -232,7 +232,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		SubjectLink string
 		SubjectText string
 		ApiLink     string
-		References  []assertions.ReferenceSummary
+		References  []Reference
 	}{
 		Uri:         assertion.Uri().String(),
 		ShortUri:    assertion.Uri().Short(),
@@ -265,8 +265,8 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, entity.Uri())
-	refs := assertions.EnrichReferences(ctx, refUris, entity.Uri(), datastore.ActiveDataStore)
+	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, entity.Uri())
+	refs = assertions.EnrichReferences(ctx, refs, entity.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
 		Uri        string
@@ -274,7 +274,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		CommonName string
 		ApiLink    string
 		PublicKey  string
-		References []assertions.ReferenceSummary
+		References []Reference
 	}{
 		Uri:        uri.String(),
 		ShortUri:   uri.Short(),

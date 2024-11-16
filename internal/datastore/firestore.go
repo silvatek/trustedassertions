@@ -290,11 +290,11 @@ type DbReference struct {
 	Type   string `json:"type"`
 }
 
-func (fs *FireStore) FetchRefs(ctx context.Context, uri HashUri) ([]HashUri, error) {
+func (fs *FireStore) FetchRefs(ctx context.Context, uri HashUri) ([]Reference, error) {
 	log.DebugfX(ctx, "Fetching references for %s", uri.String())
 
 	client := fs.client(ctx)
-	results := make([]HashUri, 0)
+	results := make([]Reference, 0)
 
 	refs := client.Collection(MainCollection).Doc(uri.Escaped()).Collection("refs").Documents(ctx)
 	for {
@@ -305,9 +305,12 @@ func (fs *FireStore) FetchRefs(ctx context.Context, uri HashUri) ([]HashUri, err
 		record := DbReference{}
 		doc.DataTo(&record)
 
-		uri := UriFromString(record.Source)
+		reference := Reference{}
+		reference.Source = UriFromString(record.Source)
+		reference.Target = UriFromString(record.Target)
+		reference.Summary = record.Type
 
-		results = append(results, uri)
+		results = append(results, reference)
 	}
 
 	log.DebugfX(ctx, "Found %d references", len(results))

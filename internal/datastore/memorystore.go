@@ -116,15 +116,18 @@ func (ds *InMemoryDataStore) FetchKey(entityUri HashUri) (string, error) {
 	return key, nil
 }
 
-func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error) {
-	uris := make([]HashUri, 0)
+func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key HashUri) ([]Reference, error) {
+	uris := make([]Reference, 0)
 	result, ok := ds.refs[key.Escaped()]
 	if !ok {
 		return uris, nil
 	}
 	for _, u := range result {
-		uri := UnescapeUri(u, "assertion")
-		uris = append(uris, uri)
+		reference := Reference{}
+		reference.Target = key
+		reference.Source = UnescapeUri(u, "assertion")
+		reference.Summary = "Example reference"
+		uris = append(uris, reference)
 	}
 	return uris, nil
 }
