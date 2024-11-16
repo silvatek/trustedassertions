@@ -5,6 +5,8 @@ import (
 	"encoding/xml"
 	"os"
 	"strings"
+
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 type Document struct {

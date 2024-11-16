@@ -7,18 +7,8 @@ import (
 	"strings"
 
 	log "silvatek.uk/trustedassertions/internal/logging"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
-
-// Referenceable is a core data type that can be referenced by an assertion.
-type Referenceable interface {
-	Uri() HashUri
-	Type() string
-	Content() string
-	Summary() string
-	TextContent() string
-	References() []HashUri
-	ParseContent(content string) error
-}
 
 // Resolver is responsible for fetching the data associated with a Hash URI.
 type Resolver interface {

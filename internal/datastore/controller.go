@@ -8,11 +8,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/references"
 )
 
 var ActiveDataStore DataStore
 
-func CreateAssertion(ctx context.Context, statementUri assertions.HashUri, confidence float64, entity assertions.Entity, privateKey *rsa.PrivateKey, kind string) *assertions.Assertion {
+func CreateAssertion(ctx context.Context, statementUri references.HashUri, confidence float64, entity assertions.Entity, privateKey *rsa.PrivateKey, kind string) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
 	assertion.Subject = statementUri.String()
 	assertion.IssuedAt = jwt.NewNumericDate(time.Now())
@@ -22,13 +23,13 @@ func CreateAssertion(ctx context.Context, statementUri assertions.HashUri, confi
 	assertion.MakeJwt(privateKey)
 	ActiveDataStore.Store(ctx, &assertion)
 
-	ActiveDataStore.StoreRef(assertion.Uri(), assertions.UriFromString(assertion.Subject), "Assertion.Subject:Statement")
-	ActiveDataStore.StoreRef(assertion.Uri(), assertions.UriFromString(assertion.Issuer), "Assertion.Issuer:Entity")
+	ActiveDataStore.StoreRef(assertion.Uri(), references.UriFromString(assertion.Subject), "Assertion.Subject:Statement")
+	ActiveDataStore.StoreRef(assertion.Uri(), references.UriFromString(assertion.Issuer), "Assertion.Issuer:Entity")
 
 	return &assertion
 }
 
-func CreateStatementAndAssertion(ctx context.Context, content string, entityUri assertions.HashUri, confidence float64) (*assertions.Assertion, error) {
+func CreateStatementAndAssertion(ctx context.Context, content string, entityUri references.HashUri, confidence float64) (*assertions.Assertion, error) {
 	log.DebugfX(ctx, "Creating statement and assertion")
 
 	b64key, err := ActiveDataStore.FetchKey(entityUri)

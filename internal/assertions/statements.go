@@ -2,6 +2,8 @@ package assertions
 
 import (
 	"crypto/sha256"
+
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 type Statement struct {

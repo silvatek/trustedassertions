@@ -9,6 +9,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	. "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/testdata"
 	"silvatek.uk/trustedassertions/internal/web"
 
@@ -60,7 +61,7 @@ func initDataStore() {
 
 	if defaultEntityUri == "" {
 		defaultEntityUri = os.Getenv("DEFAULT_ENTITY")
-		web.DefaultEntityUri = assertions.UriFromString(defaultEntityUri)
+		web.DefaultEntityUri = UriFromString(defaultEntityUri)
 	}
 
 	if defaultEntityKey == "" {

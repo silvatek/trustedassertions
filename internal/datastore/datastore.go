@@ -6,23 +6,24 @@ import (
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 type DataStore interface {
 	Name() string
 	AutoInit() bool
-	Store(ctx context.Context, value assertions.Referenceable)
-	StoreRaw(uri assertions.HashUri, content string)
-	StoreKey(entityUri assertions.HashUri, key string)
-	StoreRef(source assertions.HashUri, target assertions.HashUri, refType string)
+	Store(ctx context.Context, value Referenceable)
+	StoreRaw(uri HashUri, content string)
+	StoreKey(entityUri HashUri, key string)
+	StoreRef(source HashUri, target HashUri, refType string)
 	StoreUser(user auth.User)
-	FetchMany(ctx context.Context, uris []assertions.HashUri) ([]assertions.Referenceable, error)
-	FetchStatement(ctx context.Context, key assertions.HashUri) (assertions.Statement, error)
-	FetchEntity(ctx context.Context, key assertions.HashUri) (assertions.Entity, error)
-	FetchAssertion(ctx context.Context, key assertions.HashUri) (assertions.Assertion, error)
-	FetchDocument(ctx context.Context, key assertions.HashUri) (assertions.Document, error)
-	FetchKey(entityUri assertions.HashUri) (string, error)
-	FetchRefs(ctx context.Context, key assertions.HashUri) ([]assertions.HashUri, error)
+	FetchMany(ctx context.Context, uris []HashUri) ([]Referenceable, error)
+	FetchStatement(ctx context.Context, key HashUri) (assertions.Statement, error)
+	FetchEntity(ctx context.Context, key HashUri) (assertions.Entity, error)
+	FetchAssertion(ctx context.Context, key HashUri) (assertions.Assertion, error)
+	FetchDocument(ctx context.Context, key HashUri) (assertions.Document, error)
+	FetchKey(entityUri HashUri) (string, error)
+	FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error)
 	FetchUser(id string) (auth.User, error)
 	Search(query string) ([]SearchResult, error)
 	Reindex()
@@ -38,7 +39,7 @@ type DbRecord struct {
 }
 
 type SearchResult struct {
-	Uri       assertions.HashUri
+	Uri       HashUri
 	Content   string
 	Relevance float32
 }
@@ -50,7 +51,7 @@ func (e *KeyNotFoundError) Error() string {
 	return "Key not found"
 }
 
-func summarise(uri assertions.HashUri, content string) string {
+func summarise(uri HashUri, content string) string {
 	kind := strings.ToLower(uri.Kind())
 	switch kind {
 	case "statement":

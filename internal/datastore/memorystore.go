@@ -8,6 +8,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 type InMemoryDataStore struct {
@@ -36,24 +37,24 @@ func (ds *InMemoryDataStore) AutoInit() bool {
 	return true
 }
 
-func (ds *InMemoryDataStore) StoreRecord(uri assertions.HashUri, rec DbRecord) {
+func (ds *InMemoryDataStore) StoreRecord(uri HashUri, rec DbRecord) {
 	log.Debugf("Storing %s", uri)
 	ds.data[uri.Escaped()] = rec
 }
 
-func (ds *InMemoryDataStore) StoreRaw(uri assertions.HashUri, content string) {
+func (ds *InMemoryDataStore) StoreRaw(uri HashUri, content string) {
 	ds.StoreRecord(uri, DbRecord{Uri: uri.String(), Content: content})
 }
 
-func (ds *InMemoryDataStore) Store(ctx context.Context, value assertions.Referenceable) {
+func (ds *InMemoryDataStore) Store(ctx context.Context, value Referenceable) {
 	ds.StoreRecord(value.Uri(), DbRecord{Uri: value.Uri().String(), DataType: value.Type(), Content: value.Content()})
 }
 
-func (ds *InMemoryDataStore) StoreKey(entityUri assertions.HashUri, key string) {
+func (ds *InMemoryDataStore) StoreKey(entityUri HashUri, key string) {
 	ds.keys[entityUri.Escaped()] = key
 }
 
-func (ds *InMemoryDataStore) StoreRef(source assertions.HashUri, target assertions.HashUri, refType string) {
+func (ds *InMemoryDataStore) StoreRef(source HashUri, target HashUri, refType string) {
 	refs, ok := ds.refs[target.Escaped()]
 	if !ok {
 		refs = make([]string, 0)
@@ -63,7 +64,7 @@ func (ds *InMemoryDataStore) StoreRef(source assertions.HashUri, target assertio
 	log.Debugf("Stored reference from %s to %s", source.Short(), target.Short())
 }
 
-func (ds *InMemoryDataStore) FetchInto(key assertions.HashUri, item assertions.Referenceable) error {
+func (ds *InMemoryDataStore) FetchInto(key HashUri, item Referenceable) error {
 	record, ok := ds.data[key.Escaped()]
 	if !ok {
 		return errors.New("URI not found: " + key.String())
@@ -71,28 +72,28 @@ func (ds *InMemoryDataStore) FetchInto(key assertions.HashUri, item assertions.R
 	return item.ParseContent(record.Content)
 }
 
-func (ds *InMemoryDataStore) FetchStatement(ctx context.Context, key assertions.HashUri) (assertions.Statement, error) {
+func (ds *InMemoryDataStore) FetchStatement(ctx context.Context, key HashUri) (assertions.Statement, error) {
 	var statement assertions.Statement
 	return statement, ds.FetchInto(key, &statement)
 }
 
-func (ds *InMemoryDataStore) FetchEntity(ctx context.Context, key assertions.HashUri) (assertions.Entity, error) {
+func (ds *InMemoryDataStore) FetchEntity(ctx context.Context, key HashUri) (assertions.Entity, error) {
 	var entity assertions.Entity
 	return entity, ds.FetchInto(key, &entity)
 }
 
-func (ds *InMemoryDataStore) FetchAssertion(ctx context.Context, key assertions.HashUri) (assertions.Assertion, error) {
+func (ds *InMemoryDataStore) FetchAssertion(ctx context.Context, key HashUri) (assertions.Assertion, error) {
 	var assertion assertions.Assertion
 	return assertion, ds.FetchInto(key, &assertion)
 }
 
-func (ds *InMemoryDataStore) FetchDocument(ctx context.Context, key assertions.HashUri) (assertions.Document, error) {
+func (ds *InMemoryDataStore) FetchDocument(ctx context.Context, key HashUri) (assertions.Document, error) {
 	var doc assertions.Document
 	return doc, ds.FetchInto(key, &doc)
 }
 
-func (ds *InMemoryDataStore) FetchMany(ctx context.Context, uris []assertions.HashUri) ([]assertions.Referenceable, error) {
-	results := make([]assertions.Referenceable, 0)
+func (ds *InMemoryDataStore) FetchMany(ctx context.Context, uris []HashUri) ([]Referenceable, error) {
+	results := make([]Referenceable, 0)
 	for _, uri := range uris {
 		rec, ok := ds.data[uri.Escaped()]
 		if ok {
@@ -104,7 +105,7 @@ func (ds *InMemoryDataStore) FetchMany(ctx context.Context, uris []assertions.Ha
 	return results, nil
 }
 
-func (ds *InMemoryDataStore) FetchKey(entityUri assertions.HashUri) (string, error) {
+func (ds *InMemoryDataStore) FetchKey(entityUri HashUri) (string, error) {
 	key, ok := ds.keys[entityUri.Escaped()]
 	if !ok {
 		return "", errors.New("entity id not found " + entityUri.String())
@@ -112,15 +113,14 @@ func (ds *InMemoryDataStore) FetchKey(entityUri assertions.HashUri) (string, err
 	return key, nil
 }
 
-func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key assertions.HashUri) ([]assertions.HashUri, error) {
-	uris := make([]assertions.HashUri, 0)
+func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error) {
+	uris := make([]HashUri, 0)
 	result, ok := ds.refs[key.Escaped()]
 	if !ok {
 		return uris, nil
 	}
 	for _, u := range result {
-		uri := assertions.UnescapeUri(u, "assertion")
-		//uri := assertions.UriFromString(u).WithType("assertion")
+		uri := UnescapeUri(u, "assertion")
 		uris = append(uris, uri)
 	}
 	return uris, nil
@@ -154,7 +154,7 @@ func (ds *InMemoryDataStore) Search(query string) ([]SearchResult, error) {
 	query = strings.ToLower(query)
 	for key, value := range ds.data {
 		if strings.Contains(strings.ToLower(value.Content), query) {
-			uri := assertions.UnescapeUri(key, assertions.GuessContentType(value.Content))
+			uri := UnescapeUri(key, assertions.GuessContentType(value.Content))
 			result := SearchResult{
 				Uri:       uri,
 				Content:   summarise(uri, value.Content),

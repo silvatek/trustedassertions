@@ -17,11 +17,12 @@ import (
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 var errorMessages map[string]string
 var TemplateDir string
-var DefaultEntityUri assertions.HashUri
+var DefaultEntityUri HashUri
 
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)
@@ -156,7 +157,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	log.DebugfX(ctx, "Home page accessed")
 
 	data := struct {
-		DefaultDocument assertions.HashUri
+		DefaultDocument HashUri
 	}{
 		DefaultDocument: assertions.DefaultDocumentUri,
 	}
@@ -168,13 +169,13 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
 	key := mux.Vars(r)["hash"]
-	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, assertions.MakeUri(key, "statement"))
+	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, MakeUri(key, "statement"))
 
 	refUris, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
 	refs := assertions.EnrichReferences(ctx, refUris, statement.Uri(), datastore.ActiveDataStore)
 
 	data := struct {
-		Uri        assertions.HashUri
+		Uri        HashUri
 		ShortUri   string
 		Content    string
 		ApiLink    string
@@ -199,17 +200,17 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
 	key := mux.Vars(r)["hash"]
-	uri := assertions.MakeUri(key, "assertion")
+	uri := MakeUri(key, "assertion")
 	assertion, _ := datastore.ActiveDataStore.FetchAssertion(ctx, uri)
 
-	issuerUri := assertions.UriFromString(assertion.Issuer)
+	issuerUri := UriFromString(assertion.Issuer)
 	if !issuerUri.HasType() {
 		issuerUri = issuerUri.WithType("entity")
 	}
 
 	issuer, _ := datastore.ActiveDataStore.FetchEntity(ctx, issuerUri)
 
-	subjectUri := assertions.UriFromString(assertion.Subject)
+	subjectUri := UriFromString(assertion.Subject)
 	if !subjectUri.HasType() {
 		subjectUri = subjectUri.WithType("statement")
 	}
@@ -254,7 +255,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := mux.Vars(r)["hash"]
 
-	uri := assertions.MakeUri(key, "entity")
+	uri := MakeUri(key, "entity")
 	entity, err := datastore.ActiveDataStore.FetchEntity(ctx, uri)
 	if err != nil {
 		HandleError(ErrorEntityFetch, "Unable to fetch entity", w, r)
@@ -291,18 +292,18 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	key := mux.Vars(r)["hash"]
-	document, _ := datastore.ActiveDataStore.FetchDocument(ctx, assertions.MakeUri(key, "document"))
+	document, _ := datastore.ActiveDataStore.FetchDocument(ctx, MakeUri(key, "document"))
 
 	data := struct {
 		Doc       assertions.Document
 		Title     string
 		DocHtml   string
-		AuthorUri assertions.HashUri
+		AuthorUri HashUri
 	}{
 		Doc:       document,
 		Title:     "Testing",
 		DocHtml:   document.ToHtml(),
-		AuthorUri: assertions.UriFromString(document.Metadata.Author.Entity),
+		AuthorUri: UriFromString(document.Metadata.Author.Entity),
 	}
 
 	// menu := []PageMenuItem{
@@ -340,7 +341,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
 
-		keyUri := assertions.UriFromString(keyId)
+		keyUri := UriFromString(keyId)
 
 		if !user.HasKey(keyId) {
 			HandleError(ErrorKeyAccess, "User does not have access to selected signing key", w, r)
@@ -435,7 +436,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	statementHash := mux.Vars(r)["hash"]
 
 	if r.Method == "GET" {
-		statement, err := datastore.ActiveDataStore.FetchStatement(ctx, assertions.MakeUri(statementHash, "statement"))
+		statement, err := datastore.ActiveDataStore.FetchStatement(ctx, MakeUri(statementHash, "statement"))
 		if err != nil {
 			log.Errorf("Error fetching statement: %v", err)
 		} else {
@@ -458,7 +459,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		keyId := r.Form.Get("sign_as")
 		log.DebugfX(ctx, "Signing key ID: %s", keyId)
 
-		keyUri := assertions.UriFromString(keyId)
+		keyUri := UriFromString(keyId)
 
 		if !user.HasKey(keyId) {
 			HandleError(ErrorKeyAccess, "User does not have access to selected signing key", w, r)
@@ -474,7 +475,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		entity, _ := datastore.ActiveDataStore.FetchEntity(ctx, keyUri)
 
-		su := assertions.MakeUri(statementHash, "statement")
+		su := MakeUri(statementHash, "statement")
 
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
 		kind := r.Form.Get("assertion_type")

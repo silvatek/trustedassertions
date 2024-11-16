@@ -9,6 +9,7 @@ import (
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 func TestMetadata(t *testing.T) {
@@ -99,8 +100,8 @@ func TestStoreFetchUser(t *testing.T) {
 func TestStoreFetchReference(t *testing.T) {
 	InitInMemoryDataStore()
 
-	source := assertions.MakeUri("123456", "assertion")
-	target := assertions.MakeUri("234567", "statement")
+	source := MakeUri("123456", "assertion")
+	target := MakeUri("234567", "statement")
 
 	ActiveDataStore.StoreRef(source, target, "Test")
 
@@ -116,7 +117,7 @@ func TestStoreFetchReference(t *testing.T) {
 func TestStoreFetchKey(t *testing.T) {
 	InitInMemoryDataStore()
 
-	uri := assertions.MakeUri("123456", "entity")
+	uri := MakeUri("123456", "entity")
 	ActiveDataStore.StoreKey(uri, "kjsdfhfdksjhfdsjk")
 
 	key, err := ActiveDataStore.FetchKey(uri)
@@ -149,8 +150,8 @@ func TestFetchMany(t *testing.T) {
 	}
 }
 
-func storeStatements(content ...string) []assertions.HashUri {
-	uris := make([]assertions.HashUri, len(content))
+func storeStatements(content ...string) []HashUri {
+	uris := make([]HashUri, len(content))
 	for n, text := range content {
 		statement := assertions.NewStatement(text)
 		uris[n] = statement.Uri()

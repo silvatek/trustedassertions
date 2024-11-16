@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 func TestJwtSymmetric(t *testing.T) {

@@ -14,6 +14,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
+	. "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/testdata"
 	"silvatek.uk/trustedassertions/internal/webtest"
 )
@@ -110,7 +111,7 @@ func TestPostNewStatement(t *testing.T) {
 	page := wt.PostFormData("/web/newstatement", data)
 	page.AssertSuccessResponse()
 
-	newUri := assertions.UriFromString(strings.TrimSpace(page.Find("#uri")))
+	newUri := UriFromString(strings.TrimSpace(page.Find("#uri")))
 
 	// Make sure the new assertion is really in the datastore
 	_, err := datastore.ActiveDataStore.FetchAssertion(context.TODO(), newUri)
@@ -129,7 +130,7 @@ func TestNewEntity(t *testing.T) {
 
 	page = wt.PostFormData("/web/newentity", url.Values{"commonname": {"Test entity"}})
 	page.AssertSuccessResponse()
-	uri := assertions.UriFromString(page.Find("span.fulluri"))
+	uri := UriFromString(page.Find("span.fulluri"))
 
 	newEntity, err := datastore.ActiveDataStore.FetchEntity(context.TODO(), uri)
 	if err != nil {
@@ -159,7 +160,7 @@ func TestAddAssertion(t *testing.T) {
 	page = wt.PostFormData("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f/addassertion", values)
 	page.AssertSuccessResponse()
 
-	uri := assertions.UriFromString(page.Find("span.fulluri"))
+	uri := UriFromString(page.Find("span.fulluri"))
 	_, err := datastore.ActiveDataStore.FetchAssertion(context.TODO(), uri)
 	if err != nil {
 		t.Errorf("Error fetching new assertion")

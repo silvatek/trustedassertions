@@ -11,6 +11,7 @@ import (
 	"time"
 
 	log "silvatek.uk/trustedassertions/internal/logging"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 type Entity struct {

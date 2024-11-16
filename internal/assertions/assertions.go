@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 const DEFAULT_AUDIENCE = "trustedassertions:0.1/any"
@@ -42,7 +43,7 @@ func NewAssertion(category string) Assertion {
 // The token issuer should be the URI of an entity, and that entity is fetched using the PublicKeyResolver.
 func verificationKey(token *jwt.Token) (interface{}, error) {
 	entityUri, _ := token.Claims.GetIssuer()
-	entity, err := PublicKeyResolver.FetchEntity(context.Background(), HashUri{uri: entityUri})
+	entity, err := PublicKeyResolver.FetchEntity(context.Background(), UriFromString(entityUri))
 	return entity.PublicKey, err
 }
 

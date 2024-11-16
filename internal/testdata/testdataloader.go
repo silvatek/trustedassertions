@@ -10,6 +10,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	. "silvatek.uk/trustedassertions/internal/references"
 )
 
 func SetupTestData(testDataDir string, defaultEntityUri string, defaultEntityKey string) {
@@ -18,7 +19,7 @@ func SetupTestData(testDataDir string, defaultEntityUri string, defaultEntityKey
 	loadTestData(testDataDir+"/entities", "Entity", "txt", false)
 
 	if defaultEntityUri != "" {
-		uri := assertions.UriFromString(defaultEntityUri)
+		uri := UriFromString(defaultEntityUri)
 		datastore.ActiveDataStore.StoreKey(uri, defaultEntityKey)
 	}
 
@@ -72,6 +73,6 @@ func NormalizeNewlines(d []byte) []byte {
 
 func addAssertionReferences(content string) {
 	a, _ := assertions.ParseAssertionJwt(content)
-	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Subject), "Assertion.Subject:Statement")
-	datastore.ActiveDataStore.StoreRef(a.Uri(), assertions.UriFromString(a.Issuer), "Assertion.Issuer:Entity")
+	datastore.ActiveDataStore.StoreRef(a.Uri(), UriFromString(a.Subject), "Assertion.Subject:Statement")
+	datastore.ActiveDataStore.StoreRef(a.Uri(), UriFromString(a.Issuer), "Assertion.Issuer:Entity")
 }
