@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
 )
@@ -136,7 +137,7 @@ func (a Assertion) References() []HashUri {
 	return refs
 }
 
-func (a *Assertion) SetAssertingEntity(entity Entity) {
+func (a *Assertion) SetAssertingEntity(entity entities.Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
 }
 

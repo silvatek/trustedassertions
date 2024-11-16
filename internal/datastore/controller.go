@@ -7,13 +7,15 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	"silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 var ActiveDataStore DataStore
 
-func CreateAssertion(ctx context.Context, statementUri references.HashUri, confidence float64, entity assertions.Entity, privateKey *rsa.PrivateKey, kind string) *assertions.Assertion {
+func CreateAssertion(ctx context.Context, statementUri references.HashUri, confidence float64, entity entities.Entity, privateKey *rsa.PrivateKey, kind string) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
 	assertion.Subject = statementUri.String()
 	assertion.IssuedAt = jwt.NewNumericDate(time.Now())
@@ -43,7 +45,7 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 	}
 
 	// Create and save the statement
-	statement := assertions.NewStatement(content)
+	statement := statements.NewStatement(content)
 	ActiveDataStore.Store(ctx, statement)
 
 	log.DebugfX(ctx, "Statement created")

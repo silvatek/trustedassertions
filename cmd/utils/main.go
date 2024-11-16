@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 func main() {
@@ -23,7 +25,7 @@ func main() {
 
 	log.Infof("Key: %s", b64key[len(b64key)-8:])
 
-	entity := assertions.NewEntity("Mr Tester", *big.NewInt(8376446832743937489))
+	entity := entities.NewEntity("Mr Tester", *big.NewInt(8376446832743937489))
 	entity.MakeCertificate(prvKey)
 
 	u := entity.Uri()
@@ -37,7 +39,7 @@ func main() {
 		log.Errorf("Error writing file %v", err)
 	}
 
-	statement := assertions.NewStatement("The universe exists")
+	statement := statements.NewStatement("The universe exists")
 	log.Infof("Statement URI: %s", statement.Uri())
 	u = statement.Uri()
 	hash = u.Hash()

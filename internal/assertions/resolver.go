@@ -6,16 +6,19 @@ import (
 	"fmt"
 	"strings"
 
+	"silvatek.uk/trustedassertions/internal/docs"
+	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 // Resolver is responsible for fetching the data associated with a Hash URI.
 type Resolver interface {
-	FetchStatement(ctx context.Context, key HashUri) (Statement, error)
-	FetchEntity(ctx context.Context, key HashUri) (Entity, error)
+	FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error)
+	FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error)
 	FetchAssertion(ctx context.Context, key HashUri) (Assertion, error)
-	FetchDocument(ctx context.Context, key HashUri) (Document, error)
+	FetchDocument(ctx context.Context, key HashUri) (docs.Document, error)
 	FetchMany(ctx context.Context, keys []HashUri) ([]Referenceable, error)
 	FetchKey(entityUri HashUri) (string, error)
 	FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error)
@@ -25,20 +28,20 @@ type NullResolver struct{}
 
 var ErrNotImplemented = errors.New("not implemented")
 
-func (r NullResolver) FetchStatement(ctx context.Context, key HashUri) (Statement, error) {
-	return Statement{}, ErrNotImplemented
+func (r NullResolver) FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error) {
+	return statements.Statement{}, ErrNotImplemented
 }
 
-func (r NullResolver) FetchEntity(ctx context.Context, key HashUri) (Entity, error) {
-	return Entity{}, ErrNotImplemented
+func (r NullResolver) FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error) {
+	return entities.Entity{}, ErrNotImplemented
 }
 
 func (r NullResolver) FetchAssertion(ctx context.Context, key HashUri) (Assertion, error) {
 	return Assertion{}, ErrNotImplemented
 }
 
-func (r NullResolver) FetchDocument(ctx context.Context, key HashUri) (Document, error) {
-	return Document{}, ErrNotImplemented
+func (r NullResolver) FetchDocument(ctx context.Context, key HashUri) (docs.Document, error) {
+	return docs.Document{}, ErrNotImplemented
 }
 
 func (r NullResolver) FetchKey(key HashUri) (string, error) {
@@ -61,13 +64,13 @@ type ReferenceSummary struct {
 func NewReferenceable(kind string) Referenceable {
 	switch strings.ToLower(kind) {
 	case "statement":
-		return &Statement{}
+		return &statements.Statement{}
 	case "entity":
-		return &Entity{}
+		return &entities.Entity{}
 	case "assertion":
 		return &Assertion{}
 	case "document":
-		return &Document{}
+		return &docs.Document{}
 	default:
 		return nil
 	}
@@ -111,7 +114,7 @@ func EnrichReferences(ctx context.Context, uris []HashUri, currentUri HashUri, r
 			assertion := value.(*Assertion)
 			summary = SummariseAssertion(ctx, *assertion, currentUri, resolver)
 		case "document":
-			document := value.(*Document)
+			document := value.(*docs.Document)
 			summary = document.Metadata.Title
 		default:
 			summary = "unknown " + value.Type()

@@ -6,7 +6,10 @@ import (
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
+	"silvatek.uk/trustedassertions/internal/docs"
+	"silvatek.uk/trustedassertions/internal/entities"
 	. "silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 type DataStore interface {
@@ -18,10 +21,10 @@ type DataStore interface {
 	StoreRef(source HashUri, target HashUri, refType string)
 	StoreUser(user auth.User)
 	FetchMany(ctx context.Context, uris []HashUri) ([]Referenceable, error)
-	FetchStatement(ctx context.Context, key HashUri) (assertions.Statement, error)
-	FetchEntity(ctx context.Context, key HashUri) (assertions.Entity, error)
+	FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error)
+	FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error)
 	FetchAssertion(ctx context.Context, key HashUri) (assertions.Assertion, error)
-	FetchDocument(ctx context.Context, key HashUri) (assertions.Document, error)
+	FetchDocument(ctx context.Context, key HashUri) (docs.Document, error)
 	FetchKey(entityUri HashUri) (string, error)
 	FetchRefs(ctx context.Context, key HashUri) ([]HashUri, error)
 	FetchUser(id string) (auth.User, error)
@@ -57,10 +60,10 @@ func summarise(uri HashUri, content string) string {
 	case "statement":
 		return leftChars(content, 100)
 	case "entity":
-		entity := assertions.ParseCertificate(content)
+		entity := entities.ParseCertificate(content)
 		return entity.CommonName
 	case "document":
-		doc, _ := assertions.MakeDocument(content)
+		doc, _ := docs.MakeDocument(content)
 		return doc.Summary()
 	default:
 		return content

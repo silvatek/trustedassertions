@@ -1,13 +1,11 @@
-package assertions
+package statements
 
 import (
-	"crypto/sha256"
-
-	. "silvatek.uk/trustedassertions/internal/references"
+	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
 type Statement struct {
-	uri     HashUri
+	uri     refs.HashUri
 	content string
 }
 
@@ -15,11 +13,9 @@ func NewStatement(content string) *Statement {
 	return &Statement{content: content}
 }
 
-func (s Statement) Uri() HashUri {
+func (s Statement) Uri() refs.HashUri {
 	if s.uri.IsEmpty() {
-		hash := sha256.New()
-		hash.Write([]byte(s.content))
-		s.uri = MakeUriB(hash.Sum(nil), "statement")
+		s.uri = refs.UriFor(&s)
 	}
 	return s.uri
 }
@@ -40,8 +36,8 @@ func (s Statement) TextContent() string {
 	return s.content
 }
 
-func (s Statement) References() []HashUri {
-	return []HashUri{}
+func (s Statement) References() []refs.HashUri {
+	return []refs.HashUri{}
 }
 
 func (s *Statement) ParseContent(content string) error {

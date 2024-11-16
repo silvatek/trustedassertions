@@ -1,4 +1,4 @@
-package assertions
+package statements
 
 import (
 	"strings"

@@ -1,20 +1,19 @@
-package assertions
+package docs
 
 import (
-	"crypto/sha256"
 	"encoding/xml"
 	"os"
 	"strings"
 
-	. "silvatek.uk/trustedassertions/internal/references"
+	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
 type Document struct {
-	uri      HashUri   `xml:"-"`
-	text     string    `xml:"-"`
-	XMLName  xml.Name  `xml:"document"`
-	Metadata MetaData  `xml:"metadata"`
-	Sections []Section `xml:"section"`
+	uri      refs.HashUri `xml:"-"`
+	text     string       `xml:"-"`
+	XMLName  xml.Name     `xml:"document"`
+	Metadata MetaData     `xml:"metadata"`
+	Sections []Section    `xml:"section"`
 }
 
 type MetaData struct {
@@ -80,13 +79,14 @@ func (d *Document) ParseContent(content string) error {
 	return xml.Unmarshal([]byte(content), d)
 }
 
-var DefaultDocumentUri HashUri
+var DefaultDocumentUri refs.HashUri
 
-func (d *Document) Uri() HashUri {
+func (d *Document) Uri() refs.HashUri {
 	if d.uri.IsEmpty() {
-		hash := sha256.New()
-		hash.Write([]byte(d.text))
-		d.uri = MakeUriB(hash.Sum(nil), "document")
+		// hash := sha256.New()
+		// hash.Write([]byte(d.text))
+		// d.uri = refs.MakeUriB(hash.Sum(nil), "document")
+		d.uri = refs.UriFor(d)
 	}
 	return d.uri
 }
@@ -103,15 +103,15 @@ func (d Document) Summary() string {
 	return d.Metadata.Title
 }
 
-func (d Document) References() []HashUri {
-	refs := make([]HashUri, 0)
+func (d Document) References() []refs.HashUri {
+	references := make([]refs.HashUri, 0)
 	if d.Metadata.Author.Entity != "" {
-		refs = append(refs, UriFromString(d.Metadata.Author.Entity))
+		references = append(references, refs.UriFromString(d.Metadata.Author.Entity))
 	}
 	for _, span := range d.allAssertions() {
-		refs = append(refs, UriFromString(span.Assertion))
+		references = append(references, refs.UriFromString(span.Assertion))
 	}
-	return refs
+	return references
 }
 
 func (d *Document) allAssertions() []Span {
@@ -142,10 +142,10 @@ func (doc *Document) ToHtml() string {
 			html = html + "\n   <div class='docpara'>\n      "
 			for _, span := range para.Spans {
 				if span.Assertion != "" {
-					uri := UriFromString(span.Assertion)
+					uri := refs.UriFromString(span.Assertion)
 					html = html + "<a href='" + uri.WebPath() + "'>" + span.Body + "</a>"
 				} else if span.Statement != "" {
-					uri := UriFromString(span.Statement)
+					uri := refs.UriFromString(span.Statement)
 					html = html + "<a href='" + uri.WebPath() + "'>" + span.Body + "</a>"
 				} else {
 					html = html + "<span>" + span.Body + "</span>"

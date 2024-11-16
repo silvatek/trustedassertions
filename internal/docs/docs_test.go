@@ -1,4 +1,4 @@
-package assertions
+package docs
 
 import (
 	"bytes"

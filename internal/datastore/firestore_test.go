@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 func TestContentMatches(t *testing.T) {
@@ -21,7 +21,7 @@ func TestContentMatches(t *testing.T) {
 }
 
 func TestDataMap(t *testing.T) {
-	statement := assertions.NewStatement("Testing")
+	statement := statements.NewStatement("Testing")
 
 	data := contentDataMap(statement)
 

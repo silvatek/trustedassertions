@@ -7,9 +7,10 @@ import (
 	"math/big"
 	"testing"
 
-	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
+	"silvatek.uk/trustedassertions/internal/entities"
 	. "silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 func TestMetadata(t *testing.T) {
@@ -28,7 +29,7 @@ func TestStoreFetchStatement(t *testing.T) {
 	InitInMemoryDataStore()
 	ctx := context.Background()
 
-	statement1 := assertions.NewStatement("testing")
+	statement1 := statements.NewStatement("testing")
 	uri := statement1.Uri()
 	t.Log(uri)
 
@@ -47,7 +48,7 @@ func TestStoreFetchEntity(t *testing.T) {
 
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 
-	entity1 := assertions.NewEntity("Test Entity", *big.NewInt(123456))
+	entity1 := entities.NewEntity("Test Entity", *big.NewInt(123456))
 	entity1.MakeCertificate(privateKey)
 	uri := entity1.Uri()
 
@@ -65,11 +66,11 @@ func TestStoreFetchEntity(t *testing.T) {
 func TestSearch(t *testing.T) {
 	InitInMemoryDataStore()
 
-	s := assertions.NewStatement("Red Green Blue")
+	s := statements.NewStatement("Red Green Blue")
 	ActiveDataStore.Store(context.TODO(), s)
-	s = assertions.NewStatement("Red Yellow Blue")
+	s = statements.NewStatement("Red Yellow Blue")
 	ActiveDataStore.Store(context.TODO(), s)
-	s = assertions.NewStatement("White Green Blue")
+	s = statements.NewStatement("White Green Blue")
 	ActiveDataStore.Store(context.TODO(), s)
 
 	matches, err := ActiveDataStore.Search("green")
@@ -153,7 +154,7 @@ func TestFetchMany(t *testing.T) {
 func storeStatements(content ...string) []HashUri {
 	uris := make([]HashUri, len(content))
 	for n, text := range content {
-		statement := assertions.NewStatement(text)
+		statement := statements.NewStatement(text)
 		uris[n] = statement.Uri()
 		ActiveDataStore.Store(context.TODO(), statement)
 	}

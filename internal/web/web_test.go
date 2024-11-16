@@ -14,6 +14,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
+	"silvatek.uk/trustedassertions/internal/entities"
 	. "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/testdata"
 	"silvatek.uk/trustedassertions/internal/webtest"
@@ -26,7 +27,7 @@ func setup(t *testing.T) *webtest.WebTest {
 	assertions.PublicKeyResolver = datastore.ActiveDataStore
 
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
-	signer := assertions.NewEntity("Signing entity", *big.NewInt(123456))
+	signer := entities.NewEntity("Signing entity", *big.NewInt(123456))
 	signer.MakeCertificate(privateKey)
 	datastore.ActiveDataStore.Store(context.Background(), &signer)
 	datastore.ActiveDataStore.StoreKey(signer.Uri(), assertions.PrivateKeyToString(privateKey))

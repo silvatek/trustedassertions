@@ -1,4 +1,4 @@
-package assertions
+package entities
 
 import (
 	"crypto/rand"

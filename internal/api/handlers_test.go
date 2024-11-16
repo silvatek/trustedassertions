@@ -12,13 +12,15 @@ import (
 	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/datastore"
+	"silvatek.uk/trustedassertions/internal/entities"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 func TestStatmentApi(t *testing.T) {
 	router := mux.NewRouter()
 	AddHandlers(router)
 
-	statement := assertions.NewStatement("test")
+	statement := statements.NewStatement("test")
 
 	datastore.InitInMemoryDataStore()
 	datastore.ActiveDataStore.Store(context.TODO(), statement)
@@ -39,7 +41,7 @@ func TestEntityApi(t *testing.T) {
 	AddHandlers(router)
 
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
-	entity := assertions.NewEntity("Test", *big.NewInt(1234))
+	entity := entities.NewEntity("Test", *big.NewInt(1234))
 	entity.MakeCertificate(privateKey)
 
 	datastore.InitInMemoryDataStore()
@@ -61,10 +63,10 @@ func TestAssertionApi(t *testing.T) {
 	AddHandlers(router)
 
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
-	entity := assertions.NewEntity("Test", *big.NewInt(1234))
+	entity := entities.NewEntity("Test", *big.NewInt(1234))
 	entity.MakeCertificate(privateKey)
 
-	statement := assertions.NewStatement("test")
+	statement := statements.NewStatement("test")
 
 	datastore.InitInMemoryDataStore()
 	assertions.PublicKeyResolver = datastore.ActiveDataStore

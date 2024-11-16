@@ -13,9 +13,12 @@ import (
 	"google.golang.org/api/iterator"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
+	"silvatek.uk/trustedassertions/internal/docs"
+	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/search"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 type FireStore struct {
@@ -185,27 +188,27 @@ func (fs *FireStore) fetch(ctx context.Context, uri HashUri) (*DbRecord, error) 
 	}
 }
 
-func (fs *FireStore) FetchStatement(ctx context.Context, uri HashUri) (assertions.Statement, error) {
+func (fs *FireStore) FetchStatement(ctx context.Context, uri HashUri) (statements.Statement, error) {
 	record, err := fs.fetch(ctx, uri)
 
 	log.DebugfX(ctx, "Fetched statement %s", uri)
 
 	if err != nil {
-		return *assertions.NewStatement("{bad record}"), err
+		return *statements.NewStatement("{bad record}"), err
 	} else {
-		return *assertions.NewStatement(record.Content), nil
+		return *statements.NewStatement(record.Content), nil
 	}
 }
 
-func (fs *FireStore) FetchEntity(ctx context.Context, uri HashUri) (assertions.Entity, error) {
+func (fs *FireStore) FetchEntity(ctx context.Context, uri HashUri) (entities.Entity, error) {
 	record, err := fs.fetch(ctx, uri)
 
 	log.DebugfX(ctx, "Fetched entity %s", uri)
 
 	if err != nil {
-		return assertions.NewEntity("{bad record}", *big.NewInt(0)), err
+		return entities.NewEntity("{bad record}", *big.NewInt(0)), err
 	} else {
-		return assertions.ParseCertificate(record.Content), nil
+		return entities.ParseCertificate(record.Content), nil
 	}
 }
 
@@ -226,12 +229,12 @@ func (fs *FireStore) FetchAssertion(ctx context.Context, uri HashUri) (assertion
 	return assertion, nil
 }
 
-func (fs *FireStore) FetchDocument(ctx context.Context, uri HashUri) (assertions.Document, error) {
+func (fs *FireStore) FetchDocument(ctx context.Context, uri HashUri) (docs.Document, error) {
 	record, _ := fs.fetch(ctx, uri)
 
 	log.DebugfX(ctx, "Fetched document %s", uri)
 
-	doc, _ := assertions.MakeDocument(record.Content)
+	doc, _ := docs.MakeDocument(record.Content)
 
 	return *doc, nil
 }
@@ -447,7 +450,7 @@ func searchDocs(docs DocFetcher, query string) []SearchResult {
 		if summary == "" && strings.ToLower(record.DataType) == "statement" {
 			summary = record.Content
 		} else if summary == "" && strings.ToLower(record.DataType) == "entity" {
-			summary = assertions.ParseCertificate(record.Content).CommonName
+			summary = entities.ParseCertificate(record.Content).CommonName
 		}
 		log.Debugf("Searching %s => %s", record.Uri, summary)
 

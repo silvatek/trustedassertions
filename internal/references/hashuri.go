@@ -1,6 +1,7 @@
 package references
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net/url"
 	"strings"
@@ -11,6 +12,7 @@ type HashUri struct {
 }
 
 var EMPTY_URI = HashUri{uri: ""}
+var ERROR_URI = HashUri{uri: "ERROR"}
 var TYPE_QUERY = "?type="
 
 func MakeUri(hash string, kind string) HashUri {
@@ -23,6 +25,10 @@ func MakeUri(hash string, kind string) HashUri {
 
 func MakeUriB(hash []byte, kind string) HashUri {
 	return MakeUri(fmt.Sprintf("%x", hash), kind)
+}
+
+func UriFor(ref Referenceable) HashUri {
+	return UriFromContent(ref.Content(), ref.Type())
 }
 
 // Create a HashUri from a string.
@@ -38,6 +44,15 @@ func UriFromString(str string) HashUri {
 		return UnescapeUri(str, "")
 	}
 	return MakeUri(str, "") // Assume it is just a hash
+}
+
+// Create a HashUri from content.
+//
+// The content is hashed using the default algorithm and the HashUri built from that hash.
+func UriFromContent(content string, kind string) HashUri {
+	hash := sha256.New()
+	hash.Write([]byte(content))
+	return MakeUriB(hash.Sum(nil), kind)
 }
 
 func (u HashUri) Hash() string {

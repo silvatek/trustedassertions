@@ -7,8 +7,11 @@ import (
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
+	"silvatek.uk/trustedassertions/internal/docs"
+	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 type InMemoryDataStore struct {
@@ -72,13 +75,13 @@ func (ds *InMemoryDataStore) FetchInto(key HashUri, item Referenceable) error {
 	return item.ParseContent(record.Content)
 }
 
-func (ds *InMemoryDataStore) FetchStatement(ctx context.Context, key HashUri) (assertions.Statement, error) {
-	var statement assertions.Statement
+func (ds *InMemoryDataStore) FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error) {
+	var statement statements.Statement
 	return statement, ds.FetchInto(key, &statement)
 }
 
-func (ds *InMemoryDataStore) FetchEntity(ctx context.Context, key HashUri) (assertions.Entity, error) {
-	var entity assertions.Entity
+func (ds *InMemoryDataStore) FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error) {
+	var entity entities.Entity
 	return entity, ds.FetchInto(key, &entity)
 }
 
@@ -87,8 +90,8 @@ func (ds *InMemoryDataStore) FetchAssertion(ctx context.Context, key HashUri) (a
 	return assertion, ds.FetchInto(key, &assertion)
 }
 
-func (ds *InMemoryDataStore) FetchDocument(ctx context.Context, key HashUri) (assertions.Document, error) {
-	var doc assertions.Document
+func (ds *InMemoryDataStore) FetchDocument(ctx context.Context, key HashUri) (docs.Document, error) {
+	var doc docs.Document
 	return doc, ds.FetchInto(key, &doc)
 }
 

@@ -1,9 +1,8 @@
-package assertions
+package entities
 
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -11,14 +10,14 @@ import (
 	"time"
 
 	log "silvatek.uk/trustedassertions/internal/logging"
-	. "silvatek.uk/trustedassertions/internal/references"
+	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
 type Entity struct {
 	SerialNum   big.Int
 	CommonName  string         `json:"name"`
 	Certificate string         `json:"cert"`
-	uri         HashUri        `json:"-"`
+	uri         refs.HashUri   `json:"-"`
 	Issued      time.Time      `json:"-"`
 	PublicKey   *rsa.PublicKey `json:"-"`
 }
@@ -36,15 +35,16 @@ func randomSerialNum() big.Int {
 	return *serNum
 }
 
-func (e *Entity) Uri() HashUri {
+func (e *Entity) Uri() refs.HashUri {
 	if e.uri.String() == "" {
 		if e.Certificate == "" {
 			log.Errorf("Cannot make URI without certificate")
-			return EMPTY_URI
+			return refs.ERROR_URI
 		}
-		hash := sha256.New()
-		hash.Write([]byte(e.Certificate))
-		e.uri = MakeUriB(hash.Sum(nil), "entity")
+		e.uri = refs.UriFor(e)
+		// hash := sha256.New()
+		// hash.Write([]byte(e.Certificate))
+		// e.uri = MakeUriB(hash.Sum(nil), "entity")
 	}
 	return e.uri
 }
@@ -73,8 +73,8 @@ func (e *Entity) TextContent() string {
 	return e.CommonName
 }
 
-func (e *Entity) References() []HashUri {
-	return []HashUri{}
+func (e *Entity) References() []refs.HashUri {
+	return []refs.HashUri{}
 }
 
 func (e *Entity) MakeCertificate(privateKey *rsa.PrivateKey) {

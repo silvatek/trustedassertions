@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
+	"silvatek.uk/trustedassertions/internal/entities"
 	. "silvatek.uk/trustedassertions/internal/references"
 )
 
@@ -87,18 +88,18 @@ func TestJwtAsymmetric(t *testing.T) {
 }
 
 type TestResolver struct {
-	entity Entity
+	entity entities.Entity
 	NullResolver
 }
 
-func (r TestResolver) FetchEntity(ctx context.Context, key HashUri) (Entity, error) {
+func (r TestResolver) FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error) {
 	return r.entity, nil
 }
 
 func TestAssertionClaims(t *testing.T) {
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
 
-	entity := NewEntity("Test entity", *big.NewInt(123456))
+	entity := entities.NewEntity("Test entity", *big.NewInt(123456))
 	entity.MakeCertificate(privateKey)
 
 	PublicKeyResolver = TestResolver{entity: entity} // TestEntityFetcher{entity: entity}

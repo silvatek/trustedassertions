@@ -16,8 +16,11 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
+	"silvatek.uk/trustedassertions/internal/docs"
+	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 var errorMessages map[string]string
@@ -159,7 +162,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		DefaultDocument HashUri
 	}{
-		DefaultDocument: assertions.DefaultDocumentUri,
+		DefaultDocument: docs.DefaultDocumentUri,
 	}
 
 	RenderWebPage(ctx, "index", data, nil, w, r)
@@ -295,7 +298,7 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 	document, _ := datastore.ActiveDataStore.FetchDocument(ctx, MakeUri(key, "document"))
 
 	data := struct {
-		Doc       assertions.Document
+		Doc       docs.Document
 		Title     string
 		DocHtml   string
 		AuthorUri HashUri
@@ -402,7 +405,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		log.DebugfX(ctx, "Common name: %s", commonName)
 
 		privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
-		entity := assertions.Entity{CommonName: commonName}
+		entity := entities.Entity{CommonName: commonName}
 		entity.MakeCertificate(privateKey)
 
 		datastore.ActiveDataStore.Store(ctx, &entity)
@@ -444,7 +447,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data := struct {
-			Statement assertions.Statement
+			Statement statements.Statement
 			User      auth.User
 		}{
 			Statement: statement,
