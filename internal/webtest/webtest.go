@@ -9,12 +9,12 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
-	"silvatek.uk/trustedassertions/internal/auth"
+	// "silvatek.uk/trustedassertions/internal/auth"
 )
 
 type WebTest struct {
-	t          *testing.T
-	User       *auth.User
+	t *testing.T
+	// User       *auth.User
 	Server     *httptest.Server
 	Passwd     string
 	AuthCookie *http.Cookie

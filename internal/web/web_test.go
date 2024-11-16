@@ -20,6 +20,8 @@ import (
 	"silvatek.uk/trustedassertions/internal/webtest"
 )
 
+var user *auth.User
+
 func setup(t *testing.T) *webtest.WebTest {
 	TemplateDir = "../../web"
 
@@ -40,12 +42,12 @@ func setup(t *testing.T) *webtest.WebTest {
 	router := mux.NewRouter()
 	AddHandlers(router)
 
-	wt.User = &auth.User{Id: "admin"}
+	user = &auth.User{Id: "admin"}
 	wt.Passwd = "testing"
-	wt.User.HashPassword(wt.Passwd)
-	wt.User.KeyRefs = append(wt.User.KeyRefs, auth.KeyRef{UserId: wt.User.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
-	wt.AuthCookie = MakeAuthCookie(wt.User.Id)
-	datastore.ActiveDataStore.StoreUser(*wt.User)
+	user.HashPassword(wt.Passwd)
+	user.KeyRefs = append(user.KeyRefs, auth.KeyRef{UserId: user.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
+	wt.AuthCookie = MakeAuthCookie(user.Id)
+	datastore.ActiveDataStore.StoreUser(*user)
 
 	wt.Server = httptest.NewServer(router)
 
@@ -107,7 +109,7 @@ func TestPostNewStatement(t *testing.T) {
 
 	data := url.Values{
 		"statement": {"Test statement"},
-		"sign_as":   {wt.User.KeyRefs[0].KeyId},
+		"sign_as":   {user.KeyRefs[0].KeyId},
 	}
 	page := wt.PostFormData("/web/newstatement", data)
 	page.AssertSuccessResponse()
@@ -156,7 +158,7 @@ func TestAddAssertion(t *testing.T) {
 	values := url.Values{
 		"assertion_type": {"IsTrue"},
 		"confidence":     {"0.75"},
-		"sign_as":        {wt.User.KeyRefs[0].KeyId},
+		"sign_as":        {user.KeyRefs[0].KeyId},
 	}
 	page = wt.PostFormData("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f/addassertion", values)
 	page.AssertSuccessResponse()
@@ -192,9 +194,9 @@ func TestLoginLogout(t *testing.T) {
 	page.AssertNoCookie("auth")
 	page.AssertHtmlQuery("h2", "Login")
 
-	page = wt.PostFormData("/web/login", url.Values{"user_id": {wt.User.Id}, "password": {wt.Passwd}})
+	page = wt.PostFormData("/web/login", url.Values{"user_id": {user.Id}, "password": {wt.Passwd}})
 	page.AssertSuccessResponse()
-	page.AssertHtmlQuery("span", wt.User.Id)
+	page.AssertHtmlQuery("span", user.Id)
 	page.AssertHasCookie("auth")
 
 	page = wt.GetPage("/web/logout")
@@ -209,7 +211,7 @@ func TestBadLogin(t *testing.T) {
 	page := wt.PostFormData("/web/login", url.Values{"user_id": {"jkdshffkdjshdskfjhd"}, "password": {wt.Passwd}})
 	page.AssertHtmlQuery(".error", "Unable to verify identity")
 
-	page = wt.PostFormData("/web/login", url.Values{"user_id": {wt.User.Id}, "password": {"jkdfhskjfdshfk"}})
+	page = wt.PostFormData("/web/login", url.Values{"user_id": {user.Id}, "password": {"jkdfhskjfdshfk"}})
 	page.AssertHtmlQuery(".error", "Unable to verify identity")
 }
 
