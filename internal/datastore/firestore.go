@@ -142,9 +142,9 @@ func (fs *FireStore) Store(ctx context.Context, value Referenceable) {
 	fs.storeRefs(value.Uri(), value.References())
 }
 
-func (fs *FireStore) storeRefs(uri HashUri, refs []HashUri) {
+func (fs *FireStore) storeRefs(uri HashUri, refs []Reference) {
 	for _, ref := range refs {
-		fs.StoreRef(uri, ref, "unknown")
+		fs.StoreRef(uri, ref.Source, "unknown")
 	}
 }
 

@@ -103,13 +103,23 @@ func (d Document) Summary() string {
 	return d.Metadata.Title
 }
 
-func (d Document) References() []refs.HashUri {
-	references := make([]refs.HashUri, 0)
+func (d Document) References() []refs.Reference {
+	references := make([]refs.Reference, 0)
 	if d.Metadata.Author.Entity != "" {
-		references = append(references, refs.UriFromString(d.Metadata.Author.Entity))
+		reference := refs.Reference{
+			Source:  d.Uri(),
+			Target:  refs.UriFromString(d.Metadata.Author.Entity),
+			Summary: "Unspecified author reference",
+		}
+		references = append(references, reference)
 	}
 	for _, span := range d.allAssertions() {
-		references = append(references, refs.UriFromString(span.Assertion))
+		reference := refs.Reference{
+			Source:  d.Uri(),
+			Target:  refs.UriFromString(span.Assertion),
+			Summary: "Unspecified document reference",
+		}
+		references = append(references, reference)
 	}
 	return references
 }

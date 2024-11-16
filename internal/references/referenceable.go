@@ -13,6 +13,6 @@ type Referenceable interface {
 	Content() string
 	Summary() string
 	TextContent() string
-	References() []HashUri
+	References() []Reference
 	ParseContent(content string) error
 }

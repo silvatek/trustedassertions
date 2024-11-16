@@ -74,8 +74,8 @@ func (e *Entity) TextContent() string {
 	return e.CommonName
 }
 
-func (e *Entity) References() []refs.HashUri {
-	return []refs.HashUri{}
+func (e *Entity) References() []refs.Reference {
+	return []refs.Reference{}
 }
 
 func (e *Entity) MakeCertificate(privateKey *rsa.PrivateKey) {
