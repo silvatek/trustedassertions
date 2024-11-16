@@ -66,3 +66,24 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 
 	return assertion, nil
 }
+
+func MakeSummary(ctx context.Context, ref *references.Reference, resolver assertions.Resolver) {
+	switch ref.Source.Kind() {
+	case "statement":
+		statement, _ := resolver.FetchStatement(ctx, ref.Source)
+		ref.Summary = statement.Summary()
+	case "entity":
+		entity, _ := resolver.FetchEntity(ctx, ref.Source)
+		ref.Summary = entity.Summary()
+	case "document":
+		doc, _ := resolver.FetchDocument(ctx, ref.Source)
+		ref.Summary = doc.Summary()
+	case "assertion":
+		assertion, _ := resolver.FetchAssertion(ctx, ref.Source)
+		issuer, _ := resolver.FetchEntity(ctx, references.UriFromString(assertion.Issuer))
+		subject, _ := resolver.FetchStatement(ctx, references.UriFromString(assertion.Subject))
+		ref.Summary = issuer.CommonName + " asserts " + assertion.Category + " for '" + subject.Summary() + "'"
+	default:
+		ref.Summary = "Unknown " + ref.Source.Kind()
+	}
+}

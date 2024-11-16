@@ -139,10 +139,10 @@ func (fs *FireStore) Store(ctx context.Context, value Referenceable) {
 	}
 	fs.StoreRecord(ctx, uri, rec)
 
-	fs.storeRefs(value.Uri(), value.References())
+	fs.storeRefs(value.References())
 }
 
-func (fs *FireStore) storeRefs(uri HashUri, refs []Reference) {
+func (fs *FireStore) storeRefs(refs []Reference) {
 	for _, ref := range refs {
 		fs.StoreRef(ref)
 	}
@@ -160,6 +160,8 @@ func (fs *FireStore) StoreKey(entityUri HashUri, key string) {
 func (fs *FireStore) StoreRef(reference Reference) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
+
+	MakeSummary(ctx, &reference, fs)
 
 	data := make(map[string]string)
 	data["source"] = reference.Source.String()
