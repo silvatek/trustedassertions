@@ -3,16 +3,12 @@ package assertions
 import (
 	"context"
 	"crypto/rsa"
-	"crypto/sha256"
-	"crypto/x509"
-	"encoding/base64"
 	"errors"
-	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
-	. "silvatek.uk/trustedassertions/internal/references"
+	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
 const DEFAULT_AUDIENCE = "trustedassertions:0.1/any"
@@ -20,11 +16,11 @@ const UNDEFINED_CATEGORY = "Undefined"
 
 type Assertion struct {
 	*jwt.RegisteredClaims
-	Category   string  `json:"category,omitempty"`
-	Confidence float32 `json:"confidence,omitempty"`
-	Object     string  `json:"object,omitempty"`
-	content    string  `json:"-"`
-	uri        HashUri `json:"-"`
+	Category   string       `json:"category,omitempty"`
+	Confidence float32      `json:"confidence,omitempty"`
+	Object     string       `json:"object,omitempty"`
+	content    string       `json:"-"`
+	uri        refs.HashUri `json:"-"`
 }
 
 // Resolver used to fetch public keys for entities.
@@ -44,7 +40,7 @@ func NewAssertion(category string) Assertion {
 // The token issuer should be the URI of an entity, and that entity is fetched using the PublicKeyResolver.
 func verificationKey(token *jwt.Token) (interface{}, error) {
 	entityUri, _ := token.Claims.GetIssuer()
-	entity, err := PublicKeyResolver.FetchEntity(context.Background(), UriFromString(entityUri))
+	entity, err := PublicKeyResolver.FetchEntity(context.Background(), refs.UriFromString(entityUri))
 	return entity.PublicKey, err
 }
 
@@ -94,15 +90,13 @@ func (a *Assertion) MakeJwt(privateKey *rsa.PrivateKey) {
 	a.content = signed
 }
 
-func (a *Assertion) Uri() HashUri {
+func (a *Assertion) Uri() refs.HashUri {
 	if a.uri.IsEmpty() {
 		if a.content == "" {
 			log.Errorf("Attempting to get URI for empty assertion content")
-			return EMPTY_URI
+			return refs.ERROR_URI
 		}
-		hash := sha256.New()
-		hash.Write([]byte(a.Content()))
-		a.uri = MakeUriB(hash.Sum(nil), "assertion")
+		a.uri = refs.UriFor(a)
 	}
 	return a.uri
 }
@@ -126,49 +120,17 @@ func (a *Assertion) TextContent() string {
 	return "" // Assertions aren't directly searchable
 }
 
-func (a Assertion) References() []HashUri {
-	refs := make([]HashUri, 0)
+func (a Assertion) References() []refs.HashUri {
+	references := make([]refs.HashUri, 0)
 	if a.RegisteredClaims.Issuer != "" {
-		refs = append(refs, UriFromString(a.RegisteredClaims.Issuer))
+		references = append(references, refs.UriFromString(a.RegisteredClaims.Issuer))
 	}
 	if a.RegisteredClaims.Subject != "" {
-		refs = append(refs, UriFromString(a.RegisteredClaims.Subject))
+		references = append(references, refs.UriFromString(a.RegisteredClaims.Subject))
 	}
-	return refs
+	return references
 }
 
 func (a *Assertion) SetAssertingEntity(entity entities.Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
-}
-
-func GuessContentType(content string) string {
-	if len(content) < 512 {
-		// Both X509 certificates and JWTs signed by Entities are longer than 512 characters
-		return "Statement"
-	}
-	if strings.HasPrefix(content, "-----BEGIN CERTIFICATE----") {
-		// X509 certificates for Entities are self-describing
-		return "Entity"
-	}
-	if strings.HasPrefix(content, "eyJ") {
-		// Assertion JWTs start with bas64-encoded "{"
-		return "Assertion"
-	}
-	if strings.HasPrefix(content, "<?xml") && strings.Contains(content, "<document>") {
-		return "Document"
-	}
-	return "Statement"
-}
-
-func PrivateKeyToString(prvKey *rsa.PrivateKey) string {
-	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(prvKey))
-}
-
-func StringToPrivateKey(base64encoded string) *rsa.PrivateKey {
-	bytes, _ := base64.StdEncoding.DecodeString(base64encoded)
-	privateKey, err := x509.ParsePKCS1PrivateKey(bytes)
-	if err != nil {
-		log.Errorf("Error decoding key")
-	}
-	return privateKey
 }

@@ -30,10 +30,10 @@ func setup(t *testing.T) *webtest.WebTest {
 	signer := entities.NewEntity("Signing entity", *big.NewInt(123456))
 	signer.MakeCertificate(privateKey)
 	datastore.ActiveDataStore.Store(context.Background(), &signer)
-	datastore.ActiveDataStore.StoreKey(signer.Uri(), assertions.PrivateKeyToString(privateKey))
+	datastore.ActiveDataStore.StoreKey(signer.Uri(), entities.PrivateKeyToString(privateKey))
 	DefaultEntityUri = signer.Uri()
 
-	testdata.SetupTestData("../../testdata", signer.Uri().String(), assertions.PrivateKeyToString(privateKey))
+	testdata.SetupTestData("../../testdata", signer.Uri().String(), entities.PrivateKeyToString(privateKey))
 
 	wt := webtest.MakeWebTest(t)
 

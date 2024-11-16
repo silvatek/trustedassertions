@@ -16,7 +16,7 @@ func main() {
 	log.Info("TrustedAssertions utils")
 
 	b64key := os.Getenv("PRV_KEY")
-	prvKey := assertions.StringToPrivateKey(b64key)
+	prvKey := entities.PrivateKeyFromString(b64key)
 	err := prvKey.Validate()
 	if err != nil {
 		log.Errorf("Private key is not valid: %v", err)

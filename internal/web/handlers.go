@@ -410,7 +410,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		datastore.ActiveDataStore.Store(ctx, &entity)
 
-		datastore.ActiveDataStore.StoreKey(entity.Uri(), assertions.PrivateKeyToString(privateKey))
+		datastore.ActiveDataStore.StoreKey(entity.Uri(), entities.PrivateKeyToString(privateKey))
 
 		user.AddKeyRef(entity.Uri().Escaped(), entity.CommonName)
 		datastore.ActiveDataStore.StoreUser(user)
@@ -474,7 +474,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 			HandleError(ErrorKeyFetch, "Error fetching entity private key", w, r)
 			return
 		}
-		privateKey := assertions.StringToPrivateKey(b64key)
+		privateKey := entities.PrivateKeyFromString(b64key)
 
 		entity, _ := datastore.ActiveDataStore.FetchEntity(ctx, keyUri)
 

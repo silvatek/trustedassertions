@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/pem"
 	"math/big"
 	"time"
@@ -132,9 +133,20 @@ func ParseCertificate(content string) Entity {
 		entity.SerialNum = *cert.SerialNumber
 		entity.CommonName = cert.Subject.CommonName
 		entity.PublicKey = cert.PublicKey.(*rsa.PublicKey)
-		log.Debugf("Entity serial number: %d", entity.SerialNum.Int64())
-		log.Debugf("Entity name: %s", entity.CommonName)
 	}
 
 	return entity
+}
+
+func PrivateKeyToString(prvKey *rsa.PrivateKey) string {
+	return base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PrivateKey(prvKey))
+}
+
+func PrivateKeyFromString(base64encoded string) *rsa.PrivateKey {
+	bytes, _ := base64.StdEncoding.DecodeString(base64encoded)
+	privateKey, err := x509.ParsePKCS1PrivateKey(bytes)
+	if err != nil {
+		log.Errorf("Error decoding key")
+	}
+	return privateKey
 }

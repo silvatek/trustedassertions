@@ -151,3 +151,22 @@ func EnrichReferences(ctx context.Context, uris []HashUri, currentUri HashUri, r
 
 	return summaries
 }
+
+func GuessContentType(content string) string {
+	if len(content) < 512 {
+		// Both X509 certificates and JWTs signed by Entities are longer than 512 characters
+		return "Statement"
+	}
+	if strings.HasPrefix(content, "-----BEGIN CERTIFICATE----") {
+		// X509 certificates for Entities are self-describing
+		return "Entity"
+	}
+	if strings.HasPrefix(content, "eyJ") {
+		// Assertion JWTs start with bas64-encoded "{"
+		return "Assertion"
+	}
+	if strings.HasPrefix(content, "<?xml") && strings.Contains(content, "<document>") {
+		return "Document"
+	}
+	return "Statement"
+}

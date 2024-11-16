@@ -171,9 +171,9 @@ func TestDecodePrivateKey(t *testing.T) {
 
 func TestKeyStringRoundTrip(t *testing.T) {
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
-	s := PrivateKeyToString(privateKey)
+	s := entities.PrivateKeyToString(privateKey)
 
-	key2 := StringToPrivateKey(s)
+	key2 := entities.PrivateKeyFromString(s)
 
 	if !key2.Equal(privateKey) {
 		t.Error("Private key did not verify after round-trip through string")
