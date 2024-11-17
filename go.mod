@@ -25,6 +25,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.13.0 // indirect
 	github.com/gorilla/csrf v1.7.2 // indirect
+	github.com/gorilla/handlers v1.5.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	go.opencensus.io v0.24.0 // indirect

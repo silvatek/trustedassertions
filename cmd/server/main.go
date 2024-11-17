@@ -14,6 +14,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/web"
 
 	"github.com/gorilla/csrf"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -38,6 +39,7 @@ func main() {
 		csrf.Path("/"),
 		csrf.CookieName("authenticity_token"),
 	)
+	handlers.CompressHandler(r)
 
 	srv := &http.Server{
 		Handler:      CSRF(r),
