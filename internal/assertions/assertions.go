@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"errors"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/entities"
@@ -143,4 +144,20 @@ func (a Assertion) References() []refs.Reference {
 
 func (a *Assertion) SetAssertingEntity(entity entities.Entity) {
 	a.RegisteredClaims.Issuer = entity.Uri().String()
+}
+
+func CategoryDescription(category string, language string) string {
+	if strings.HasPrefix(language, "en") {
+		switch category {
+		case "IsTrue":
+			return "is true"
+		case "IsFalse":
+			return "is false"
+		default:
+			return category
+		}
+
+	} else {
+		return category
+	}
 }

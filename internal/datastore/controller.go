@@ -82,7 +82,7 @@ func MakeSummary(ctx context.Context, ref *references.Reference, resolver assert
 		assertion, _ := resolver.FetchAssertion(ctx, ref.Source)
 		issuer, _ := resolver.FetchEntity(ctx, references.UriFromString(assertion.Issuer))
 		subject, _ := resolver.FetchStatement(ctx, references.UriFromString(assertion.Subject))
-		ref.Summary = issuer.CommonName + " asserts " + assertion.Category + " for '" + subject.Summary() + "'"
+		ref.Summary = issuer.CommonName + " claims that '" + subject.Summary() + "' " + assertions.CategoryDescription(assertion.Category, "en")
 	default:
 		ref.Summary = "Unknown " + ref.Source.Kind()
 	}
