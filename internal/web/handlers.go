@@ -179,7 +179,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, MakeUri(key, "statement"))
 
 	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
-	refs = assertions.EnrichReferences(ctx, refs, statement.Uri(), datastore.ActiveDataStore)
+	enrichReferences(ctx, refs)
 
 	data := struct {
 		Uri        HashUri
@@ -201,6 +201,14 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RenderWebPage(ctx, "viewstatement", data, menu, w, r)
+}
+
+func enrichReferences(ctx context.Context, refs []Reference) {
+	for _, ref := range refs {
+		if ref.Summary == "" {
+			datastore.MakeSummary(ctx, &ref, datastore.ActiveDataStore)
+		}
+	}
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -270,7 +278,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, entity.Uri())
-	refs = assertions.EnrichReferences(ctx, refs, entity.Uri(), datastore.ActiveDataStore)
+	enrichReferences(ctx, refs)
 
 	data := struct {
 		Uri        string
