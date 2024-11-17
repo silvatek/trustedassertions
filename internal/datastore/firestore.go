@@ -138,13 +138,11 @@ func (fs *FireStore) Store(ctx context.Context, value Referenceable) {
 		SearchWords: search.SearchWords(value.TextContent()),
 	}
 	fs.StoreRecord(ctx, uri, rec)
-
-	fs.storeRefs(value.References())
 }
 
-func (fs *FireStore) storeRefs(refs []Reference) {
+func (fs *FireStore) storeRefs(ctx context.Context, refs []Reference) {
 	for _, ref := range refs {
-		fs.StoreRef(ref)
+		fs.StoreRef(ctx, ref)
 	}
 }
 
@@ -157,19 +155,19 @@ func (fs *FireStore) StoreKey(entityUri HashUri, key string) {
 	fs.store(KeyCollection, entityUri.Escaped(), data)
 }
 
-func (fs *FireStore) StoreRef(reference Reference) {
-	ctx := context.TODO()
+func (fs *FireStore) StoreRef(ctx context.Context, reference Reference) {
 	client := fs.client(ctx)
-
-	MakeSummary(ctx, &reference, fs)
 
 	data := make(map[string]string)
 	data["source"] = reference.Source.String()
 	data["target"] = reference.Target.String()
 	data["summary"] = reference.Summary
+	data["updated"] = time.Now().Format(time.RFC3339)
 
 	refs := client.Collection(MainCollection).Doc(reference.Target.Escaped()).Collection("refs")
 	refs.Doc(reference.Source.Escaped()).Set(ctx, data)
+
+	log.DebugfX(ctx, "Stored reference from %s to %s", reference.Source.String(), reference.Target.String())
 }
 
 func (fs *FireStore) fetch(ctx context.Context, uri HashUri) (*DbRecord, error) {

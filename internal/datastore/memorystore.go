@@ -58,7 +58,7 @@ func (ds *InMemoryDataStore) StoreKey(entityUri HashUri, key string) {
 	ds.keys[entityUri.Escaped()] = key
 }
 
-func (ds *InMemoryDataStore) StoreRef(reference refs.Reference) {
+func (ds *InMemoryDataStore) StoreRef(ctx context.Context, reference refs.Reference) {
 	targetKey := reference.Target.Escaped()
 	refs, ok := ds.refs[targetKey]
 	if !ok {

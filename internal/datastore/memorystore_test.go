@@ -107,7 +107,7 @@ func TestStoreFetchReference(t *testing.T) {
 		Summary: "Testing",
 	}
 
-	ActiveDataStore.StoreRef(ref)
+	ActiveDataStore.StoreRef(context.TODO(), ref)
 
 	refs, err := ActiveDataStore.FetchRefs(context.TODO(), ref.Target)
 	if err != nil {

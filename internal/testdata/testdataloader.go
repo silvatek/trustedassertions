@@ -1,7 +1,6 @@
 package testdata
 
 import (
-	"bytes"
 	"context"
 	"os"
 	"strings"
@@ -10,7 +9,9 @@ import (
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/references"
 	. "silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 func SetupTestData(testDataDir string, defaultEntityUri string, defaultEntityKey string) {
@@ -48,7 +49,7 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 			continue
 		}
 
-		content = NormalizeNewlines(content)
+		content = statements.NormalizeNewlines(content)
 
 		item := assertions.NewReferenceable(dataType)
 		item.ParseContent(string(content))
@@ -61,18 +62,8 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 	}
 }
 
-// NormalizeNewlines normalizes \r\n (windows) and \r (mac)
-// into \n (unix)
-func NormalizeNewlines(d []byte) []byte {
-	// replace CR LF \r\n (windows) with LF \n (unix)
-	d = bytes.Replace(d, []byte{13, 10}, []byte{10}, -1)
-	// replace CF \r (mac) with LF \n (unix)
-	d = bytes.Replace(d, []byte{13}, []byte{10}, -1)
-	return d
-}
-
 func addAssertionReferences(content string) {
-	a, _ := assertions.ParseAssertionJwt(content)
-	datastore.StoreReference(a.Uri(), UriFromString(a.Subject), "Assertion.Subject:Statement")
-	datastore.StoreReference(a.Uri(), UriFromString(a.Issuer), "Assertion.Issuer:Entity")
+	assertion, _ := assertions.ParseAssertionJwt(content)
+	datastore.StoreReferenceWithSummary(context.Background(), assertion.Uri(), references.UriFromString(assertion.Subject))
+	datastore.StoreReferenceWithSummary(context.Background(), assertion.Uri(), references.UriFromString(assertion.Issuer))
 }

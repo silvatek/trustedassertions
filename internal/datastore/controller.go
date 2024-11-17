@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"crypto/rsa"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -25,19 +26,20 @@ func CreateAssertion(ctx context.Context, statementUri references.HashUri, confi
 	assertion.MakeJwt(privateKey)
 	ActiveDataStore.Store(ctx, &assertion)
 
-	StoreReference(assertion.Uri(), references.UriFromString(assertion.Subject), "Assertion.Subject:Statement")
-	StoreReference(assertion.Uri(), references.UriFromString(assertion.Issuer), "Assertion.Issuer:Entity")
+	StoreReferenceWithSummary(ctx, assertion.Uri(), references.UriFromString(assertion.Subject))
+	StoreReferenceWithSummary(ctx, assertion.Uri(), references.UriFromString(assertion.Issuer))
 
 	return &assertion
 }
 
-func StoreReference(source references.HashUri, target references.HashUri, summary string) {
+// Adds a summary to a reference and stores it in the active datastore.
+func StoreReferenceWithSummary(ctx context.Context, source references.HashUri, target references.HashUri) {
 	ref := references.Reference{
-		Source:  source,
-		Target:  target,
-		Summary: summary,
+		Source: source,
+		Target: target,
 	}
-	ActiveDataStore.StoreRef(ref)
+	MakeSummary(ctx, &ref, ActiveDataStore)
+	ActiveDataStore.StoreRef(ctx, ref)
 }
 
 func CreateStatementAndAssertion(ctx context.Context, content string, entityUri references.HashUri, confidence float64) (*assertions.Assertion, error) {
@@ -82,7 +84,7 @@ func MakeSummary(ctx context.Context, ref *references.Reference, resolver assert
 		assertion, _ := resolver.FetchAssertion(ctx, ref.Source)
 		issuer, _ := resolver.FetchEntity(ctx, references.UriFromString(assertion.Issuer))
 		subject, _ := resolver.FetchStatement(ctx, references.UriFromString(assertion.Subject))
-		ref.Summary = issuer.CommonName + " claims that '" + subject.Summary() + "' " + assertions.CategoryDescription(assertion.Category, "en")
+		ref.Summary = fmt.Sprintf("%s claims that '%s' %s", issuer.CommonName, subject.Summary(), assertions.CategoryDescription(assertion.Category, "en"))
 	default:
 		ref.Summary = "Unknown " + ref.Source.Kind()
 	}
