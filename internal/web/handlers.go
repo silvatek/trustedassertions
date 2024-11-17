@@ -180,7 +180,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, MakeUri(key, "statement"))
 
 	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
-	enrichReferences(ctx, refs)
+	enrichReferencesTo(ctx, &statement, refs)
 
 	data := struct {
 		Uri        HashUri
@@ -204,7 +204,7 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	RenderWebPage(ctx, "viewstatement", data, menu, w, r)
 }
 
-func enrichReferences(ctx context.Context, refs []Reference) {
+func enrichReferencesTo(ctx context.Context, target Referenceable, refs []Reference) {
 	var wg sync.WaitGroup
 
 	for n, ref := range refs {
@@ -212,7 +212,7 @@ func enrichReferences(ctx context.Context, refs []Reference) {
 			wg.Add(1)
 			go func(ref *Reference) {
 				log.DebugfX(ctx, "Constructing summary %d", n)
-				datastore.MakeSummary(ctx, ref, datastore.ActiveDataStore)
+				datastore.MakeSummary(ctx, &target, ref, datastore.ActiveDataStore)
 				refs[n] = *ref
 				log.DebugfX(ctx, "Summary %d constructed.", n)
 				wg.Done()
@@ -294,7 +294,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, entity.Uri())
-	enrichReferences(ctx, refs)
+	enrichReferencesTo(ctx, &entity, refs)
 
 	data := struct {
 		Uri        string

@@ -157,6 +157,6 @@ func (u HashUri) WithType(kind string) HashUri {
 	return u2
 }
 
-func (u *HashUri) Equals(other HashUri) bool {
+func (u HashUri) Equals(other HashUri) bool {
 	return u.Escaped() == other.Escaped()
 }

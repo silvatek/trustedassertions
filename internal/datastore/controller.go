@@ -38,7 +38,7 @@ func StoreReferenceWithSummary(ctx context.Context, source references.HashUri, t
 		Source: source,
 		Target: target,
 	}
-	MakeSummary(ctx, &ref, ActiveDataStore)
+	MakeSummary(ctx, nil, &ref, ActiveDataStore)
 	ActiveDataStore.StoreRef(ctx, ref)
 }
 
@@ -69,22 +69,41 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 	return assertion, nil
 }
 
-func MakeSummary(ctx context.Context, ref *references.Reference, resolver assertions.Resolver) {
+func MakeSummary(ctx context.Context, target *references.Referenceable, ref *references.Reference, resolver assertions.Resolver) {
 	switch ref.Source.Kind() {
 	case "statement":
 		statement, _ := resolver.FetchStatement(ctx, ref.Source)
 		ref.Summary = statement.Summary()
 	case "entity":
-		entity, _ := resolver.FetchEntity(ctx, ref.Source)
+		entity, _ := ActiveDataStore.FetchEntity(ctx, ref.Source)
 		ref.Summary = entity.Summary()
 	case "document":
 		doc, _ := resolver.FetchDocument(ctx, ref.Source)
 		ref.Summary = doc.Summary()
 	case "assertion":
 		assertion, _ := resolver.FetchAssertion(ctx, ref.Source)
-		issuer, _ := resolver.FetchEntity(ctx, references.UriFromString(assertion.Issuer))
-		subject, _ := resolver.FetchStatement(ctx, references.UriFromString(assertion.Subject))
-		ref.Summary = fmt.Sprintf("%s claims that '%s' %s", issuer.CommonName, subject.Summary(), assertions.CategoryDescription(assertion.Category, "en"))
+
+		issuerUri := references.UriFromString(assertion.Issuer)
+		var issuerName string
+
+		if target != nil && issuerUri.Equals((*target).Uri()) {
+			issuerName = (*target).Summary()
+		} else {
+			entity, _ := ActiveDataStore.FetchEntity(ctx, issuerUri)
+			issuerName = entity.Summary()
+		}
+
+		subjectUri := references.UriFromString(assertion.Subject)
+		var subjectSummary string
+
+		if target != nil && subjectUri.Equals((*target).Uri()) {
+			subjectSummary = (*target).Summary()
+		} else {
+			subject, _ := resolver.FetchStatement(ctx, subjectUri)
+			subjectSummary = subject.Summary()
+		}
+
+		ref.Summary = fmt.Sprintf("%s claims that '%s' %s", issuerName, subjectSummary, assertions.CategoryDescription(assertion.Category, "en"))
 	default:
 		ref.Summary = "Unknown " + ref.Source.Kind()
 	}
