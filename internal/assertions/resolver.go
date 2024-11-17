@@ -129,10 +129,12 @@ func EnrichReferences(ctx context.Context, refs []Reference, currentUri HashUri,
 	for _, reference := range refs {
 		uri := reference.Source
 		summary := reference.Summary
+		log.DebugfX(ctx, "Existing reference summary: %s", summary)
 
 		if summary == "" {
 			switch reference.Source.Kind() {
 			case "assertion":
+				log.DebugfX(ctx, "Enriching assertion reference summary")
 				assertion, err := resolver.FetchAssertion(ctx, reference.Source)
 				if err != nil {
 					log.ErrorfX(ctx, "Error fetching assertion %s %v", uri.String(), err)
@@ -141,6 +143,7 @@ func EnrichReferences(ctx context.Context, refs []Reference, currentUri HashUri,
 					summary = SummariseAssertion(ctx, assertion, currentUri, resolver)
 				}
 			case "document":
+				log.DebugfX(ctx, "Enriching document reference summary")
 				document, err := resolver.FetchDocument(ctx, uri)
 				if err != nil {
 					log.ErrorfX(ctx, "Error fetching document %s %v", uri.String(), err)
@@ -149,6 +152,7 @@ func EnrichReferences(ctx context.Context, refs []Reference, currentUri HashUri,
 					summary = document.Metadata.Title
 				}
 			default:
+				log.ErrorfX(ctx, "Enriching unidentified reference summary: %s", uri.Kind())
 				summary = "unknown " + uri.Kind()
 			}
 		}
