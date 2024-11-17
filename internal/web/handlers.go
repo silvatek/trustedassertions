@@ -209,13 +209,14 @@ func enrichReferences(ctx context.Context, refs []Reference) {
 
 	for n, ref := range refs {
 		if ref.Summary == "" {
-			log.DebugfX(ctx, "Constructing summary %d", n)
 			wg.Add(1)
 			go func(ref *Reference) {
+				log.DebugfX(ctx, "Constructing summary %d", n)
 				datastore.MakeSummary(ctx, ref, datastore.ActiveDataStore)
 				refs[n] = *ref
+				log.DebugfX(ctx, "Summary %d constructed.", n)
+				wg.Done()
 			}(&ref)
-			wg.Done()
 		}
 	}
 
