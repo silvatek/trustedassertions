@@ -283,9 +283,10 @@ func (fs *FireStore) FetchKey(entityUri HashUri) (string, error) {
 }
 
 type DbReference struct {
-	Source string `json:"source"`
-	Target string `json:"target"`
-	Type   string `json:"type"`
+	Source  string `json:"source"`
+	Target  string `json:"target"`
+	Type    string `json:"type"`
+	Summary string `json:"summary"`
 }
 
 func (fs *FireStore) FetchRefs(ctx context.Context, uri HashUri) ([]Reference, error) {
@@ -303,10 +304,11 @@ func (fs *FireStore) FetchRefs(ctx context.Context, uri HashUri) ([]Reference, e
 		record := DbReference{}
 		doc.DataTo(&record)
 
-		reference := Reference{}
-		reference.Source = UriFromString(record.Source)
-		reference.Target = UriFromString(record.Target)
-		reference.Summary = record.Type
+		reference := Reference{
+			Source:  UriFromString(record.Source),
+			Target:  UriFromString(record.Target),
+			Summary: record.Summary,
+		}
 
 		results = append(results, reference)
 	}
