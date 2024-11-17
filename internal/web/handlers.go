@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/gorilla/csrf"
@@ -204,12 +205,25 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func enrichReferences(ctx context.Context, refs []Reference) {
+	var wg sync.WaitGroup
+
 	for n, ref := range refs {
 		if ref.Summary == "" {
-			datastore.MakeSummary(ctx, &ref, datastore.ActiveDataStore)
-			refs[n] = ref
+			log.DebugfX(ctx, "Constructing summary %d", n)
+			wg.Add(1)
+			go func(ref *Reference) {
+				datastore.MakeSummary(ctx, ref, datastore.ActiveDataStore)
+				refs[n] = *ref
+			}(&ref)
+			wg.Done()
 		}
 	}
+
+	log.DebugfX(ctx, "Waiting for all summaries to be ready...")
+
+	wg.Wait()
+
+	log.DebugfX(ctx, "All summaries ready.")
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
