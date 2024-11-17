@@ -4,6 +4,7 @@
         <div class="error">{{.Detail}}</div>
 
         <form method="POST" action="/web/login">
+                {{.CsrfField}}
                 <div>
                     <label for="user_id">ID:</label><br>
                     <input id="user_id" name="user_id" autofocus>

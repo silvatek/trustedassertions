@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/assertions"
@@ -60,6 +61,7 @@ type PageData struct {
 	AuthUser  string
 	AuthName  string
 	LoggedIn  bool
+	CsrfField interface{}
 	Detail    interface{}
 }
 
@@ -79,10 +81,11 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 
 	username := authUser(r)
 	pageData := PageData{
-		AuthUser: username,
-		AuthName: nameOnly(username),
-		LoggedIn: username != "",
-		Detail:   data,
+		AuthUser:  username,
+		AuthName:  nameOnly(username),
+		LoggedIn:  username != "",
+		CsrfField: csrf.TemplateField(r),
+		Detail:    data,
 	}
 
 	if pageName == "loggedout" {

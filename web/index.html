@@ -2,6 +2,7 @@
         <div class="homecontainer">
             <div class="homepanel">
                 <form id="searchform" method="get" action="/web/search">
+                    {{.CsrfField}}
                     <div>
                         <label for="query">Search for:</label><br>
                         <input id="query" name="query" width="30" autofocus></input>

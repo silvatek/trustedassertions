@@ -2,6 +2,7 @@
         <h2>Add Assertion</h2>
 
         <form method="POST" action="./addassertion">
+                {{.CsrfField}}
                 <div class="fieldset">
                         <div class="fieldprompt">Statement text:</div><br>
                         <div id="content" class="fieldvalue" disabled>{{.Detail.Statement.Content}}</div>   

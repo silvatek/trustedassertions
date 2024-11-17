@@ -13,6 +13,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/testdata"
 	"silvatek.uk/trustedassertions/internal/web"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 )
 
@@ -30,8 +31,16 @@ func main() {
 	web.TemplateDir = "./web"
 	r := setupHandlers()
 
+	CSRF := csrf.Protect(
+		[]byte(os.Getenv("CSRF_KEY")),
+		csrf.SameSite(csrf.SameSiteStrictMode),
+		csrf.FieldName("authenticity_token"),
+		csrf.Path("/"),
+		csrf.CookieName("authenticity_token"),
+	)
+
 	srv := &http.Server{
-		Handler:      r,
+		Handler:      CSRF(r),
 		Addr:         listenAddress(),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,

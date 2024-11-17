@@ -3,6 +3,7 @@
         <div>Create a new Entity, including a signing key.</div>
 
         <form method="POST" action="/web/newentity">
+                {{.CsrfField}}
                 <div>
                         <label for="commonname">Entity name:</label><br>
                         <input id="commonname" name="commonname" type="text" autofocus>                        
