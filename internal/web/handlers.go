@@ -49,6 +49,7 @@ func AddHandlers(r *mux.Router) {
 	staticDir := http.Dir(TemplateDir + "/static")
 	fs := http.FileServer(staticDir)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+	r.PathPrefix("/google").Handler(fs)
 
 	errorMessages = make(map[string]string)
 }
