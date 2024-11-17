@@ -127,27 +127,30 @@ func EnrichReferences(ctx context.Context, refs []Reference, currentUri HashUri,
 	// }
 
 	for _, reference := range refs {
-		var summary string
 		uri := reference.Source
-		switch reference.Source.Kind() {
-		case "assertion":
-			assertion, err := resolver.FetchAssertion(ctx, reference.Source)
-			if err != nil {
-				log.ErrorfX(ctx, "Error fetching assertion %s %v", uri.String(), err)
-				summary = "Error fetching assertion"
-			} else {
-				summary = SummariseAssertion(ctx, assertion, currentUri, resolver)
+		summary := reference.Summary
+
+		if summary == "" {
+			switch reference.Source.Kind() {
+			case "assertion":
+				assertion, err := resolver.FetchAssertion(ctx, reference.Source)
+				if err != nil {
+					log.ErrorfX(ctx, "Error fetching assertion %s %v", uri.String(), err)
+					summary = "Error fetching assertion"
+				} else {
+					summary = SummariseAssertion(ctx, assertion, currentUri, resolver)
+				}
+			case "document":
+				document, err := resolver.FetchDocument(ctx, uri)
+				if err != nil {
+					log.ErrorfX(ctx, "Error fetching document %s %v", uri.String(), err)
+					summary = "Error fetching document"
+				} else {
+					summary = document.Metadata.Title
+				}
+			default:
+				summary = "unknown " + uri.Kind()
 			}
-		case "document":
-			document, err := resolver.FetchDocument(ctx, uri)
-			if err != nil {
-				log.ErrorfX(ctx, "Error fetching document %s %v", uri.String(), err)
-				summary = "Error fetching document"
-			} else {
-				summary = document.Metadata.Title
-			}
-		default:
-			summary = "unknown " + uri.Kind()
 		}
 		ref := Reference{Source: uri, Target: currentUri, Summary: summary}
 		summaries = append(summaries, ref)
