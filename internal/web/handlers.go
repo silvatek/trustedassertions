@@ -204,9 +204,10 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func enrichReferences(ctx context.Context, refs []Reference) {
-	for _, ref := range refs {
+	for n, ref := range refs {
 		if ref.Summary == "" {
 			datastore.MakeSummary(ctx, &ref, datastore.ActiveDataStore)
+			refs[n] = ref
 		}
 	}
 }
