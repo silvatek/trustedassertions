@@ -16,7 +16,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
-	. "silvatek.uk/trustedassertions/internal/references"
+	ref "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/search"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
@@ -30,7 +30,7 @@ const MainCollection = "Primary"
 const KeyCollection = "Keys"
 const UserCollection = "Users"
 
-var EmptyRefs = []HashUri{}
+var EmptyRefs = []ref.HashUri{}
 
 var client *firestore.Client
 
@@ -76,7 +76,7 @@ func (fs *FireStore) store(collection string, id string, data map[string]interfa
 	}
 }
 
-func rawDataMap(uri HashUri, content string, summary string, searchText string) map[string]interface{} {
+func rawDataMap(uri ref.HashUri, content string, summary string, searchText string) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["uri"] = uri.String()
@@ -94,7 +94,7 @@ func rawDataMap(uri HashUri, content string, summary string, searchText string) 
 	return data
 }
 
-func contentDataMap(value Referenceable) map[string]interface{} {
+func contentDataMap(value ref.Referenceable) map[string]interface{} {
 	uri := value.Uri()
 	if value.Type() != "" && !uri.HasType() {
 		uri = uri.WithType(value.Type())
@@ -103,7 +103,7 @@ func contentDataMap(value Referenceable) map[string]interface{} {
 	return data
 }
 
-func (fs *FireStore) StoreRecord(ctx context.Context, uri HashUri, rec DbRecord) {
+func (fs *FireStore) StoreRecord(ctx context.Context, uri ref.HashUri, rec DbRecord) {
 	client := fs.client(ctx)
 
 	result, err := client.Collection(MainCollection).Doc(uri.Escaped()).Set(ctx, rec)
@@ -115,13 +115,13 @@ func (fs *FireStore) StoreRecord(ctx context.Context, uri HashUri, rec DbRecord)
 	}
 }
 
-func (fs *FireStore) StoreRaw(uri HashUri, content string) {
+func (fs *FireStore) StoreRaw(uri ref.HashUri, content string) {
 	log.Debugf("Writing to datastore: %s", uri)
 
 	fs.store(MainCollection, uri.Escaped(), rawDataMap(uri, content, "", ""))
 }
 
-func (fs *FireStore) Store(ctx context.Context, value Referenceable) {
+func (fs *FireStore) Store(ctx context.Context, value ref.Referenceable) {
 	log.DebugfX(ctx, "Writing to datastore: %s", value.Uri())
 
 	uri := value.Uri()
@@ -146,7 +146,7 @@ func (fs *FireStore) Store(ctx context.Context, value Referenceable) {
 // 	}
 // }
 
-func (fs *FireStore) StoreKey(entityUri HashUri, key string) {
+func (fs *FireStore) StoreKey(entityUri ref.HashUri, key string) {
 	data := make(map[string]interface{})
 	data["entity"] = entityUri.Unadorned()
 	data["encoding"] = "base64"
@@ -155,7 +155,7 @@ func (fs *FireStore) StoreKey(entityUri HashUri, key string) {
 	fs.store(KeyCollection, entityUri.Escaped(), data)
 }
 
-func (fs *FireStore) StoreRef(ctx context.Context, reference Reference) {
+func (fs *FireStore) StoreRef(ctx context.Context, reference ref.Reference) {
 	client := fs.client(ctx)
 
 	data := make(map[string]string)
@@ -170,7 +170,7 @@ func (fs *FireStore) StoreRef(ctx context.Context, reference Reference) {
 	log.DebugfX(ctx, "Stored reference from %s to %s", reference.Source.String(), reference.Target.String())
 }
 
-func (fs *FireStore) fetch(ctx context.Context, uri HashUri) (*DbRecord, error) {
+func (fs *FireStore) fetch(ctx context.Context, uri ref.HashUri) (*DbRecord, error) {
 	client := fs.client(ctx)
 
 	doc, err := client.Collection(MainCollection).Doc(uri.Escaped()).Get(ctx)
@@ -184,7 +184,7 @@ func (fs *FireStore) fetch(ctx context.Context, uri HashUri) (*DbRecord, error) 
 	}
 }
 
-func (fs *FireStore) FetchStatement(ctx context.Context, uri HashUri) (statements.Statement, error) {
+func (fs *FireStore) FetchStatement(ctx context.Context, uri ref.HashUri) (statements.Statement, error) {
 	record, err := fs.fetch(ctx, uri)
 
 	log.DebugfX(ctx, "Fetched statement %s", uri)
@@ -196,7 +196,7 @@ func (fs *FireStore) FetchStatement(ctx context.Context, uri HashUri) (statement
 	}
 }
 
-func (fs *FireStore) FetchEntity(ctx context.Context, uri HashUri) (entities.Entity, error) {
+func (fs *FireStore) FetchEntity(ctx context.Context, uri ref.HashUri) (entities.Entity, error) {
 	record, err := fs.fetch(ctx, uri)
 
 	log.DebugfX(ctx, "Fetched entity %s", uri)
@@ -208,7 +208,7 @@ func (fs *FireStore) FetchEntity(ctx context.Context, uri HashUri) (entities.Ent
 	}
 }
 
-func (fs *FireStore) FetchAssertion(ctx context.Context, uri HashUri) (assertions.Assertion, error) {
+func (fs *FireStore) FetchAssertion(ctx context.Context, uri ref.HashUri) (assertions.Assertion, error) {
 	record, err := fs.fetch(ctx, uri)
 
 	if err != nil {
@@ -225,7 +225,7 @@ func (fs *FireStore) FetchAssertion(ctx context.Context, uri HashUri) (assertion
 	return assertion, nil
 }
 
-func (fs *FireStore) FetchDocument(ctx context.Context, uri HashUri) (docs.Document, error) {
+func (fs *FireStore) FetchDocument(ctx context.Context, uri ref.HashUri) (docs.Document, error) {
 	record, _ := fs.fetch(ctx, uri)
 
 	log.DebugfX(ctx, "Fetched document %s", uri)
@@ -235,9 +235,9 @@ func (fs *FireStore) FetchDocument(ctx context.Context, uri HashUri) (docs.Docum
 	return *doc, nil
 }
 
-// func (fs *FireStore) FetchMany(ctx context.Context, keys []HashUri) ([]Referenceable, error) {
+// func (fs *FireStore) FetchMany(ctx context.Context, keys []ref.HashUri) ([]ref.Referenceable, error) {
 // 	log.DebugfX(ctx, "Fetching %d keys", len(keys))
-// 	results := make([]Referenceable, 0)
+// 	results := make([]ref.Referenceable, 0)
 
 // 	refs := make([]*firestore.DocumentRef, len(keys))
 // 	for n, key := range keys {
@@ -249,7 +249,7 @@ func (fs *FireStore) FetchDocument(ctx context.Context, uri HashUri) (docs.Docum
 // 		return results, err
 // 	}
 // 	for _, record := range records {
-// 		value := assertions.NewReferenceable(record.DataType)
+// 		value := assertions.Newref.Referenceable(record.DataType)
 // 		value.ParseContent(record.Content)
 // 		results = append(results, value)
 // 	}
@@ -265,7 +265,7 @@ type KeyRecord struct {
 	Encoding string `json:"encoding"`
 }
 
-func (fs *FireStore) FetchKey(entityUri HashUri) (string, error) {
+func (fs *FireStore) FetchKey(entityUri ref.HashUri) (string, error) {
 	ctx := context.TODO()
 	client := fs.client(ctx)
 
@@ -287,11 +287,11 @@ type DbReference struct {
 	Summary string `json:"summary"`
 }
 
-func (fs *FireStore) FetchRefs(ctx context.Context, uri HashUri) ([]Reference, error) {
+func (fs *FireStore) FetchRefs(ctx context.Context, uri ref.HashUri) ([]ref.Reference, error) {
 	log.DebugfX(ctx, "Fetching references for %s", uri.String())
 
 	client := fs.client(ctx)
-	results := make([]Reference, 0)
+	results := make([]ref.Reference, 0)
 
 	refs := client.Collection(MainCollection).Doc(uri.Escaped()).Collection("refs").Documents(ctx)
 	for {
@@ -302,9 +302,9 @@ func (fs *FireStore) FetchRefs(ctx context.Context, uri HashUri) ([]Reference, e
 		record := DbReference{}
 		doc.DataTo(&record)
 
-		reference := Reference{
-			Source:  UriFromString(record.Source),
-			Target:  UriFromString(record.Target),
+		reference := ref.Reference{
+			Source:  ref.UriFromString(record.Source),
+			Target:  ref.UriFromString(record.Target),
 			Summary: record.Summary,
 		}
 
@@ -374,7 +374,7 @@ func (fs *FireStore) Search(query string) ([]SearchResult, error) {
 
 	records, _ := fs.query(ctx, "words", "array-contains-any", queryWords)
 	for _, record := range records {
-		uri := UriFromString(record.Uri)
+		uri := ref.UriFromString(record.Uri)
 		if !uri.HasType() {
 			uri = uri.WithType(record.DataType)
 		}
@@ -456,7 +456,7 @@ func searchDocs(docs DocFetcher, query string) []SearchResult {
 		log.Debugf("Searching %s => %s", record.Uri, summary)
 
 		if contentMatches(summary, query) {
-			uri := UriFromString(record.Uri)
+			uri := ref.UriFromString(record.Uri)
 			if !uri.HasType() {
 				uri = uri.WithType(assertions.GuessContentType(record.Content))
 			}
