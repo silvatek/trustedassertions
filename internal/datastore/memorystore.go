@@ -96,19 +96,6 @@ func (ds *InMemoryDataStore) FetchDocument(ctx context.Context, key HashUri) (do
 	return doc, ds.FetchInto(key, &doc)
 }
 
-func (ds *InMemoryDataStore) FetchMany(ctx context.Context, uris []HashUri) ([]Referenceable, error) {
-	results := make([]Referenceable, 0)
-	for _, uri := range uris {
-		rec, ok := ds.data[uri.Escaped()]
-		if ok {
-			value := assertions.NewReferenceable(rec.DataType)
-			value.ParseContent(rec.Content)
-			results = append(results, value)
-		}
-	}
-	return results, nil
-}
-
 func (ds *InMemoryDataStore) FetchKey(entityUri HashUri) (string, error) {
 	key, ok := ds.keys[entityUri.Escaped()]
 	if !ok {
@@ -123,9 +110,10 @@ func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key HashUri) ([]Refe
 	if !ok {
 		return refs, nil
 	}
-	for _, ref := range result {
-		refs = append(refs, ref)
-	}
+	// for _, ref := range result {
+	// 	refs = append(refs, ref)
+	// }
+	refs = append(refs, result...)
 	return refs, nil
 }
 

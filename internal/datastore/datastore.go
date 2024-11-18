@@ -20,7 +20,6 @@ type DataStore interface {
 	StoreKey(entityUri refs.HashUri, key string)
 	StoreRef(ctx context.Context, reference refs.Reference)
 	StoreUser(user auth.User)
-	FetchMany(ctx context.Context, uris []refs.HashUri) ([]refs.Referenceable, error)
 	FetchStatement(ctx context.Context, key refs.HashUri) (statements.Statement, error)
 	FetchEntity(ctx context.Context, key refs.HashUri) (entities.Entity, error)
 	FetchAssertion(ctx context.Context, key refs.HashUri) (assertions.Assertion, error)

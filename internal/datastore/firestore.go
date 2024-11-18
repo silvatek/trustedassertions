@@ -140,11 +140,11 @@ func (fs *FireStore) Store(ctx context.Context, value Referenceable) {
 	fs.StoreRecord(ctx, uri, rec)
 }
 
-func (fs *FireStore) storeRefs(ctx context.Context, refs []Reference) {
-	for _, ref := range refs {
-		fs.StoreRef(ctx, ref)
-	}
-}
+// func (fs *FireStore) storeRefs(ctx context.Context, refs []Reference) {
+// 	for _, ref := range refs {
+// 		fs.StoreRef(ctx, ref)
+// 	}
+// }
 
 func (fs *FireStore) StoreKey(entityUri HashUri, key string) {
 	data := make(map[string]interface{})
@@ -235,29 +235,29 @@ func (fs *FireStore) FetchDocument(ctx context.Context, uri HashUri) (docs.Docum
 	return *doc, nil
 }
 
-func (fs *FireStore) FetchMany(ctx context.Context, keys []HashUri) ([]Referenceable, error) {
-	log.DebugfX(ctx, "Fetching %d keys", len(keys))
-	results := make([]Referenceable, 0)
+// func (fs *FireStore) FetchMany(ctx context.Context, keys []HashUri) ([]Referenceable, error) {
+// 	log.DebugfX(ctx, "Fetching %d keys", len(keys))
+// 	results := make([]Referenceable, 0)
 
-	refs := make([]*firestore.DocumentRef, len(keys))
-	for n, key := range keys {
-		refs[n] = client.Collection(MainCollection).Doc(key.Escaped())
-	}
+// 	refs := make([]*firestore.DocumentRef, len(keys))
+// 	for n, key := range keys {
+// 		refs[n] = client.Collection(MainCollection).Doc(key.Escaped())
+// 	}
 
-	records, err := fs.query(ctx, firestore.DocumentID, "in", refs)
-	if err != nil {
-		return results, err
-	}
-	for _, record := range records {
-		value := assertions.NewReferenceable(record.DataType)
-		value.ParseContent(record.Content)
-		results = append(results, value)
-	}
+// 	records, err := fs.query(ctx, firestore.DocumentID, "in", refs)
+// 	if err != nil {
+// 		return results, err
+// 	}
+// 	for _, record := range records {
+// 		value := assertions.NewReferenceable(record.DataType)
+// 		value.ParseContent(record.Content)
+// 		results = append(results, value)
+// 	}
 
-	log.DebugfX(ctx, "Fetched %d values", len(results))
+// 	log.DebugfX(ctx, "Fetched %d values", len(results))
 
-	return results, nil
-}
+// 	return results, nil
+// }
 
 type KeyRecord struct {
 	Entity   string `json:"entity"`

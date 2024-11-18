@@ -133,27 +133,6 @@ func TestStoreFetchKey(t *testing.T) {
 	}
 }
 
-func TestFetchMany(t *testing.T) {
-	InitInMemoryDataStore()
-	ctx := context.Background()
-
-	uris := storeStatements("test 1", "test 2")
-
-	values, err := ActiveDataStore.FetchMany(ctx, uris)
-	if err != nil {
-		t.Errorf("Error fetching values: %v", err)
-	}
-	if len(values) != 2 {
-		t.Errorf("Unexpected return count: %d", len(values))
-	}
-	if values[0].Content() != "test 1" {
-		t.Errorf("Unexpected content 1: %s", values[0].Content())
-	}
-	if values[1].Content() != "test 2" {
-		t.Errorf("Unexpected content 2: %s", values[1].Content())
-	}
-}
-
 func storeStatements(content ...string) []HashUri {
 	uris := make([]HashUri, len(content))
 	for n, text := range content {

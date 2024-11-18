@@ -17,7 +17,6 @@ type Resolver interface {
 	FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error)
 	FetchAssertion(ctx context.Context, key HashUri) (Assertion, error)
 	FetchDocument(ctx context.Context, key HashUri) (docs.Document, error)
-	FetchMany(ctx context.Context, keys []HashUri) ([]Referenceable, error)
 	FetchKey(entityUri HashUri) (string, error)
 	FetchRefs(ctx context.Context, key HashUri) ([]Reference, error)
 }
@@ -48,10 +47,6 @@ func (r NullResolver) FetchKey(key HashUri) (string, error) {
 
 func (r NullResolver) FetchRefs(ctx context.Context, key HashUri) ([]Reference, error) {
 	return []Reference{}, ErrNotImplemented
-}
-
-func (r NullResolver) FetchMany(ctx context.Context, keys []HashUri) ([]Referenceable, error) {
-	return []Referenceable{}, ErrNotImplemented
 }
 
 func NewReferenceable(kind string) Referenceable {
