@@ -211,20 +211,14 @@ func enrichReferencesTo(ctx context.Context, target Referenceable, refs []Refere
 		if ref.Summary == "" {
 			wg.Add(1)
 			go func(ref *Reference) {
-				log.DebugfX(ctx, "Constructing summary %d", n)
 				datastore.MakeSummary(ctx, &target, ref, datastore.ActiveDataStore)
 				refs[n] = *ref
-				log.DebugfX(ctx, "Summary %d constructed.", n)
 				wg.Done()
 			}(&ref)
 		}
 	}
 
-	log.DebugfX(ctx, "Waiting for all summaries to be ready...")
-
 	wg.Wait()
-
-	log.DebugfX(ctx, "All summaries ready.")
 }
 
 func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {

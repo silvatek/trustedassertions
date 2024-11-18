@@ -57,8 +57,8 @@ func (fs *FireStore) client(ctx context.Context) *firestore.Client {
 		if err != nil {
 			log.ErrorfX(ctx, "Error connecting to database: %v", err)
 		} else {
-			log.DebugfX(ctx, "Connected to Firestore database: %v", client)
 			client = newClient
+			log.DebugfX(ctx, "Connected to Firestore database: %v", client)
 		}
 	}
 	return client
