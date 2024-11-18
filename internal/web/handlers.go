@@ -510,7 +510,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
 		kind := r.Form.Get("assertion_type")
 
-		assertion := datastore.CreateAssertion(ctx, su, confidence, entity, privateKey, kind)
+		assertion := datastore.CreateAssertion(ctx, su, confidence, entity.Uri(), privateKey, kind)
 
 		// Redirect the user to the assertion
 		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)

@@ -64,6 +64,6 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 
 func addAssertionReferences(content string) {
 	assertion, _ := assertions.ParseAssertionJwt(content)
-	datastore.StoreReferenceWithSummary(context.Background(), assertion.Uri(), references.UriFromString(assertion.Subject))
-	datastore.StoreReferenceWithSummary(context.Background(), assertion.Uri(), references.UriFromString(assertion.Issuer))
+	datastore.CreateReferenceWithSummary(context.Background(), assertion.Uri(), references.UriFromString(assertion.Subject))
+	datastore.CreateReferenceWithSummary(context.Background(), assertion.Uri(), references.UriFromString(assertion.Issuer))
 }

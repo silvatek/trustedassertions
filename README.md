@@ -102,7 +102,16 @@ Packages can only depend on other packages lower than them in the hierarchy.
 2. `api` `web`
 3. `datastore`
 4. `assertions` `auth`
-5. `logging`
+5. `entities` `statements`
+6. `references`
+7. `logging`
+
+### Code Terminology
+
+* `New???` - produces a new unpopulated instance in memory
+* `Make???` - produces a new populated instance in memory, can use a `Resolver`
+* `Store???` - stores an instance in the datastore
+* `Create???` - produces a new instance and stores in the active datastore
 
 ### Build time analysis
 

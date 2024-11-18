@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/rsa"
 	"time"
 
@@ -15,24 +16,24 @@ import (
 
 var ActiveDataStore DataStore
 
-func CreateAssertion(ctx context.Context, statementUri references.HashUri, confidence float64, entity entities.Entity, privateKey *rsa.PrivateKey, kind string) *assertions.Assertion {
+func CreateAssertion(ctx context.Context, statementUri references.HashUri, confidence float64, entityUri references.HashUri, privateKey *rsa.PrivateKey, kind string) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
 	assertion.Subject = statementUri.String()
 	assertion.IssuedAt = jwt.NewNumericDate(time.Now())
 	assertion.NotBefore = assertion.IssuedAt
 	assertion.Confidence = float32(confidence)
-	assertion.SetAssertingEntity(entity)
+	assertion.Issuer = entityUri.String()
 	assertion.MakeJwt(privateKey)
 	ActiveDataStore.Store(ctx, &assertion)
 
-	StoreReferenceWithSummary(ctx, assertion.Uri(), references.UriFromString(assertion.Subject))
-	StoreReferenceWithSummary(ctx, assertion.Uri(), references.UriFromString(assertion.Issuer))
+	CreateReferenceWithSummary(ctx, assertion.Uri(), references.UriFromString(assertion.Subject))
+	CreateReferenceWithSummary(ctx, assertion.Uri(), references.UriFromString(assertion.Issuer))
 
 	return &assertion
 }
 
 // Adds a summary to a reference and stores it in the active datastore.
-func StoreReferenceWithSummary(ctx context.Context, source references.HashUri, target references.HashUri) {
+func CreateReferenceWithSummary(ctx context.Context, source references.HashUri, target references.HashUri) {
 	ref := references.Reference{
 		Source: source,
 		Target: target,
@@ -61,7 +62,7 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 	log.DebugfX(ctx, "Statement created")
 
 	// Create and save an assertion by the default entity that the statement is probably true
-	assertion := CreateAssertion(ctx, statement.Uri(), confidence, entity, privateKey, "IsTrue")
+	assertion := CreateAssertion(ctx, statement.Uri(), confidence, entity.Uri(), privateKey, "IsTrue")
 
 	log.DebugfX(ctx, "Assertion created")
 
@@ -80,10 +81,35 @@ func MakeSummary(ctx context.Context, target *references.Referenceable, ref *ref
 		doc, _ := resolver.FetchDocument(ctx, ref.Source)
 		ref.Summary = doc.Summary()
 	case "assertion":
-		assertion, _ := resolver.FetchAssertion(ctx, ref.Source)
+		var assertion assertions.Assertion
+		if target != nil && (*target).Uri().Equals(ref.Source) {
+			assertion = *((*target).(*assertions.Assertion))
+		} else {
+			assertion, _ = resolver.FetchAssertion(ctx, ref.Source)
+		}
 		summary := assertions.SummariseAssertion(ctx, assertion, target, resolver)
 		ref.Summary = summary
 	default:
 		ref.Summary = "Unknown " + ref.Source.Kind()
 	}
+}
+
+// Creates a new Statement and stores it in the active datastore.
+func CreateStatement(ctx context.Context, content string) references.HashUri {
+	statement := statements.NewStatement(content)
+	ActiveDataStore.Store(ctx, statement)
+	return statement.Uri()
+}
+
+// Creates a new Entity with a private key and stores both in the active
+func CreateEntityWithKey(ctx context.Context, commonName string) references.HashUri {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	entity := entities.Entity{CommonName: commonName}
+	entity.MakeCertificate(privateKey)
+
+	ActiveDataStore.Store(ctx, &entity)
+
+	ActiveDataStore.StoreKey(entity.Uri(), entities.PrivateKeyToString(privateKey))
+
+	return entity.Uri()
 }
