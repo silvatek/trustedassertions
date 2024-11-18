@@ -44,8 +44,8 @@ func (s Statement) TextContent() string {
 	return s.content
 }
 
-func (s Statement) References() []refs.Reference {
-	return []refs.Reference{}
+func (s Statement) References() []refs.HashUri {
+	return []refs.HashUri{}
 }
 
 func (s *Statement) ParseContent(content string) error {

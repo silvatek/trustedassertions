@@ -108,8 +108,10 @@ Packages can only depend on other packages lower than them in the hierarchy.
 
 ### Code Terminology
 
+There are multiple levels at which we can produce a new "thing".
+
 * `New???` - produces a new unpopulated instance in memory
-* `Make???` - produces a new populated instance in memory, can use a `Resolver`
+* `Make???` - produces a new populated instance in memory, can use a `Resolver` to lookup other things
 * `Store???` - stores an instance in the datastore
 * `Create???` - produces a new instance and stores in the active datastore
 

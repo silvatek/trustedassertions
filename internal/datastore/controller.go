@@ -16,7 +16,7 @@ import (
 
 var ActiveDataStore DataStore
 
-func CreateAssertion(ctx context.Context, statementUri references.HashUri, confidence float64, entityUri references.HashUri, privateKey *rsa.PrivateKey, kind string) *assertions.Assertion {
+func CreateAssertion(ctx context.Context, statementUri references.HashUri, entityUri references.HashUri, kind string, confidence float64, privateKey *rsa.PrivateKey) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
 	assertion.Subject = statementUri.String()
 	assertion.IssuedAt = jwt.NewNumericDate(time.Now())
@@ -26,13 +26,18 @@ func CreateAssertion(ctx context.Context, statementUri references.HashUri, confi
 	assertion.MakeJwt(privateKey)
 	ActiveDataStore.Store(ctx, &assertion)
 
-	CreateReferenceWithSummary(ctx, assertion.Uri(), references.UriFromString(assertion.Subject))
-	CreateReferenceWithSummary(ctx, assertion.Uri(), references.UriFromString(assertion.Issuer))
+	CreateReferences(ctx, &assertion)
 
 	return &assertion
 }
 
-// Adds a summary to a reference and stores it in the active datastore.
+func CreateReferences(ctx context.Context, target references.Referenceable) {
+	for _, uri := range target.References() {
+		CreateReferenceWithSummary(ctx, uri, target.Uri())
+	}
+}
+
+// Creates a reference including a summary and stores it in the active datastore.
 func CreateReferenceWithSummary(ctx context.Context, source references.HashUri, target references.HashUri) {
 	ref := references.Reference{
 		Source: source,
@@ -62,7 +67,7 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 	log.DebugfX(ctx, "Statement created")
 
 	// Create and save an assertion by the default entity that the statement is probably true
-	assertion := CreateAssertion(ctx, statement.Uri(), confidence, entity.Uri(), privateKey, "IsTrue")
+	assertion := CreateAssertion(ctx, statement.Uri(), entity.Uri(), "IsTrue", confidence, privateKey)
 
 	log.DebugfX(ctx, "Assertion created")
 

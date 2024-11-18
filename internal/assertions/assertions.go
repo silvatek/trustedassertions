@@ -123,23 +123,13 @@ func (a *Assertion) TextContent() string {
 	return "" // Assertions aren't directly searchable
 }
 
-func (a Assertion) References() []refs.Reference {
-	references := make([]refs.Reference, 0)
+func (a Assertion) References() []refs.HashUri {
+	references := make([]refs.HashUri, 0)
 	if a.RegisteredClaims.Issuer != "" {
-		reference := refs.Reference{
-			Source:  a.Uri(),
-			Target:  refs.UriFromString(a.RegisteredClaims.Issuer),
-			Summary: "Unspecified issuer reference",
-		}
-		references = append(references, reference)
+		references = append(references, refs.UriFromString(a.RegisteredClaims.Issuer))
 	}
 	if a.RegisteredClaims.Subject != "" {
-		reference := refs.Reference{
-			Source:  a.Uri(),
-			Target:  refs.UriFromString(a.RegisteredClaims.Subject),
-			Summary: "Unspecified subject reference",
-		}
-		references = append(references, reference)
+		references = append(references, refs.UriFromString(a.RegisteredClaims.Subject))
 	}
 	return references
 }
