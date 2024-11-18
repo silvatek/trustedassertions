@@ -12,8 +12,10 @@ import (
 	"sync"
 	"text/template"
 
+	"cloud.google.com/go/firestore"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
+	"github.com/umahmood/soundex"
 	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
@@ -43,6 +45,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/search", SearchWebHandler)
 	r.HandleFunc("/web/share", SharePageWebHandler)
 	r.HandleFunc("/web/qrcode", qrCodeGenerator)
+	r.HandleFunc("/web/poc", PocWebHandler)
 
 	r.NotFoundHandler = http.HandlerFunc(NotFoundWebHandler)
 
@@ -517,4 +520,39 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.DebugfX(ctx, "Redirecting to %s", assertion.Uri().WebPath())
 	}
+}
+
+func PocWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
+	words := []string{"universe", "universal", "anniversary", "see", "sea", "see?", "cease"}
+
+	vec := make(firestore.Vector64, len(words))
+
+	for i, word := range words {
+		code := soundex.Code(word)
+		term := float64(0)
+		mult := float64(1)
+		for n := 3; n >= 0; n-- {
+			term = term + mult*float64(code[n])
+			mult = mult * float64(256)
+		}
+
+		vec[i] = term
+	}
+
+	log.DebugfX(ctx, "Vector = %v", vec)
+
+	client, err := firestore.NewClientWithDatabase(ctx, "trustedassertions", "firestore-833660")
+	if err != nil {
+		log.ErrorfX(ctx, "Error connecting to Firestore: %v", err)
+	}
+
+	data := make(map[string]interface{})
+	data["summary"] = "Vector Test"
+	data["terms"] = vec
+
+	client.Collection("POC").NewDoc().Set(ctx, data)
+
+	w.Write([]byte("Done"))
 }
