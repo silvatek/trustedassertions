@@ -12,10 +12,8 @@ import (
 	"sync"
 	"text/template"
 
-	"cloud.google.com/go/firestore"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
-	"github.com/umahmood/soundex"
 	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
@@ -23,13 +21,13 @@ import (
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
-	. "silvatek.uk/trustedassertions/internal/references"
+	ref "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 var errorMessages map[string]string
 var TemplateDir string
-var DefaultEntityUri HashUri
+var DefaultEntityUri ref.HashUri
 
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)
@@ -45,7 +43,6 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/search", SearchWebHandler)
 	r.HandleFunc("/web/share", SharePageWebHandler)
 	r.HandleFunc("/web/qrcode", qrCodeGenerator)
-	r.HandleFunc("/web/poc", PocWebHandler)
 
 	r.NotFoundHandler = http.HandlerFunc(NotFoundWebHandler)
 
@@ -168,7 +165,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	log.DebugfX(ctx, "Home page accessed")
 
 	data := struct {
-		DefaultDocument HashUri
+		DefaultDocument ref.HashUri
 	}{
 		DefaultDocument: docs.DefaultDocumentUri,
 	}
@@ -180,17 +177,17 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
 	key := mux.Vars(r)["hash"]
-	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, MakeUri(key, "statement"))
+	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, ref.MakeUri(key, "statement"))
 
 	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
 	enrichReferencesTo(ctx, &statement, refs)
 
 	data := struct {
-		Uri        HashUri
+		Uri        ref.HashUri
 		ShortUri   string
 		Content    string
 		ApiLink    string
-		References []Reference
+		References []ref.Reference
 	}{
 		Uri:        statement.Uri(),
 		ShortUri:   statement.Uri().Short(),
@@ -207,13 +204,13 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	RenderWebPage(ctx, "viewstatement", data, menu, w, r)
 }
 
-func enrichReferencesTo(ctx context.Context, target Referenceable, refs []Reference) {
+func enrichReferencesTo(ctx context.Context, target ref.Referenceable, refs []ref.Reference) {
 	var wg sync.WaitGroup
 
-	for n, ref := range refs {
-		if ref.Summary == "" {
+	for n, reference := range refs {
+		if reference.Summary == "" {
 			wg.Add(1)
-			go func(ref *Reference) {
+			go func(ref *ref.Reference) {
 				// Construct a summary for the reference
 				datastore.MakeSummary(ctx, &target, ref, datastore.ActiveDataStore)
 
@@ -222,7 +219,7 @@ func enrichReferencesTo(ctx context.Context, target Referenceable, refs []Refere
 
 				refs[n] = *ref
 				wg.Done()
-			}(&ref)
+			}(&reference)
 		}
 	}
 
@@ -233,17 +230,17 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
 	key := mux.Vars(r)["hash"]
-	uri := MakeUri(key, "assertion")
+	uri := ref.MakeUri(key, "assertion")
 	assertion, _ := datastore.ActiveDataStore.FetchAssertion(ctx, uri)
 
-	issuerUri := UriFromString(assertion.Issuer)
+	issuerUri := ref.UriFromString(assertion.Issuer)
 	if !issuerUri.HasType() {
 		issuerUri = issuerUri.WithType("entity")
 	}
 
 	issuer, _ := datastore.ActiveDataStore.FetchEntity(ctx, issuerUri)
 
-	subjectUri := UriFromString(assertion.Subject)
+	subjectUri := ref.UriFromString(assertion.Subject)
 	if !subjectUri.HasType() {
 		subjectUri = subjectUri.WithType("statement")
 	}
@@ -262,7 +259,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		SubjectLink string
 		SubjectText string
 		ApiLink     string
-		References  []Reference
+		References  []ref.Reference
 	}{
 		Uri:         assertion.Uri().String(),
 		ShortUri:    assertion.Uri().Short(),
@@ -288,7 +285,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := mux.Vars(r)["hash"]
 
-	uri := MakeUri(key, "entity")
+	uri := ref.MakeUri(key, "entity")
 	entity, err := datastore.ActiveDataStore.FetchEntity(ctx, uri)
 	if err != nil {
 		HandleError(ErrorEntityFetch, "Unable to fetch entity", w, r)
@@ -304,7 +301,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		CommonName string
 		ApiLink    string
 		PublicKey  string
-		References []Reference
+		References []ref.Reference
 	}{
 		Uri:        uri.String(),
 		ShortUri:   uri.Short(),
@@ -325,18 +322,18 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	key := mux.Vars(r)["hash"]
-	document, _ := datastore.ActiveDataStore.FetchDocument(ctx, MakeUri(key, "document"))
+	document, _ := datastore.ActiveDataStore.FetchDocument(ctx, ref.MakeUri(key, "document"))
 
 	data := struct {
 		Doc       docs.Document
 		Title     string
 		DocHtml   string
-		AuthorUri HashUri
+		AuthorUri ref.HashUri
 	}{
 		Doc:       document,
 		Title:     "Testing",
 		DocHtml:   document.ToHtml(),
-		AuthorUri: UriFromString(document.Metadata.Author.Entity),
+		AuthorUri: ref.UriFromString(document.Metadata.Author.Entity),
 	}
 
 	// menu := []PageMenuItem{
@@ -374,7 +371,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
 
-		keyUri := UriFromString(keyId)
+		keyUri := ref.UriFromString(keyId)
 
 		if !user.HasKey(keyId) {
 			HandleError(ErrorKeyAccess, "User does not have access to selected signing key", w, r)
@@ -469,7 +466,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	statementHash := mux.Vars(r)["hash"]
 
 	if r.Method == "GET" {
-		statement, err := datastore.ActiveDataStore.FetchStatement(ctx, MakeUri(statementHash, "statement"))
+		statement, err := datastore.ActiveDataStore.FetchStatement(ctx, ref.MakeUri(statementHash, "statement"))
 		if err != nil {
 			log.Errorf("Error fetching statement: %v", err)
 		} else {
@@ -492,7 +489,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		keyId := r.Form.Get("sign_as")
 		log.DebugfX(ctx, "Signing key ID: %s", keyId)
 
-		keyUri := UriFromString(keyId)
+		keyUri := ref.UriFromString(keyId)
 
 		if !user.HasKey(keyId) {
 			HandleError(ErrorKeyAccess, "User does not have access to selected signing key", w, r)
@@ -508,7 +505,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		entity, _ := datastore.ActiveDataStore.FetchEntity(ctx, keyUri)
 
-		su := MakeUri(statementHash, "statement")
+		su := ref.MakeUri(statementHash, "statement")
 
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
 		kind := r.Form.Get("assertion_type")
@@ -520,63 +517,4 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.DebugfX(ctx, "Redirecting to %s", assertion.Uri().WebPath())
 	}
-}
-
-func PocWebHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appcontext.NewWebContext(r)
-
-	// words := []string{"universe", "universal", "anniversary", "see", "sea", "see?", "cease"}
-	words := []string{"universal", "sea"}
-
-	vec := make(firestore.Vector64, len(words))
-
-	for i, word := range words {
-		code := soundex.Code(word)
-		term := float64(0)
-		mult := float64(1)
-		for n := 3; n >= 0; n-- {
-			term = term + mult*float64(code[n])
-			mult = mult * float64(256)
-		}
-
-		vec[i] = term
-	}
-
-	log.DebugfX(ctx, "Vector = %v", vec)
-
-	client, err := firestore.NewClientWithDatabase(ctx, "trustedassertions", "firestore-833660")
-	if err != nil {
-		log.ErrorfX(ctx, "Error connecting to Firestore: %v", err)
-		w.Write([]byte("Error"))
-		return
-	}
-
-	type DbRec struct {
-		summary string
-		terms   firestore.Vector64
-	}
-	// data := make(map[string]interface{})
-	// data["summary"] = "Vector Test"
-	// data["terms"] = vec
-
-	// client.Collection("POC").NewDoc().Set(ctx, data)
-
-	q := client.Collection("POC").FindNearest("terms", vec, 10, firestore.DistanceMeasureEuclidean, nil)
-	docs, err := q.Documents(ctx).GetAll()
-	if err != nil {
-		log.ErrorfX(ctx, "Error connecting to Firestore: %v", err)
-		w.Write([]byte("Error"))
-		return
-	}
-	log.DebugfX(ctx, "Found %d documents", len(docs))
-
-	for _, doc := range docs {
-		var rec DbRec
-		doc.DataTo(&rec)
-		log.DebugfX(ctx, rec.summary)
-		w.Write([]byte(rec.summary))
-		w.Write([]byte("\n"))
-	}
-
-	w.Write([]byte("Done"))
 }
