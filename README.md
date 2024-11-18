@@ -55,7 +55,7 @@ Any number of trust models can be created from the same set of assertions, and i
 ## Development Commands
 
 * `go run ./cmd/server/main.go`
-* `go test -coverprofile=coverage.out ./...`
+* `go test -coverprofile coverage.out ./...`
 * `go tool cover -html=coverage.out`
 
 ## Things to Do

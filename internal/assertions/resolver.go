@@ -3,12 +3,10 @@ package assertions
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
-	log "silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
@@ -56,11 +54,6 @@ func (r NullResolver) FetchMany(ctx context.Context, keys []HashUri) ([]Referenc
 	return []Referenceable{}, ErrNotImplemented
 }
 
-// type ReferenceSummary struct {
-// 	Uri     HashUri
-// 	Summary string
-// }
-
 func NewReferenceable(kind string) Referenceable {
 	switch strings.ToLower(kind) {
 	case "statement":
@@ -74,93 +67,6 @@ func NewReferenceable(kind string) Referenceable {
 	default:
 		return nil
 	}
-}
-
-func SummariseAssertion(ctx context.Context, assertion Assertion, currentUri HashUri, resolver Resolver) string {
-	if assertion.Issuer == "" {
-		var err error
-		assertion, err = ParseAssertionJwt(assertion.Content())
-		if err != nil {
-			return "Error parsing JWT"
-		}
-	}
-
-	subjectUri := UriFromString(assertion.Subject)
-	if subjectUri.Equals(currentUri) {
-		issuer, _ := resolver.FetchEntity(ctx, UriFromString(assertion.Issuer))
-		return fmt.Sprintf("%s asserts this %s", issuer.CommonName, assertion.Category)
-	}
-
-	issuerUri := UriFromString(assertion.Issuer)
-	if issuerUri.Equals(currentUri) {
-		statement, _ := resolver.FetchStatement(ctx, UriFromString(assertion.Subject))
-		return fmt.Sprintf("This entity asserts that statement %s %s", statement.Uri().Short(), assertion.Category)
-	}
-
-	return "Some kind of assertion"
-}
-
-func EnrichReferences(ctx context.Context, refs []Reference, currentUri HashUri, resolver Resolver) []Reference {
-	summaries := make([]Reference, 0)
-
-	// values, err := resolver.FetchMany(ctx, uris)
-	// if err != nil {
-	// 	log.ErrorfX(ctx, "Error fetching many values: %v", err)
-	// }
-	// for _, value := range values {
-	// 	var summary string
-	// 	switch strings.ToLower(value.Type()) {
-	// 	case "assertion":
-	// 		assertion := value.(*Assertion)
-	// 		summary = SummariseAssertion(ctx, *assertion, currentUri, resolver)
-	// 	case "document":
-	// 		document := value.(*docs.Document)
-	// 		summary = document.Metadata.Title
-	// 	default:
-	// 		summary = "unknown " + value.Type()
-	// 	}
-	// 	ref := Reference{}
-	// 	ref.Source = value.Uri()
-	// 	ref.Target = currentUri
-	// 	ref.Summary = summary
-	// 	summaries = append(summaries, ref)
-	// }
-
-	for _, reference := range refs {
-		uri := reference.Source
-		summary := reference.Summary
-		log.DebugfX(ctx, "Existing reference summary: %s", summary)
-
-		if summary == "" {
-			switch reference.Source.Kind() {
-			case "assertion":
-				log.DebugfX(ctx, "Enriching assertion reference summary")
-				assertion, err := resolver.FetchAssertion(ctx, reference.Source)
-				if err != nil {
-					log.ErrorfX(ctx, "Error fetching assertion %s %v", uri.String(), err)
-					summary = "Error fetching assertion"
-				} else {
-					summary = SummariseAssertion(ctx, assertion, currentUri, resolver)
-				}
-			case "document":
-				log.DebugfX(ctx, "Enriching document reference summary")
-				document, err := resolver.FetchDocument(ctx, uri)
-				if err != nil {
-					log.ErrorfX(ctx, "Error fetching document %s %v", uri.String(), err)
-					summary = "Error fetching document"
-				} else {
-					summary = document.Metadata.Title
-				}
-			default:
-				log.ErrorfX(ctx, "Enriching unidentified reference summary: %s", uri.Kind())
-				summary = "unknown " + uri.Kind()
-			}
-		}
-		ref := Reference{Source: uri, Target: currentUri, Summary: summary}
-		summaries = append(summaries, ref)
-	}
-
-	return summaries
 }
 
 func GuessContentType(content string) string {

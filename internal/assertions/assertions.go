@@ -4,11 +4,13 @@ import (
 	"context"
 	"crypto/rsa"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/entities"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/references"
 	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
@@ -160,4 +162,28 @@ func CategoryDescription(category string, language string) string {
 	} else {
 		return category
 	}
+}
+
+func SummariseAssertion(ctx context.Context, assertion Assertion, target *references.Referenceable, resolver Resolver) string {
+	issuerUri := references.UriFromString(assertion.Issuer)
+	var issuerName string
+
+	if target != nil && issuerUri.Equals((*target).Uri()) {
+		issuerName = (*target).Summary()
+	} else {
+		entity, _ := resolver.FetchEntity(ctx, issuerUri)
+		issuerName = entity.Summary()
+	}
+
+	subjectUri := references.UriFromString(assertion.Subject)
+	var subjectSummary string
+
+	if target != nil && subjectUri.Equals((*target).Uri()) {
+		subjectSummary = (*target).Summary()
+	} else {
+		subject, _ := resolver.FetchStatement(ctx, subjectUri)
+		subjectSummary = subject.Summary()
+	}
+
+	return fmt.Sprintf("%s claims that '%s' %s", issuerName, subjectSummary, CategoryDescription(assertion.Category, "en"))
 }

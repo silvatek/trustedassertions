@@ -248,7 +248,7 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	subject, _ := datastore.ActiveDataStore.FetchStatement(ctx, subjectUri)
 
 	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, uri)
-	refs = assertions.EnrichReferences(ctx, refs, assertion.Uri(), datastore.ActiveDataStore)
+	enrichReferencesTo(ctx, &assertion, refs)
 
 	data := struct {
 		Uri         string
