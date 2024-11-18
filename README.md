@@ -65,7 +65,6 @@ Any number of trust models can be created from the same set of assertions, and i
 * Access control
 * User management
 * Add new document
-* Documents reference assertion not statement
 * Auto-create statements and assertions from documents
 * Document schema
 * Document search
@@ -90,6 +89,8 @@ Any number of trust models can be created from the same set of assertions, and i
 * ~~Resolver interface~~
 * ~~QR Codes for statement entity, and assertion pages~~
 * ~~User JWT refresh~~
+* ~~Documents reference assertion not statement~~
+
 
 ## Implementation Details
 

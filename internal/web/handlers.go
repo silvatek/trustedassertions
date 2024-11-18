@@ -211,7 +211,12 @@ func enrichReferencesTo(ctx context.Context, target Referenceable, refs []Refere
 		if ref.Summary == "" {
 			wg.Add(1)
 			go func(ref *Reference) {
+				// Construct a summary for the reference
 				datastore.MakeSummary(ctx, &target, ref, datastore.ActiveDataStore)
+
+				// Store the newly summarised reference back in the datastore
+				datastore.ActiveDataStore.StoreRef(ctx, *ref)
+
 				refs[n] = *ref
 				wg.Done()
 			}(&ref)
