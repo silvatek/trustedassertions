@@ -525,7 +525,8 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 func PocWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
-	words := []string{"universe", "universal", "anniversary", "see", "sea", "see?", "cease"}
+	// words := []string{"universe", "universal", "anniversary", "see", "sea", "see?", "cease"}
+	words := []string{"universal", "sea"}
 
 	vec := make(firestore.Vector64, len(words))
 
@@ -546,6 +547,8 @@ func PocWebHandler(w http.ResponseWriter, r *http.Request) {
 	client, err := firestore.NewClientWithDatabase(ctx, "trustedassertions", "firestore-833660")
 	if err != nil {
 		log.ErrorfX(ctx, "Error connecting to Firestore: %v", err)
+		w.Write([]byte("Error"))
+		return
 	}
 
 	type DbRec struct {
@@ -559,10 +562,18 @@ func PocWebHandler(w http.ResponseWriter, r *http.Request) {
 	// client.Collection("POC").NewDoc().Set(ctx, data)
 
 	q := client.Collection("POC").FindNearest("terms", vec, 10, firestore.DistanceMeasureEuclidean, nil)
-	docs, _ := q.Documents(ctx).GetAll()
+	docs, err := q.Documents(ctx).GetAll()
+	if err != nil {
+		log.ErrorfX(ctx, "Error connecting to Firestore: %v", err)
+		w.Write([]byte("Error"))
+		return
+	}
+	log.DebugfX(ctx, "Found %d documents", len(docs))
+
 	for _, doc := range docs {
 		var rec DbRec
 		doc.DataTo(&rec)
+		log.DebugfX(ctx, rec.summary)
 		w.Write([]byte(rec.summary))
 		w.Write([]byte("\n"))
 	}
