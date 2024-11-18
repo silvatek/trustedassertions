@@ -28,9 +28,7 @@ func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("Error fetching statement: %v", err)
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/plain")
-	setNoIndexHeader(w)
+	setHeaders(w, http.StatusOK, "text/plain")
 	w.Write([]byte(statement.Content()))
 }
 
@@ -39,9 +37,7 @@ func EntityApiHandler(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["key"]
 	entity, _ := datastore.ActiveDataStore.FetchEntity(ctx, references.MakeUri(key, "entity"))
 
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
-	setNoIndexHeader(w)
+	setHeaders(w, http.StatusOK, "text/plain")
 	w.Write([]byte(entity.Certificate))
 }
 
@@ -51,21 +47,17 @@ func AssertionApiHandler(w http.ResponseWriter, r *http.Request) {
 	assertion, err := datastore.ActiveDataStore.FetchAssertion(ctx, references.MakeUri(key, "assertion"))
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Set("Content-Type", "text/plain")
+		setHeaders(w, http.StatusInternalServerError, "text/plain")
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/plain")
-	setNoIndexHeader(w)
+	setHeaders(w, http.StatusOK, "text/plain")
 	w.Write([]byte(assertion.Content()))
 }
 
 func ReindexApiHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/plain")
+	setHeaders(w, http.StatusOK, "text/plain")
 	w.Write([]byte("Reindexing..."))
 
 	datastore.ActiveDataStore.Reindex()
@@ -73,6 +65,8 @@ func ReindexApiHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Done"))
 }
 
-func setNoIndexHeader(w http.ResponseWriter) {
+func setHeaders(w http.ResponseWriter, httpStatus int, contentType string) {
+	w.WriteHeader(httpStatus)
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Add("X-Robots-Tag", "noindex")
 }
