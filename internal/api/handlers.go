@@ -68,5 +68,5 @@ func ReindexApiHandler(w http.ResponseWriter, r *http.Request) {
 func setHeaders(w http.ResponseWriter, httpStatus int, contentType string) {
 	w.WriteHeader(httpStatus)
 	w.Header().Set("Content-Type", contentType)
-	w.Header().Add("X-Robots-Tag", "noindex")
+	w.Header().Set("X-Robots-Tag", "noindex")
 }
