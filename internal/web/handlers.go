@@ -548,11 +548,24 @@ func PocWebHandler(w http.ResponseWriter, r *http.Request) {
 		log.ErrorfX(ctx, "Error connecting to Firestore: %v", err)
 	}
 
-	data := make(map[string]interface{})
-	data["summary"] = "Vector Test"
-	data["terms"] = vec
+	type DbRec struct {
+		summary string
+		terms   firestore.Vector64
+	}
+	// data := make(map[string]interface{})
+	// data["summary"] = "Vector Test"
+	// data["terms"] = vec
 
-	client.Collection("POC").NewDoc().Set(ctx, data)
+	// client.Collection("POC").NewDoc().Set(ctx, data)
+
+	q := client.Collection("POC").FindNearest("terms", vec, 10, firestore.DistanceMeasureEuclidean, nil)
+	docs, _ := q.Documents(ctx).GetAll()
+	for _, doc := range docs {
+		var rec DbRec
+		doc.DataTo(&rec)
+		w.Write([]byte(rec.summary))
+		w.Write([]byte("\n"))
+	}
 
 	w.Write([]byte("Done"))
 }
