@@ -15,7 +15,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/api/v1/entities/{key}", EntityApiHandler)
 	r.HandleFunc("/api/v1/assertions/{key}", AssertionApiHandler)
 
-	r.HandleFunc("/api/v1/reindex", ReindexApiHandler)
+	//r.HandleFunc("/api/v1/reindex", ReindexApiHandler)
 }
 
 func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +30,7 @@ func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
+	setNoIndexHeader(w)
 	w.Write([]byte(statement.Content()))
 }
 
@@ -40,6 +41,7 @@ func EntityApiHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/x-x509-ca-cert")
+	setNoIndexHeader(w)
 	w.Write([]byte(entity.Certificate))
 }
 
@@ -57,6 +59,7 @@ func AssertionApiHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
+	setNoIndexHeader(w)
 	w.Write([]byte(assertion.Content()))
 }
 
@@ -68,4 +71,8 @@ func ReindexApiHandler(w http.ResponseWriter, r *http.Request) {
 	datastore.ActiveDataStore.Reindex()
 
 	w.Write([]byte("Done"))
+}
+
+func setNoIndexHeader(w http.ResponseWriter) {
+	w.Header().Add("X-Robots-Tag", "noindex")
 }
