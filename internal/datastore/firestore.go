@@ -546,7 +546,7 @@ func (fs *FireStore) FetchRegistration(ctx context.Context, code string) (auth.R
 		return reg, err
 	}
 
-	doc.DataTo(reg)
+	doc.DataTo(&reg)
 
 	return reg, nil
 }
