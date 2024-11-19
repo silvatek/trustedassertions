@@ -91,8 +91,11 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
 		}
 		if reg.Status != "Pending" {
+			log.InfofX(ctx, "Attempt to reuse registration code %s", code)
 			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
 		}
+
+		log.DebugfX(ctx, "Registering with valid registration code %s", code)
 
 		userId := r.Form.Get("user_id")
 
@@ -107,11 +110,17 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 		user := auth.User{Id: userId}
 		user.HashPassword(password)
 
+		// TODO: do all updates in a single transaction
+
 		datastore.ActiveDataStore.StoreUser(ctx, user)
 
 		reg.UserName = userId
 		reg.Status = "Complete"
-		datastore.ActiveDataStore.StoreRegistration(ctx, reg)
+		err = datastore.ActiveDataStore.StoreRegistration(ctx, reg)
+		if err != nil {
+			log.ErrorfX(ctx, "Error updating registration status: %v", err)
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
