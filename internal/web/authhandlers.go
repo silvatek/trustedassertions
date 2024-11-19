@@ -84,20 +84,26 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 		code := r.Form.Get("reg_code")
 		if code == "" {
 			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+			return
 		}
 
 		reg, err := datastore.ActiveDataStore.FetchRegistration(ctx, code)
 		if err != nil {
+			log.ErrorfX(ctx, "Could not load registration code %s, %v", code, err)
 			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+			return
 		}
 		if reg.Status != "Pending" {
-			log.InfofX(ctx, "Attempt to reuse registration code %s", code)
+			log.InfofX(ctx, "Attempt to reuse registration code %s (%s)", code, reg.Status)
 			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+			return
 		}
 
 		log.DebugfX(ctx, "Registering with valid registration code %s", code)
 
-		userId := r.Form.Get("user_id")
+		user := auth.User{}
+
+		user.Id = r.Form.Get("user_id")
 
 		// Check for bad username
 		// Check for duplicate username
@@ -107,19 +113,20 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 		// Check for password mismatch
 		// Check for weak password
 
-		user := auth.User{Id: userId}
 		user.HashPassword(password)
 
 		// TODO: do all updates in a single transaction
 
 		datastore.ActiveDataStore.StoreUser(ctx, user)
 
-		reg.UserName = userId
+		reg.Code = code
+		reg.UserName = user.Id
 		reg.Status = "Complete"
 		err = datastore.ActiveDataStore.StoreRegistration(ctx, reg)
 		if err != nil {
 			log.ErrorfX(ctx, "Error updating registration status: %v", err)
 			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+			return
 		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
