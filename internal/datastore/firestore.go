@@ -184,6 +184,18 @@ func (fs *FireStore) fetch(ctx context.Context, uri ref.HashUri) (*DbRecord, err
 	}
 }
 
+func (fs *FireStore) Fetch(ctx context.Context, uri ref.HashUri) (ref.Referenceable, error) {
+	record, err := fs.fetch(ctx, uri)
+	if err != nil {
+		return ref.REF_ERROR, err
+	}
+
+	item := assertions.NewReferenceable(record.DataType)
+	item.ParseContent(record.Content)
+
+	return item, nil
+}
+
 func (fs *FireStore) FetchStatement(ctx context.Context, uri ref.HashUri) (statements.Statement, error) {
 	record, err := fs.fetch(ctx, uri)
 

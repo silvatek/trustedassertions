@@ -76,6 +76,18 @@ func (ds *InMemoryDataStore) FetchInto(key HashUri, item Referenceable) error {
 	return item.ParseContent(record.Content)
 }
 
+func (ds *InMemoryDataStore) Fetch(ctx context.Context, key HashUri) (Referenceable, error) {
+	record, ok := ds.data[key.Escaped()]
+	if !ok {
+		return REF_ERROR, errors.New("URI not found: " + key.String())
+	}
+
+	item := assertions.NewReferenceable(record.DataType)
+	item.ParseContent(record.Content)
+
+	return item, nil
+}
+
 func (ds *InMemoryDataStore) FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error) {
 	var statement statements.Statement
 	return statement, ds.FetchInto(key, &statement)
