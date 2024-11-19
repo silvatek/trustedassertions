@@ -3,7 +3,6 @@ package datastore
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"math/big"
 	"os"
 	"strconv"
@@ -30,6 +29,7 @@ type FireStore struct {
 const MainCollection = "Primary"
 const KeyCollection = "Keys"
 const UserCollection = "Users"
+const RegistrationCollection = "Registration"
 
 var EmptyRefs = []ref.HashUri{}
 
@@ -529,9 +529,24 @@ func (fs *FireStore) Reindex() {
 }
 
 func (fs *FireStore) StoreRegistration(ctx context.Context, reg auth.Registration) error {
-	return nil
+	client := fs.client(ctx)
+
+	_, err := client.Collection(RegistrationCollection).Doc(reg.Code).Set(ctx, reg)
+
+	return err
 }
 
 func (fs *FireStore) FetchRegistration(ctx context.Context, code string) (auth.Registration, error) {
-	return auth.Registration{}, errors.New("Registration not found with code " + code)
+	client := fs.client(ctx)
+
+	var reg auth.Registration
+
+	doc, err := client.Collection(RegistrationCollection).Doc(code).Get(ctx)
+	if err != nil {
+		return reg, err
+	}
+
+	doc.DataTo(reg)
+
+	return reg, nil
 }
