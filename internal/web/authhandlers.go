@@ -17,6 +17,7 @@ var userJwtKey []byte
 func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/login", LoginWebHandler)
 	r.HandleFunc("/web/logout", LogoutWebHandler)
+	r.HandleFunc("/web/register", RegisterWebHandler)
 
 	userJwtKey = auth.MakeJwtKey()
 }
@@ -64,4 +65,22 @@ func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debug("Cleared auth cookie")
 
 	RenderWebPage(ctx, "loggedout", "", nil, w, r)
+}
+
+func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+	if r.Method == "GET" {
+		errorCode := r.URL.Query().Get("err")
+
+		data := ""
+		if errorCode == strconv.Itoa(ErrorRegCode) {
+			data = "Registration code not valid"
+		}
+
+		RenderWebPage(ctx, "registrationform", data, nil, w, r)
+	} else if r.Method == "POST" {
+		r.ParseForm()
+
+		http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+	}
 }

@@ -111,6 +111,7 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		//
 	} else if username == "" {
 		rightMenu.AddRightLink("Login", "/web/login")
+		rightMenu.AddRightLink("Register", "/web/register")
 	} else {
 		rightMenu.AddRightText(nameOnly(username))
 		rightMenu.AddRightLink("Logout", "/web/logout")

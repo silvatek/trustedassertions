@@ -11,12 +11,15 @@ import (
 )
 
 const ErrorEntityFetch = 1001
+
 const ErrorMakeAssertion = 2002
-const ErrorNoAuth = 2001
-const ErrorUserNotFound = 2002
 const ErrorKeyFetch = 2003
 const ErrorKeyAccess = 2004
-const ErrorAuthFail = 2005
+
+const ErrorNoAuth = 3001
+const ErrorUserNotFound = 3002
+const ErrorAuthFail = 3005
+const ErrorRegCode = 3101
 
 const ErrorFakeTest = 9999
 

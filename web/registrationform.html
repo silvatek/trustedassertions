@@ -1,0 +1,32 @@
+{{define "content"}}		
+        <h2>User Registration</h2>
+
+        <div class="error">{{.Detail}}</div>
+
+
+        <form method="POST" action="/web/register">
+                {{.CsrfField}}
+                <div>In order to register you must have been supplied with a registration code by an administrator.<br>&nbsp;</div>
+                <div>
+                    <label for="reg_code">Registration code:</label><br>
+                    <input id="reg_code" name="reg_code" size="10" autofocus>
+                </div>
+
+                <div>&nbsp;<br>You can choose your own user ID and password. Your email address makes a good user ID.<br>&nbsp;</div>
+                <div>
+                        <label for="user_id">User ID:</label><br>
+                        <input id="user_id" name="user_id" autofocus>
+                    </div>    
+                <div>
+                    <label for="password1">Password:</label><br>
+                    <input id="password1" name="password1" type="password">
+                </div>
+                <div>
+                        <label for="password2">Repeat password:</label><br>
+                        <input id="password2" name="password2" type="password">
+                    </div>
+                    <div>
+                        <input id="login" type="Submit" value="Submit">
+                </div>
+        </form>
+{{end}}
