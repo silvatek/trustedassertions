@@ -353,7 +353,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		HandleError(ErrorNoAuth, "Not logged in", w, r)
 		return
 	}
-	user, err := datastore.ActiveDataStore.FetchUser(username)
+	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
 	if err != nil {
 		HandleError(ErrorUserNotFound, "User not found", w, r)
 		return
@@ -418,7 +418,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		HandleError(ErrorNoAuth, "Not logged in", w, r)
 		return
 	}
-	user, err := datastore.ActiveDataStore.FetchUser(username)
+	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
 	if err != nil {
 		HandleError(ErrorUserNotFound, "User not found", w, r)
 		return
@@ -441,7 +441,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 		datastore.ActiveDataStore.StoreKey(entity.Uri(), entities.PrivateKeyToString(privateKey))
 
 		user.AddKeyRef(entity.Uri().Escaped(), entity.CommonName)
-		datastore.ActiveDataStore.StoreUser(user)
+		datastore.ActiveDataStore.StoreUser(ctx, user)
 
 		// Redirect the user to the assertion
 		http.Redirect(w, r, entity.Uri().WebPath(), http.StatusSeeOther)
@@ -458,7 +458,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		HandleError(ErrorNoAuth, "Not logged in", w, r)
 		return
 	}
-	user, err := datastore.ActiveDataStore.FetchUser(username)
+	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
 	if err != nil {
 		HandleError(ErrorUserNotFound, "User not found", w, r)
 		return

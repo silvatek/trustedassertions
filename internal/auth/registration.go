@@ -1,4 +1,4 @@
-package registration
+package auth
 
 type Registration struct {
 	Code     string

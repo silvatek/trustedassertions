@@ -15,20 +15,28 @@ import (
 type DataStore interface {
 	Name() string
 	AutoInit() bool
-	Store(ctx context.Context, value refs.Referenceable)
-	StoreRaw(uri refs.HashUri, content string)
-	StoreKey(entityUri refs.HashUri, key string)
-	StoreRef(ctx context.Context, reference refs.Reference)
-	StoreUser(user auth.User)
+
 	Fetch(ctx context.Context, uri refs.HashUri) (refs.Referenceable, error)
 	FetchStatement(ctx context.Context, key refs.HashUri) (statements.Statement, error)
 	FetchEntity(ctx context.Context, key refs.HashUri) (entities.Entity, error)
 	FetchAssertion(ctx context.Context, key refs.HashUri) (assertions.Assertion, error)
 	FetchDocument(ctx context.Context, key refs.HashUri) (docs.Document, error)
-	FetchKey(entityUri refs.HashUri) (string, error)
+	Store(ctx context.Context, value refs.Referenceable)
+	StoreRaw(uri refs.HashUri, content string)
+
 	FetchRefs(ctx context.Context, key refs.HashUri) ([]refs.Reference, error)
-	FetchUser(id string) (auth.User, error)
+	StoreRef(ctx context.Context, reference refs.Reference)
+
+	StoreKey(entityUri refs.HashUri, key string)
+	StoreUser(ctx context.Context, user auth.User)
+	StoreRegistration(ctx context.Context, reg auth.Registration) error
+
+	FetchKey(entityUri refs.HashUri) (string, error)
+	FetchUser(ctx context.Context, id string) (auth.User, error)
+	FetchRegistration(ctx context.Context, code string) (auth.Registration, error)
+
 	Search(query string) ([]SearchResult, error)
+
 	Reindex()
 }
 

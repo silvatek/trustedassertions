@@ -87,9 +87,9 @@ func TestStoreFetchUser(t *testing.T) {
 
 	user1 := auth.User{Id: "Tester", PassHash: "zzz"}
 	user1.AddKeyRef("123", "Testing")
-	ActiveDataStore.StoreUser(user1)
+	ActiveDataStore.StoreUser(context.TODO(), user1)
 
-	user2, err := ActiveDataStore.FetchUser("Tester")
+	user2, err := ActiveDataStore.FetchUser(context.TODO(), "Tester")
 	if err != nil {
 		t.Errorf("Error fetching new user: %v", err)
 	}

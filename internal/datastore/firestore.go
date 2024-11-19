@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"math/big"
 	"os"
 	"strconv"
@@ -327,8 +328,7 @@ func (fs *FireStore) FetchRefs(ctx context.Context, uri ref.HashUri) ([]ref.Refe
 	return results, nil
 }
 
-func (fs *FireStore) StoreUser(user auth.User) {
-	ctx := context.TODO()
+func (fs *FireStore) StoreUser(ctx context.Context, user auth.User) {
 	client := fs.client(ctx)
 
 	client.Collection(UserCollection).Doc(user.Id).Set(ctx, user)
@@ -336,8 +336,7 @@ func (fs *FireStore) StoreUser(user auth.User) {
 	log.Debugf("Stored user %s", user.Id)
 }
 
-func (fs *FireStore) FetchUser(id string) (auth.User, error) {
-	ctx := context.TODO()
+func (fs *FireStore) FetchUser(ctx context.Context, id string) (auth.User, error) {
 	client := fs.client(ctx)
 
 	user := auth.User{}
@@ -527,4 +526,12 @@ func (fs *FireStore) Reindex() {
 	}
 
 	log.Info("Reindex complete.")
+}
+
+func (fs *FireStore) StoreRegistration(ctx context.Context, reg auth.Registration) error {
+	return nil
+}
+
+func (fs *FireStore) FetchRegistration(ctx context.Context, code string) (auth.Registration, error) {
+	return auth.Registration{}, errors.New("Registration not found with code " + code)
 }

@@ -47,7 +47,7 @@ func setup(t *testing.T) *webtest.WebTest {
 	user.HashPassword(wt.Passwd)
 	user.KeyRefs = append(user.KeyRefs, auth.KeyRef{UserId: user.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
 	wt.AuthCookie = MakeAuthCookie(user.Id)
-	datastore.ActiveDataStore.StoreUser(*user)
+	datastore.ActiveDataStore.StoreUser(context.TODO(), *user)
 
 	wt.Server = httptest.NewServer(router)
 

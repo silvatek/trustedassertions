@@ -21,6 +21,7 @@ type InMemoryDataStore struct {
 	refs  map[string][]Reference
 	users map[string]auth.User
 	krefs map[string]auth.KeyRef
+	regs  map[string]auth.Registration
 }
 
 func InitInMemoryDataStore() {
@@ -30,6 +31,7 @@ func InitInMemoryDataStore() {
 	datastore.refs = make(map[string][]Reference)
 	datastore.users = make(map[string]auth.User)
 	datastore.krefs = make(map[string]auth.KeyRef)
+	datastore.regs = make(map[string]auth.Registration)
 	ActiveDataStore = &datastore
 }
 
@@ -129,7 +131,7 @@ func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key HashUri) ([]Refe
 	return refs, nil
 }
 
-func (ds *InMemoryDataStore) StoreUser(user auth.User) {
+func (ds *InMemoryDataStore) StoreUser(ctx context.Context, user auth.User) {
 	ds.users[user.Id] = user
 	if user.KeyRefs != nil {
 		for _, ref := range user.KeyRefs {
@@ -138,7 +140,7 @@ func (ds *InMemoryDataStore) StoreUser(user auth.User) {
 	}
 }
 
-func (ds *InMemoryDataStore) FetchUser(id string) (auth.User, error) {
+func (ds *InMemoryDataStore) FetchUser(ctx context.Context, id string) (auth.User, error) {
 	user, ok := ds.users[id]
 	if !ok {
 		return auth.User{}, errors.New("User not found with id " + id)
@@ -171,4 +173,17 @@ func (ds *InMemoryDataStore) Search(query string) ([]SearchResult, error) {
 
 func (ds *InMemoryDataStore) Reindex() {
 	// NO-OP
+}
+
+func (ds *InMemoryDataStore) StoreRegistration(ctx context.Context, reg auth.Registration) error {
+	ds.regs[reg.Code] = reg
+	return nil
+}
+
+func (ds *InMemoryDataStore) FetchRegistration(ctx context.Context, code string) (auth.Registration, error) {
+	reg, ok := ds.regs[code]
+	if !ok {
+		return auth.Registration{}, errors.New("Registration not found with code " + code)
+	}
+	return reg, nil
 }

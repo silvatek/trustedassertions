@@ -9,34 +9,37 @@ import (
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	log "silvatek.uk/trustedassertions/internal/logging"
-	"silvatek.uk/trustedassertions/internal/references"
-	. "silvatek.uk/trustedassertions/internal/references"
+	ref "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 func SetupTestData(testDataDir string, defaultEntityUri string, defaultEntityKey string) {
+	ctx := context.Background()
+
 	log.Infof("Loading test data into %s", datastore.ActiveDataStore.Name())
 
-	loadTestData(testDataDir+"/entities", "Entity", "txt", false)
+	loadTestData(ctx, testDataDir+"/entities", "Entity", "txt", false)
 
 	if defaultEntityUri != "" {
-		uri := UriFromString(defaultEntityUri)
+		uri := ref.UriFromString(defaultEntityUri)
 		datastore.ActiveDataStore.StoreKey(uri, defaultEntityKey)
 	}
 
-	loadTestData(testDataDir+"/statements", "Statement", "txt", false)
-	loadTestData(testDataDir+"/assertions", "Assertion", "txt", false)
-	loadTestData(testDataDir+"/documents", "Document", "xml", true)
+	loadTestData(ctx, testDataDir+"/statements", "Statement", "txt", false)
+	loadTestData(ctx, testDataDir+"/assertions", "Assertion", "txt", false)
+	loadTestData(ctx, testDataDir+"/documents", "Document", "xml", true)
 
 	initialUser := auth.User{Id: os.Getenv("INITIAL_USER")}
 	initialUser.HashPassword(os.Getenv("INITIAL_PW"))
 	initialUser.AddKeyRef(defaultEntityUri, "Default")
-	datastore.ActiveDataStore.StoreUser(initialUser)
+	datastore.ActiveDataStore.StoreUser(ctx, initialUser)
+
+	datastore.ActiveDataStore.StoreRegistration(ctx, auth.Registration{Code: "TESTCODE-1001", Status: "Pending"})
 
 	log.Info("Test data load complete.")
 }
 
-func loadTestData(dirName string, dataType string, extension string, calcHash bool) {
+func loadTestData(ctx context.Context, dirName string, dataType string, extension string, calcHash bool) {
 	files, err := os.ReadDir(dirName)
 	if err != nil {
 		log.Errorf("Error reading directory: %v", err)
@@ -54,16 +57,16 @@ func loadTestData(dirName string, dataType string, extension string, calcHash bo
 		item := assertions.NewReferenceable(dataType)
 		item.ParseContent(string(content))
 
-		datastore.ActiveDataStore.Store(context.TODO(), item)
+		datastore.ActiveDataStore.Store(ctx, item)
 
 		if strings.ToLower(dataType) == "assertion" {
-			addAssertionReferences(string(content))
+			addAssertionReferences(ctx, string(content))
 		}
 	}
 }
 
-func addAssertionReferences(content string) {
+func addAssertionReferences(ctx context.Context, content string) {
 	assertion, _ := assertions.ParseAssertionJwt(content)
-	datastore.CreateReferenceWithSummary(context.Background(), assertion.Uri(), references.UriFromString(assertion.Subject))
-	datastore.CreateReferenceWithSummary(context.Background(), assertion.Uri(), references.UriFromString(assertion.Issuer))
+	datastore.CreateReferenceWithSummary(ctx, assertion.Uri(), ref.UriFromString(assertion.Subject))
+	datastore.CreateReferenceWithSummary(ctx, assertion.Uri(), ref.UriFromString(assertion.Issuer))
 }

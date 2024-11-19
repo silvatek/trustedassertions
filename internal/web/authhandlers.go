@@ -38,7 +38,7 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		userId := r.Form.Get("user_id")
 
-		user, err := datastore.ActiveDataStore.FetchUser(userId)
+		user, err := datastore.ActiveDataStore.FetchUser(ctx, userId)
 		if err != nil {
 			log.Errorf("User not found in login attempt: `%s`", userId)
 			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail), http.StatusSeeOther)
@@ -81,6 +81,38 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == "POST" {
 		r.ParseForm()
 
-		http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+		code := r.Form.Get("reg_code")
+		if code == "" {
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+		}
+
+		reg, err := datastore.ActiveDataStore.FetchRegistration(ctx, code)
+		if err != nil {
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+		}
+		if reg.Status != "Pending" {
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+		}
+
+		userId := r.Form.Get("user_id")
+
+		// Check for bad username
+		// Check for duplicate username
+
+		password := r.Form.Get("password1")
+		//password2 := r.Form.Get("password2")
+		// Check for password mismatch
+		// Check for weak password
+
+		user := auth.User{Id: userId}
+		user.HashPassword(password)
+
+		datastore.ActiveDataStore.StoreUser(ctx, user)
+
+		reg.UserName = userId
+		reg.Status = "Complete"
+		datastore.ActiveDataStore.StoreRegistration(ctx, reg)
+
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
