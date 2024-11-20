@@ -10,7 +10,7 @@ import (
 	"math/big"
 	"time"
 
-	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/logging"
 	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
@@ -22,6 +22,8 @@ type Entity struct {
 	Issued      time.Time      `json:"-"`
 	PublicKey   *rsa.PublicKey `json:"-"`
 }
+
+var log = logging.GetLogger("entities")
 
 func NewEntity(commonName string, serialNum big.Int) Entity {
 	return Entity{CommonName: commonName, SerialNum: serialNum, Issued: time.Now()}

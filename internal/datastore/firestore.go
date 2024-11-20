@@ -15,7 +15,6 @@ import (
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
-	log "silvatek.uk/trustedassertions/internal/logging"
 	ref "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/search"
 	"silvatek.uk/trustedassertions/internal/statements"
@@ -71,9 +70,9 @@ func (fs *FireStore) store(collection string, id string, data map[string]interfa
 	result, err := client.Collection(collection).Doc(id).Set(ctx, data)
 
 	if err != nil {
-		log.Errorf("Error writing value: %v", err)
+		log.ErrorfX(ctx, "Error writing value: %v", err)
 	} else {
-		log.Debugf("Written: %s %v", id, result)
+		log.DebugfX(ctx, "Written: %s %v", id, result)
 	}
 }
 
@@ -232,7 +231,7 @@ func (fs *FireStore) FetchAssertion(ctx context.Context, uri ref.HashUri) (asser
 
 	assertion, err := assertions.ParseAssertionJwt(record.Content)
 	if err != nil {
-		log.Errorf("Error parsing JWT: %v", err)
+		log.ErrorfX(ctx, "Error parsing JWT: %v", err)
 		return assertions.NewAssertion("{bad record}"), err
 	}
 	return assertion, nil
@@ -284,7 +283,7 @@ func (fs *FireStore) FetchKey(entityUri ref.HashUri) (string, error) {
 
 	doc, err := client.Collection(KeyCollection).Doc(entityUri.Escaped()).Get(ctx)
 	if err != nil {
-		log.Errorf("Error reading value: %v", err)
+		log.ErrorfX(ctx, "Error reading value: %v", err)
 		return "", err
 	} else {
 		record := KeyRecord{}

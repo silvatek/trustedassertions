@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/entities"
-	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/logging"
 	"silvatek.uk/trustedassertions/internal/references"
 	refs "silvatek.uk/trustedassertions/internal/references"
 )
@@ -28,6 +28,8 @@ type Assertion struct {
 
 // Resolver used to fetch public keys for entities.
 var PublicKeyResolver Resolver
+
+var log = logging.GetLogger("assertions")
 
 func NewAssertion(category string) Assertion {
 	return Assertion{

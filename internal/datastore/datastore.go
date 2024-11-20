@@ -8,6 +8,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
+	"silvatek.uk/trustedassertions/internal/logging"
 	refs "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
@@ -57,6 +58,8 @@ type SearchResult struct {
 
 type KeyNotFoundError struct {
 }
+
+var log = logging.GetLogger("datastore")
 
 func (e *KeyNotFoundError) Error() string {
 	return "Key not found"
