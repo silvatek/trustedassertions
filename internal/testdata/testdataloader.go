@@ -8,15 +8,17 @@ import (
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
-	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/logging"
 	ref "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
+var log = logging.GetLogger("testdataloader")
+
 func SetupTestData(testDataDir string, defaultEntityUri string, defaultEntityKey string) {
 	ctx := context.Background()
 
-	log.Infof("Loading test data into %s", datastore.ActiveDataStore.Name())
+	log.InfofX(ctx, "Loading test data into %s", datastore.ActiveDataStore.Name())
 
 	loadTestData(ctx, testDataDir+"/entities", "Entity", "txt", false)
 
@@ -36,19 +38,19 @@ func SetupTestData(testDataDir string, defaultEntityUri string, defaultEntityKey
 
 	datastore.ActiveDataStore.StoreRegistration(ctx, auth.Registration{Code: "TESTCODE-1001", Status: "Pending"})
 
-	log.Info("Test data load complete.")
+	log.InfofX(ctx, "Test data load complete.")
 }
 
 func loadTestData(ctx context.Context, dirName string, dataType string, extension string, calcHash bool) {
 	files, err := os.ReadDir(dirName)
 	if err != nil {
-		log.Errorf("Error reading directory: %v", err)
+		log.ErrorfX(ctx, "Error reading directory: %v", err)
 	}
 
 	for _, file := range files {
 		content, err := os.ReadFile(dirName + "/" + file.Name())
 		if err != nil {
-			log.Errorf("Error reading file %s, %v", file.Name(), err)
+			log.ErrorfX(ctx, "Error reading file %s, %v", file.Name(), err)
 			continue
 		}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
@@ -8,7 +9,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/api"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/datastore"
-	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/testdata"
 	"silvatek.uk/trustedassertions/internal/web"
@@ -22,9 +23,11 @@ var testDataDir string
 var defaultEntityUri string
 var defaultEntityKey string
 
+var log = logging.GetLogger("main")
+
 func main() {
 	initLogging()
-	log.Print("Starting TrustedAssertions server...")
+	log.InfofX(context.Background(), "Starting TrustedAssertions server...")
 
 	testDataDir = "./testdata"
 	initDataStore()
@@ -48,7 +51,7 @@ func main() {
 		WriteTimeout: 5 * time.Second,
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	srv.ListenAndServe()
 }
 
 func setupHandlers() *mux.Router {
@@ -87,7 +90,7 @@ func initDataStore() {
 }
 
 func initLogging() {
-	log.StructureLogs = (os.Getenv("GCLOUD_PROJECT") != "")
+	logging.StructureLogs = (os.Getenv("GCLOUD_PROJECT") != "")
 }
 
 func InitDbApiHandler(w http.ResponseWriter, r *http.Request) {
