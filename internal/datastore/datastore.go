@@ -36,7 +36,7 @@ type DataStore interface {
 	FetchUser(ctx context.Context, id string) (auth.User, error)
 	FetchRegistration(ctx context.Context, code string) (auth.Registration, error)
 
-	Search(query string) ([]SearchResult, error)
+	Search(ctx context.Context, query string) ([]SearchResult, error)
 
 	Reindex()
 }

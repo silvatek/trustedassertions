@@ -73,7 +73,7 @@ func TestSearch(t *testing.T) {
 	s = statements.NewStatement("White Green Blue")
 	ActiveDataStore.Store(context.TODO(), s)
 
-	matches, err := ActiveDataStore.Search("green")
+	matches, err := ActiveDataStore.Search(context.Background(), "green")
 	if err != nil {
 		t.Errorf("Error fetching search results: %v", err)
 	}

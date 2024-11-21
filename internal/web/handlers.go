@@ -400,7 +400,7 @@ func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	query, _ = url.QueryUnescape(query)
 
-	results, _ := datastore.ActiveDataStore.Search(query)
+	results, _ := datastore.ActiveDataStore.Search(ctx, query)
 
 	data := struct {
 		Query   string

@@ -375,9 +375,7 @@ func (df *DocFetcher) Next() *DbRecord {
 	return &record
 }
 
-func (fs *FireStore) Search(query string) ([]SearchResult, error) {
-	ctx := context.TODO()
-
+func (fs *FireStore) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	queryWords := search.SearchWords(query)
 
 	results := make([]SearchResult, 0)

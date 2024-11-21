@@ -153,7 +153,7 @@ func (ds *InMemoryDataStore) FetchUser(ctx context.Context, id string) (auth.Use
 	return user, nil
 }
 
-func (ds *InMemoryDataStore) Search(query string) ([]SearchResult, error) {
+func (ds *InMemoryDataStore) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	results := make([]SearchResult, 0)
 	query = strings.ToLower(query)
 	for key, value := range ds.data {
