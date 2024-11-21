@@ -20,7 +20,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/datastore"
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
-	log "silvatek.uk/trustedassertions/internal/logging"
+	"silvatek.uk/trustedassertions/internal/logging"
 	ref "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
@@ -28,6 +28,8 @@ import (
 var errorMessages map[string]string
 var TemplateDir string
 var DefaultEntityUri ref.HashUri
+
+var log = logging.GetLogger("web")
 
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)

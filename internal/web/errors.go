@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"silvatek.uk/trustedassertions/internal/appcontext"
-	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
 const ErrorEntityFetch = 1001

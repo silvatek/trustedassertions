@@ -9,7 +9,6 @@ import (
 	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
-	log "silvatek.uk/trustedassertions/internal/logging"
 )
 
 var userJwtKey []byte
@@ -62,7 +61,7 @@ func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := http.Cookie{Name: "auth", Path: "/", Value: "", MaxAge: -1, SameSite: http.SameSiteStrictMode}
 	http.SetCookie(w, &cookie)
 
-	log.Debug("Cleared auth cookie")
+	log.DebugfX(ctx, "Cleared auth cookie")
 
 	RenderWebPage(ctx, "loggedout", "", nil, w, r)
 }
