@@ -34,12 +34,12 @@ var EmptyRefs = []ref.HashUri{}
 
 var client *firestore.Client
 
-func InitFireStore() {
+func InitFireStore(ctx context.Context) {
 	datastore := &FireStore{
 		projectId:    os.Getenv("GCLOUD_PROJECT"),
 		databaseName: os.Getenv("FIRESTORE_DB_NAME"),
 	}
-	log.Infof("Initialising FireStore: %s / %s", datastore.projectId, datastore.databaseName)
+	log.InfofX(ctx, "Initialising FireStore: %s / %s", datastore.projectId, datastore.databaseName)
 	ActiveDataStore = datastore
 }
 

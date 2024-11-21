@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"silvatek.uk/trustedassertions/internal/api"
+	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	"silvatek.uk/trustedassertions/internal/logging"
@@ -26,11 +27,12 @@ var defaultEntityKey string
 var log = logging.GetLogger("main")
 
 func main() {
+	ctx := appcontext.InitContext()
 	initLogging()
-	log.InfofX(context.Background(), "Starting TrustedAssertions server...")
+	log.InfofX(ctx, "Starting TrustedAssertions server...")
 
 	testDataDir = "./testdata"
-	initDataStore()
+	initDataStore(ctx)
 
 	web.TemplateDir = "./web"
 	r := setupHandlers()
@@ -66,9 +68,9 @@ func setupHandlers() *mux.Router {
 	return r
 }
 
-func initDataStore() {
+func initDataStore(ctx context.Context) {
 	if os.Getenv("FIRESTORE_DB_NAME") != "" {
-		datastore.InitFireStore()
+		datastore.InitFireStore(ctx)
 	} else {
 		datastore.InitInMemoryDataStore()
 	}
@@ -85,7 +87,7 @@ func initDataStore() {
 	assertions.PublicKeyResolver = datastore.ActiveDataStore
 
 	if datastore.ActiveDataStore.AutoInit() {
-		testdata.SetupTestData(testDataDir, defaultEntityUri, defaultEntityKey)
+		testdata.SetupTestData(ctx, testDataDir, defaultEntityUri, defaultEntityKey)
 	}
 }
 
@@ -94,7 +96,7 @@ func initLogging() {
 }
 
 func InitDbApiHandler(w http.ResponseWriter, r *http.Request) {
-	testdata.SetupTestData(testDataDir, defaultEntityUri, defaultEntityKey)
+	testdata.SetupTestData(context.Background(), testDataDir, defaultEntityUri, defaultEntityKey)
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("Data store initialised"))

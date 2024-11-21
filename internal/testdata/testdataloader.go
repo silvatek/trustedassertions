@@ -15,9 +15,7 @@ import (
 
 var log = logging.GetLogger("testdataloader")
 
-func SetupTestData(testDataDir string, defaultEntityUri string, defaultEntityKey string) {
-	ctx := context.Background()
-
+func SetupTestData(ctx context.Context, testDataDir string, defaultEntityUri string, defaultEntityKey string) {
 	log.InfofX(ctx, "Loading test data into %s", datastore.ActiveDataStore.Name())
 
 	loadTestData(ctx, testDataDir+"/entities", "Entity", "txt", false)

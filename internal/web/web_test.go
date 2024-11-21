@@ -35,7 +35,7 @@ func setup(t *testing.T) *webtest.WebTest {
 	datastore.ActiveDataStore.StoreKey(signer.Uri(), entities.PrivateKeyToString(privateKey))
 	DefaultEntityUri = signer.Uri()
 
-	testdata.SetupTestData("../../testdata", signer.Uri().String(), entities.PrivateKeyToString(privateKey))
+	testdata.SetupTestData(context.Background(), "../../testdata", signer.Uri().String(), entities.PrivateKeyToString(privateKey))
 
 	wt := webtest.MakeWebTest(t)
 

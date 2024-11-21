@@ -19,6 +19,7 @@ func NewWebContext(req *http.Request) context.Context {
 	return WebContext(req.Context(), req)
 }
 
+// Custom context for web requests
 func WebContext(parent context.Context, req *http.Request) context.Context {
 	var data CtxData
 
@@ -27,6 +28,17 @@ func WebContext(parent context.Context, req *http.Request) context.Context {
 	data.TraceParent = req.Header.Get("traceparent")
 
 	return context.WithValue(parent, ctxDataKey, data)
+}
+
+// Custom context for server startup
+func InitContext() context.Context {
+	var data CtxData
+
+	data.ReqPath = "{INIT}"
+	data.ReqMethod = "{INIT}"
+	data.TraceParent = ""
+
+	return context.WithValue(context.Background(), ctxDataKey, data)
 }
 
 // Returns the data associated with the context.
