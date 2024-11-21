@@ -69,18 +69,15 @@ type PageData struct {
 }
 
 func RenderWebPageWithStatus(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request, status int) {
-	log.DebugfX(ctx, "Rendering page %s", pageName)
 	dir := TemplateDir
 
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
 	if err != nil {
 		msg := http.StatusText(http.StatusInternalServerError)
-		log.Errorf("Error parsing template: %+v", err)
+		log.ErrorfX(ctx, "Error parsing template: %+v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
-
-	log.DebugfX(ctx, "Templates parsed")
 
 	username := authUser(r)
 	pageData := PageData{
@@ -125,12 +122,10 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 	}
 
 	if err := t.ExecuteTemplate(w, "base", pageData); err != nil {
+		log.ErrorfX(ctx, "template.Execute: %v", err)
 		msg := http.StatusText(http.StatusInternalServerError)
-		log.Errorf("template.Execute: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
-
-	log.DebugfX(ctx, "Page rendered")
 }
 
 func RenderWebPage(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
