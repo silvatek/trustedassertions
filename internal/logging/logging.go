@@ -126,6 +126,9 @@ func WriteNamedLog(ctx context.Context, name string, level string, template stri
 }
 
 func traceId(traceparent string) (string, string) {
+	if traceparent == "" {
+		return "", ""
+	}
 	parts := strings.Split(traceparent, "-")
 	return "projects/trustedassertions/traces/" + parts[1], parts[2]
 }
