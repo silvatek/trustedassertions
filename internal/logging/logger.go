@@ -10,9 +10,12 @@ type Logger struct {
 	Level int
 }
 
-var loggers = make(map[string]Logger, 0)
+var loggers map[string]Logger = nil
 
 func GetLogger(name string) Logger {
+	if loggers == nil {
+		loggers = make(map[string]Logger, 0)
+	}
 	log, ok := loggers[name]
 	if !ok {
 		log = Logger{Name: name, Level: INFO}
