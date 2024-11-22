@@ -54,7 +54,7 @@ func AddHandlers(r *mux.Router) {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 	r.PathPrefix("/google").Handler(fs)
 
-	errorMessages = make(map[string]string)
+	errors = make(map[string]AppError)
 }
 
 type PageData struct {

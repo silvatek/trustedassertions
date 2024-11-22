@@ -12,11 +12,12 @@ import (
 
 // Application errors, including external and internal messages, error codes and http status codes.
 type AppError struct {
-	ErrorCode   int
-	HttpCode    int
-	UserMessage string
-	LogMessage  string
-	ErrorId     string
+	ErrorCode   int       // A numeric code shared by all instances of this error
+	HttpCode    int       // The Http status code that is appropriate for this error
+	UserMessage string    // An error message suitable to be displayed to the end user
+	LogMessage  string    // An error message intended to be written to server logs for debugging
+	ErrorId     string    // A unique code for a specific instance of an error at a particular time for a particular user
+	template    *AppError // The error on which an instance is based on
 }
 
 const FetchError = 1000
@@ -32,8 +33,9 @@ var ErrorKeyAccess = AppError{ErrorCode: UpdateError + 4, UserMessage: "Error ac
 
 var ErrorFakeTest = AppError{ErrorCode: 9999, UserMessage: "Fake error for testing"}
 
-var errorMessages map[string]string
+var errors map[string]AppError
 
+// Create an instance of the error
 func (e AppError) instance(logMessage string) AppError {
 	if logMessage == "" {
 		logMessage = e.UserMessage
@@ -48,6 +50,7 @@ func (e AppError) instance(logMessage string) AppError {
 		UserMessage: e.UserMessage,
 		LogMessage:  logMessage,
 		ErrorId:     makeErrorId(),
+		template:    &e,
 	}
 
 	return instance
@@ -61,6 +64,14 @@ func (e AppError) Error() string {
 	}
 }
 
+func (e AppError) Template() AppError {
+	if e.template != nil {
+		return *e.template
+	} else {
+		return e
+	}
+}
+
 // Error handling for web app.
 //
 // Logs an error with a message, code and unique ID, then redirects to the error page with the error code and ID.
@@ -69,24 +80,17 @@ func HandleError(ctx context.Context, err AppError, w http.ResponseWriter, r *ht
 		err = err.instance("")
 	}
 	log.ErrorfX(ctx, fmt.Sprintf("%d : %s (%s)", err.ErrorCode, err.Error(), err.ErrorId))
-	errorMessages[fmt.Sprintf("%d", err.ErrorCode)] = err.UserMessage
+	errors[fmt.Sprintf("%d", err.ErrorCode)] = err.Template()
 	errorPage := fmt.Sprintf("/web/error?err=%d&id=%s", err.ErrorCode, err.ErrorId)
 	http.Redirect(w, r, errorPage, http.StatusSeeOther)
 }
-
-// func HandleError(errorCode int, errorMessage string, w http.ResponseWriter, r *http.Request) {
-// 	errorId := makeErrorId()
-// 	log.Errorf("%s [%d,%s]", errorMessage, errorCode, errorId)
-// 	errorMessages[fmt.Sprintf("%d", errorCode)] = errorMessage
-// 	errorPage := fmt.Sprintf("/web/error?err=%d&id=%s", errorCode, errorId)
-// 	http.Redirect(w, r, errorPage, http.StatusSeeOther)
-// }
 
 func makeErrorId() string {
 	errorInt, _ := rand.Int(rand.Reader, big.NewInt(0xFFFFFF))
 	return fmt.Sprintf("%X", errorInt)
 }
 
+// Handler for showing information about an error to the user.
 func ErrorPageHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	errorCode := r.URL.Query().Get("err")
@@ -104,11 +108,11 @@ func ErrorPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func errorMessage(errorCode string) string {
-	message, ok := errorMessages[errorCode]
+	error, ok := errors[errorCode]
 	if !ok {
 		return "Unknown error [" + errorCode + "]"
 	}
-	return message + " [" + errorCode + "]"
+	return error.UserMessage + " [" + errorCode + "]"
 }
 
 func ErrorTestHandler(w http.ResponseWriter, r *http.Request) {
