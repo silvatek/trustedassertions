@@ -11,6 +11,13 @@ import (
 	"silvatek.uk/trustedassertions/internal/datastore"
 )
 
+const AuthError = 3000
+
+var ErrorNoAuth = AppError{ErrorCode: AuthError + 1, UserMessage: "Not logged in"}
+var ErrorUserNotFound = AppError{ErrorCode: AuthError + 2, UserMessage: "User not found"}
+var ErrorAuthFail = AppError{ErrorCode: AuthError + 5, UserMessage: "Not logged in"}
+var ErrorRegCode = AppError{ErrorCode: AuthError + 101, UserMessage: "Registration code not valid"}
+
 var userJwtKey []byte
 
 func addAuthHandlers(r *mux.Router) {
@@ -28,7 +35,7 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 		errorCode := r.URL.Query().Get("err")
 
 		data := ""
-		if errorCode == strconv.Itoa(ErrorAuthFail) {
+		if errorCode == strconv.Itoa(ErrorAuthFail.ErrorCode) {
 			data = "Unable to verify identity"
 		}
 
@@ -40,12 +47,12 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 		user, err := datastore.ActiveDataStore.FetchUser(ctx, userId)
 		if err != nil {
 			log.Errorf("User not found in login attempt: `%s`", userId)
-			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail), http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail.ErrorCode), http.StatusSeeOther)
 			return
 		}
 		if !user.CheckHash(r.Form.Get("password")) {
 			log.Errorf("Incorrect password entered for: `%s`", userId)
-			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail), http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail.ErrorCode), http.StatusSeeOther)
 			return
 		}
 
@@ -72,7 +79,7 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 		errorCode := r.URL.Query().Get("err")
 
 		data := ""
-		if errorCode == strconv.Itoa(ErrorRegCode) {
+		if errorCode == strconv.Itoa(ErrorRegCode.ErrorCode) {
 			data = "Registration code not valid"
 		}
 
@@ -82,19 +89,19 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		code := r.Form.Get("reg_code")
 		if code == "" {
-			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode.ErrorCode), http.StatusSeeOther)
 			return
 		}
 
 		reg, err := datastore.ActiveDataStore.FetchRegistration(ctx, code)
 		if err != nil {
 			log.ErrorfX(ctx, "Could not load registration code %s, %v", code, err)
-			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode.ErrorCode), http.StatusSeeOther)
 			return
 		}
 		if reg.Status != "Pending" {
 			log.InfofX(ctx, "Attempt to reuse registration code %s (%s)", code, reg.Status)
-			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode.ErrorCode), http.StatusSeeOther)
 			return
 		}
 
@@ -124,7 +131,7 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 		err = datastore.ActiveDataStore.StoreRegistration(ctx, reg)
 		if err != nil {
 			log.ErrorfX(ctx, "Error updating registration status: %v", err)
-			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode), http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode.ErrorCode), http.StatusSeeOther)
 			return
 		}
 

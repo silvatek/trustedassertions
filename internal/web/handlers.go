@@ -285,7 +285,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	uri := ref.MakeUri(key, "entity")
 	entity, err := datastore.ActiveDataStore.FetchEntity(ctx, uri)
 	if err != nil {
-		HandleWebError(ctx, ErrorEntityFetch.instance("Error fetching entity "+uri.String()), w, r)
+		HandleError(ctx, ErrorEntityFetch.instance("Error fetching entity "+uri.String()), w, r)
 		return
 	}
 
@@ -346,12 +346,12 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	username := authUser(r)
 	if username == "" {
-		HandleWebError(ctx, ErrorNoAuth, w, r)
+		HandleError(ctx, ErrorNoAuth, w, r)
 		return
 	}
 	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
 	if err != nil {
-		HandleError(ErrorUserNotFound, "User not found", w, r)
+		HandleError(ctx, ErrorUserNotFound.instance("User not found: "+username), w, r)
 		return
 	}
 
@@ -371,13 +371,13 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 		keyUri := ref.UriFromString(keyId)
 
 		if !user.HasKey(keyId) {
-			HandleError(ErrorKeyAccess, "User does not have access to selected signing key", w, r)
+			HandleError(ctx, ErrorKeyAccess.instance("User does not have access to selected signing key"), w, r)
 			return
 		}
 
 		assertion, err := datastore.CreateStatementAndAssertion(ctx, content, keyUri, confidence)
 		if err != nil {
-			HandleError(ErrorMakeAssertion, "Error making new statement and assertion", w, r)
+			HandleError(ctx, ErrorMakeAssertion.instance("Error making new statement and assertion"), w, r)
 			return
 		}
 
@@ -411,12 +411,12 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	username := authUser(r)
 	if username == "" {
-		HandleWebError(ctx, ErrorNoAuth, w, r)
+		HandleError(ctx, ErrorNoAuth, w, r)
 		return
 	}
 	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
 	if err != nil {
-		HandleError(ErrorUserNotFound, "User not found", w, r)
+		HandleError(ctx, ErrorUserNotFound.instance("User not found when making new entity: "+username), w, r)
 		return
 	}
 
@@ -451,12 +451,12 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	username := authUser(r)
 	if username == "" {
-		HandleWebError(ctx, ErrorNoAuth, w, r)
+		HandleError(ctx, ErrorNoAuth, w, r)
 		return
 	}
 	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
 	if err != nil {
-		HandleError(ErrorUserNotFound, "User not found", w, r)
+		HandleError(ctx, ErrorUserNotFound.instance("User not found when making new statement: "+username), w, r)
 		return
 	}
 
@@ -489,13 +489,13 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		keyUri := ref.UriFromString(keyId)
 
 		if !user.HasKey(keyId) {
-			HandleError(ErrorKeyAccess, "User does not have access to selected signing key", w, r)
+			HandleError(ctx, ErrorKeyAccess.instance("User does not have access to selected signing key"), w, r)
 			return
 		}
 
 		b64key, err := datastore.ActiveDataStore.FetchKey(keyUri)
 		if err != nil {
-			HandleError(ErrorKeyFetch, "Error fetching entity private key", w, r)
+			HandleError(ctx, ErrorKeyFetch.instance("Error fetching entity private key"), w, r)
 			return
 		}
 		privateKey := entities.PrivateKeyFromString(b64key)
