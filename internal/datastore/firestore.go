@@ -395,6 +395,8 @@ func (fs *FireStore) Search(ctx context.Context, query string) ([]SearchResult, 
 		results = append(results, result)
 	}
 
+	log.DebugfX(ctx, "Search for `%s` found %d matches", query, len(results))
+
 	return results, nil
 }
 

@@ -55,13 +55,13 @@ func (log Logger) Infof(text string, args ...interface{}) {
 }
 
 func (log Logger) InfofX(ctx context.Context, text string, args ...interface{}) {
-	if log.Level >= INFO {
+	if log.Level <= INFO {
 		WriteNamedLog(ctx, log.Name, "INFO ", text, args...)
 	}
 }
 
 func (log Logger) ErrorfX(ctx context.Context, text string, args ...interface{}) {
-	if log.Level >= ERROR {
+	if log.Level <= ERROR {
 		WriteNamedLog(ctx, log.Name, "ERROR", text, args...)
 	}
 }

@@ -25,7 +25,6 @@ import (
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
-var errorMessages map[string]string
 var TemplateDir string
 var DefaultEntityUri ref.HashUri
 
@@ -286,7 +285,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	uri := ref.MakeUri(key, "entity")
 	entity, err := datastore.ActiveDataStore.FetchEntity(ctx, uri)
 	if err != nil {
-		HandleError(ErrorEntityFetch, "Unable to fetch entity", w, r)
+		HandleWebError(ctx, ErrorEntityFetch.instance("Error fetching entity "+uri.String()), w, r)
 		return
 	}
 
@@ -347,7 +346,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	username := authUser(r)
 	if username == "" {
-		HandleError(ErrorNoAuth, "Not logged in", w, r)
+		HandleWebError(ctx, ErrorNoAuth, w, r)
 		return
 	}
 	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
@@ -412,7 +411,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	username := authUser(r)
 	if username == "" {
-		HandleError(ErrorNoAuth, "Not logged in", w, r)
+		HandleWebError(ctx, ErrorNoAuth, w, r)
 		return
 	}
 	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
@@ -452,7 +451,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	username := authUser(r)
 	if username == "" {
-		HandleError(ErrorNoAuth, "Not logged in", w, r)
+		HandleWebError(ctx, ErrorNoAuth, w, r)
 		return
 	}
 	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
