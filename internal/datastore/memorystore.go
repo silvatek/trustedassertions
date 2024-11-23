@@ -23,7 +23,7 @@ type InMemoryDataStore struct {
 	regs  map[string]auth.Registration
 }
 
-func InitInMemoryDataStore() {
+func NewInMemoryDataStore() DataStore {
 	datastore := InMemoryDataStore{}
 	datastore.data = make(map[string]DbRecord)
 	datastore.keys = make(map[string]string)
@@ -31,7 +31,11 @@ func InitInMemoryDataStore() {
 	datastore.users = make(map[string]auth.User)
 	datastore.krefs = make(map[string]auth.KeyRef)
 	datastore.regs = make(map[string]auth.Registration)
-	ActiveDataStore = &datastore
+	return &datastore
+}
+
+func InitInMemoryDataStore() {
+	ActiveDataStore = NewInMemoryDataStore()
 }
 
 func (ds *InMemoryDataStore) Name() string {
