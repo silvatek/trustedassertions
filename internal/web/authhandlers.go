@@ -24,10 +24,10 @@ const RegistrationError = 3100
 
 var ErrorRegCode = AppError{ErrorCode: RegistrationError + 1, UserMessage: "Registration code not valid", HttpCode: 400}
 var ErrorPasswordMismatch = AppError{ErrorCode: RegistrationError + 2, UserMessage: "Passwords do not match", HttpCode: 400}
-var ErrorBadUsername = AppError{ErrorCode: RegistrationError + 3, UserMessage: "Username is too short", HttpCode: 400}
+var ErrorBadUsername = AppError{ErrorCode: RegistrationError + 3, UserMessage: "Username is not valid", HttpCode: 400}
 var ErrorUserExists = AppError{ErrorCode: RegistrationError + 4, UserMessage: "Username already in use", HttpCode: 400}
 var ErrorWeakPassword = AppError{ErrorCode: RegistrationError + 5, UserMessage: "Password is not strong enough", HttpCode: 400}
-var ErrorRegistering = AppError{ErrorCode: RegistrationError + 5, UserMessage: "Unexpected error during registration"}
+var ErrorRegistering = AppError{ErrorCode: RegistrationError + 6, UserMessage: "Unexpected error during registration"}
 
 var RegistrationErrors = []AppError{ErrorRegCode, ErrorPasswordMismatch, ErrorBadUsername, ErrorUserExists, ErrorWeakPassword, ErrorRegistering}
 
@@ -126,7 +126,7 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 		err := registerUser(ctx, registration, datastore.ActiveDataStore)
 
 		if err != nil {
-			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", ErrorRegCode.ErrorCode), http.StatusSeeOther)
+			http.Redirect(w, r, fmt.Sprintf("/web/register?err=%d", err.ErrorCode), http.StatusSeeOther)
 		} else {
 			http.Redirect(w, r, "/web/login", http.StatusSeeOther)
 		}
@@ -140,11 +140,11 @@ func registerUser(ctx context.Context, registration RegistrationForm, store Regi
 
 	reg, err := store.FetchRegistration(ctx, registration.regCode)
 	if err != nil {
-		log.ErrorfX(ctx, "Could not load registration code %s, %v", registration.regCode, err)
+		log.DebugfX(ctx, "Could not load registration code %s, %v", registration.regCode, err)
 		return &ErrorRegCode
 	}
 	if reg.Status != "Pending" {
-		log.InfofX(ctx, "Attempt to reuse registration code %s (%s)", registration.regCode, reg.Status)
+		log.DebugfX(ctx, "Attempt to reuse registration code %s (%s)", registration.regCode, reg.Status)
 		return &ErrorRegCode
 	}
 

@@ -226,3 +226,19 @@ func TestQrCode(t *testing.T) {
 	page.AssertHtmlQuery("h2", "Share Item")
 	page.AssertSuccessResponse()
 }
+
+func TestRegistration(t *testing.T) {
+	wt := setup(t)
+	defer wt.Close()
+
+	ctx := context.Background()
+
+	datastore.ActiveDataStore.StoreRegistration(ctx, auth.Registration{Code: "ABC", Status: "Pending"})
+
+	page := wt.GetPage("/web/register")
+	page.AssertHtmlQuery("h2", "User Registration")
+
+	page = wt.PostFormData("/web/register", url.Values{"reg_code": {"ABC"}, "user_id": {"Tester 99"}, "password1": {"jsdj87sda;swg59jmd;;874j"}, "password2": {"jsdj87sda;swg59jmd;;874j"}})
+	page.AssertHtmlQuery("h2", "Login")
+	page.AssertHtmlQuery(".error", "")
+}

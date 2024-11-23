@@ -161,3 +161,7 @@ func (page *WebPage) AssertNoCookie(name string) {
 	}
 
 }
+
+func (page *WebPage) Text() string {
+	return page.html.Text()
+}

@@ -48,7 +48,7 @@ func TestFailedRegistration(t *testing.T) {
 	store.StoreRegistration(ctx, auth.Registration{Code: "IJK", Status: "Complete"})
 	store.StoreUser(ctx, auth.User{Id: "Existing"})
 
-	testData := []struct {
+	testCases := []struct {
 		name string
 		reg  RegistrationForm
 		err  int
@@ -63,7 +63,7 @@ func TestFailedRegistration(t *testing.T) {
 		{name: "weak password", reg: RegistrationForm{regCode: "ABC", userId: "Tester", password1: "Password", password2: "Password"}, err: ErrorWeakPassword.ErrorCode},
 	}
 
-	for _, cfg := range testData {
+	for _, cfg := range testCases {
 		err := registerUser(ctx, cfg.reg, store)
 		if err == nil {
 			t.Errorf("Unexpected registration success for `%s`", cfg.name)
