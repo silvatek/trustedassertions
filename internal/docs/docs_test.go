@@ -41,8 +41,20 @@ func TestTestPoc1(t *testing.T) {
 
 	words := search.SearchWords(doc.TextContent())
 
-	if !search.WordsContains(words, "about", "appear", "begin", "can", "do", "exist", "far", "gl93j73c", "know", "may", "mr", "need", "obvious", "somewhere", "tell", "tester", "truth", "universe", "what") {
+	if !wordsContains(words, "about", "appear", "begin", "can", "do", "exist", "far", "gl93j73c", "know", "may", "mr", "need", "obvious", "somewhere", "tell", "tester", "truth", "universe", "what") {
 		t.Errorf("Unexpected %v", words)
 	}
 
+}
+
+func wordsContains(wordList []string, words ...string) bool {
+	matches := 0
+	for _, w1 := range wordList {
+		for _, w2 := range words {
+			if w1 == w2 {
+				matches++
+			}
+		}
+	}
+	return matches == len(words)
 }
