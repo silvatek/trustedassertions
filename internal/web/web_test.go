@@ -22,7 +22,7 @@ import (
 
 var user *auth.User
 
-func setup(t *testing.T) *webtest.WebTest {
+func NewWebTest(t *testing.T) *webtest.WebTest {
 	TemplateDir = "../../web"
 
 	datastore.InitInMemoryDataStore()
@@ -55,7 +55,7 @@ func setup(t *testing.T) *webtest.WebTest {
 }
 
 func TestHomePage(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/")
@@ -63,7 +63,7 @@ func TestHomePage(t *testing.T) {
 }
 
 func TestErrorPage(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/web/broken")
@@ -72,7 +72,7 @@ func TestErrorPage(t *testing.T) {
 }
 
 func TestStatementPage(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f")
@@ -80,7 +80,7 @@ func TestStatementPage(t *testing.T) {
 }
 
 func TestEntityPage(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/web/entities/177ed36580cf1ed395e1d0d3a7709993ac1599ee844dc4cf5b9573a1265df2db")
@@ -88,7 +88,7 @@ func TestEntityPage(t *testing.T) {
 }
 
 func TestAssertionPage(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/web/assertions/514518bb09d57524bc6b96842721e4c4404cb4a3329aadf1761bb3eddb2832da")
@@ -96,7 +96,7 @@ func TestAssertionPage(t *testing.T) {
 }
 
 func TestNewStatementPage(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/web/newstatement")
@@ -104,7 +104,7 @@ func TestNewStatementPage(t *testing.T) {
 }
 
 func TestPostNewStatement(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	data := url.Values{
@@ -124,7 +124,7 @@ func TestPostNewStatement(t *testing.T) {
 }
 
 func TestNewEntity(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/web/newentity")
@@ -145,7 +145,7 @@ func TestNewEntity(t *testing.T) {
 }
 
 func TestAddAssertion(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f")
@@ -172,7 +172,7 @@ func TestAddAssertion(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/")
@@ -184,39 +184,8 @@ func TestSearch(t *testing.T) {
 	page.AssertHtmlQuery("#content", "The universe exists")
 }
 
-func TestLoginLogout(t *testing.T) {
-	wt := setup(t)
-	defer wt.Close()
-
-	wt.AuthCookie = nil
-
-	page := wt.GetPage("/web/login")
-	page.AssertNoCookie("auth")
-	page.AssertHtmlQuery("h2", "Login")
-
-	page = wt.PostFormData("/web/login", url.Values{"user_id": {user.Id}, "password": {wt.Passwd}})
-	page.AssertSuccessResponse()
-	page.AssertHtmlQuery("span", user.Id)
-	page.AssertHasCookie("auth")
-
-	page = wt.GetPage("/web/logout")
-	page.AssertHtmlQuery("#message", "You have been logged out")
-	page.AssertNoCookie("auth")
-}
-
-func TestBadLogin(t *testing.T) {
-	wt := setup(t)
-	defer wt.Close()
-
-	page := wt.PostFormData("/web/login", url.Values{"user_id": {"jkdshffkdjshdskfjhd"}, "password": {wt.Passwd}})
-	page.AssertHtmlQuery(".error", "Unable to verify identity")
-
-	page = wt.PostFormData("/web/login", url.Values{"user_id": {user.Id}, "password": {"jkdfhskjfdshfk"}})
-	page.AssertHtmlQuery(".error", "Unable to verify identity")
-}
-
 func TestQrCode(t *testing.T) {
-	wt := setup(t)
+	wt := NewWebTest(t)
 	defer wt.Close()
 
 	page := wt.GetPage("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f")
@@ -225,20 +194,4 @@ func TestQrCode(t *testing.T) {
 	page = wt.GetPage("/web/share?hash=33fe9d5eedb329c5a662d3c206d8938a33f94795c3f715be0bcd53fbdcadc7e8&type=entity")
 	page.AssertHtmlQuery("h2", "Share Item")
 	page.AssertSuccessResponse()
-}
-
-func TestRegistration(t *testing.T) {
-	wt := setup(t)
-	defer wt.Close()
-
-	ctx := context.Background()
-
-	datastore.ActiveDataStore.StoreRegistration(ctx, auth.Registration{Code: "ABC", Status: "Pending"})
-
-	page := wt.GetPage("/web/register")
-	page.AssertHtmlQuery("h2", "User Registration")
-
-	page = wt.PostFormData("/web/register", url.Values{"reg_code": {"ABC"}, "user_id": {"Tester 99"}, "password1": {"jsdj87sda;swg59jmd;;874j"}, "password2": {"jsdj87sda;swg59jmd;;874j"}})
-	page.AssertHtmlQuery("h2", "Login")
-	page.AssertHtmlQuery(".error", "")
 }

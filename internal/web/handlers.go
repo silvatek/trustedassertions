@@ -333,11 +333,6 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 		AuthorUri: ref.UriFromString(document.Metadata.Author.Entity),
 	}
 
-	// menu := []PageMenuItem{
-	// 	{Text: "Raw", Target: document.Uri().ApiPath()},
-	// 	{Text: "Share", Target: "/web/share?hash=" + document.Uri().Hash() + "&type=statement"},
-	// }
-
 	RenderWebPage(ctx, "viewdocument", data, nil, w, r)
 }
 
