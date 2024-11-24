@@ -83,14 +83,12 @@ func ErrorfX(ctx context.Context, text string, args ...interface{}) {
 }
 
 func WriteLog(ctx context.Context, level string, template string, args ...interface{}) {
-	WriteNamedLog(ctx, "", level, template, args...)
+	WriteNamedLog(ctx, LogWriter, StructureLogs, "", level, template, args...)
 }
 
-func WriteNamedLog(ctx context.Context, name string, level string, template string, args ...interface{}) {
-	if StructureLogs {
-		if encoder == nil {
-			encoder = json.NewEncoder(LogWriter)
-		}
+func WriteNamedLog(ctx context.Context, output io.Writer, structured bool, name string, level string, template string, args ...interface{}) {
+	if structured {
+		encoder = json.NewEncoder(output)
 		entry := LogEntry{
 			Severity:  strings.TrimSpace(level),
 			Timestamp: time.Now(),
@@ -118,9 +116,9 @@ func WriteNamedLog(ctx context.Context, name string, level string, template stri
 
 	} else {
 		if name == "" {
-			fmt.Fprintf(LogWriter, level+" "+template+"\n", args...)
+			fmt.Fprintf(output, level+" "+template+"\n", args...)
 		} else {
-			fmt.Fprintf(LogWriter, level+" ["+name+"] "+template+"\n", args...)
+			fmt.Fprintf(output, level+" ["+name+"] "+template+"\n", args...)
 		}
 	}
 }

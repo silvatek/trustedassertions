@@ -3,11 +3,14 @@ package logging
 import (
 	"context"
 	"fmt"
+	"io"
 )
 
 type Logger struct {
-	Name  string
-	Level int
+	Name       string
+	Level      int
+	Structured bool
+	Writer     io.Writer
 }
 
 var loggers map[string]Logger = nil
@@ -16,16 +19,23 @@ func GetLogger(name string) Logger {
 	if loggers == nil {
 		loggers = make(map[string]Logger, 0)
 	}
-	log, ok := loggers[name]
-	if !ok {
-		log = Logger{Name: name, Level: INFO}
+	log, found := loggers[name]
+	if !found {
+		log = Logger{Name: name, Level: INFO, Structured: StructureLogs, Writer: LogWriter}
 		loggers[name] = log
 	}
 	return log
 }
 
 func (log Logger) Print(args ...any) {
-	log.Info(fmt.Sprintf("%v", args))
+	text := ""
+	for _, arg := range args {
+		if len(text) > 0 {
+			text += " "
+		}
+		text += fmt.Sprintf("%v", arg)
+	}
+	log.Info(text)
 }
 
 func (log Logger) Println(args ...any) {
@@ -38,7 +48,7 @@ func (log Logger) Printf(template string, args ...any) {
 
 func (log Logger) DebugfX(ctx context.Context, text string, args ...interface{}) {
 	if log.Level >= DEBUG {
-		WriteNamedLog(ctx, log.Name, "DEBUG", text, args...)
+		WriteNamedLog(ctx, log.Writer, log.Structured, log.Name, "DEBUG", text, args...)
 	}
 }
 
@@ -56,13 +66,13 @@ func (log Logger) Infof(text string, args ...interface{}) {
 
 func (log Logger) InfofX(ctx context.Context, text string, args ...interface{}) {
 	if log.Level <= INFO {
-		WriteNamedLog(ctx, log.Name, "INFO ", text, args...)
+		WriteNamedLog(ctx, log.Writer, log.Structured, log.Name, "INFO ", text, args...)
 	}
 }
 
 func (log Logger) ErrorfX(ctx context.Context, text string, args ...interface{}) {
 	if log.Level <= ERROR {
-		WriteNamedLog(ctx, log.Name, "ERROR", text, args...)
+		WriteNamedLog(ctx, log.Writer, log.Structured, log.Name, "ERROR", text, args...)
 	}
 }
 

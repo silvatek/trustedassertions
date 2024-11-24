@@ -1,5 +1,7 @@
 package references
 
+import "errors"
+
 type Reference struct {
 	Source  HashUri // The source has a reference to the target
 	Target  HashUri
@@ -47,5 +49,9 @@ func (e ReferenceError) References() []HashUri {
 }
 
 func (e ReferenceError) ParseContent(content string) error {
-	return nil
+	return errors.New("Error URI cannot parse content")
+}
+
+func (e ReferenceError) Error() string {
+	return "Reference error"
 }

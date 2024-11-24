@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -84,4 +85,31 @@ func TestStructuredLogs(t *testing.T) {
 	}
 
 	StructureLogs = original
+}
+
+func TestLogger(t *testing.T) {
+	var buf bytes.Buffer
+
+	log := GetLogger("testing")
+	log.Structured = true
+	log.Writer = &buf
+
+	log.Print("Logger Print")
+	log.Debugf("Logger Debugf")
+	log.Infof("Logger Infof")
+	log.Errorf("Logger Errorf")
+
+	if !strings.Contains(buf.String(), "\"message\":\"Logger Print\"") {
+		t.Errorf("Did not find `Logger Print` in `%s`", buf.String())
+	}
+	if !strings.Contains(buf.String(), "\"message\":\"Logger Debugf\"") {
+		t.Errorf("Did not find `Logger Debugf` in `%s`", buf.String())
+	}
+	if !strings.Contains(buf.String(), "\"message\":\"Logger Infof\"") {
+		t.Errorf("Did not find `Logger Infof` in `%s`", buf.String())
+	}
+	if !strings.Contains(buf.String(), "\"message\":\"Logger Errorf\"") {
+		t.Errorf("Did not find `Logger Errorf` in `%s`", buf.String())
+	}
+
 }

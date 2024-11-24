@@ -159,3 +159,17 @@ func TestEquals(t *testing.T) {
 		t.Error("Expected URIs to be equal")
 	}
 }
+
+func TestReferenceError(t *testing.T) {
+	err := REF_ERROR
+
+	if err.Error() != "Reference error" {
+		t.Errorf("Unexpected Error value %s", err.Error())
+	}
+	if err.Uri() != ERROR_URI {
+		t.Errorf("Unexpected URI %s", err.Uri())
+	}
+	if err.ParseContent("some text") == nil {
+		t.Errorf("Unexpected success parsing content")
+	}
+}
