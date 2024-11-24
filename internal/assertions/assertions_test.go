@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"math/big"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -239,6 +240,23 @@ func TestGuessContentType(t *testing.T) {
 		output := GuessContentType(input)
 		if output != expected {
 			t.Errorf("Unexpected type for `%s`: %s", input, output)
+		}
+	}
+}
+
+func TestMakeReferenceable(t *testing.T) {
+	testdata := map[string]string{
+		"statement": "*statements.Statement",
+		"Statement": "*statements.Statement",
+		"entity":    "*entities.Entity",
+		"assertion": "*assertions.Assertion",
+		"document":  "*docs.Document",
+	}
+	for key, typeName := range testdata {
+		item := NewReferenceable(key)
+		itemType := reflect.TypeOf(item)
+		if itemType.String() != typeName {
+			t.Errorf("Unexpected type for %s: %v", key, itemType)
 		}
 	}
 }
