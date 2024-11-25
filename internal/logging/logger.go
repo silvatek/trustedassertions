@@ -21,7 +21,7 @@ func GetLogger(name string) Logger {
 	}
 	log, found := loggers[name]
 	if !found {
-		log = Logger{Name: name, Level: INFO, Structured: StructureLogs, Writer: LogWriter}
+		log = Logger{Name: name, Level: DEBUG, Structured: StructureLogs, Writer: LogWriter}
 		loggers[name] = log
 	}
 	return log
