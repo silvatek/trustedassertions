@@ -12,6 +12,8 @@ import (
 	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
+	"silvatek.uk/trustedassertions/internal/entities"
+	"silvatek.uk/trustedassertions/internal/references"
 )
 
 const AuthError = 3000
@@ -232,12 +234,21 @@ func ProfileWebHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	signers := make([]entities.Entity, len(user.KeyRefs))
+	for n, keyRef := range user.KeyRefs {
+		keyUri := references.UriFromString(keyRef.KeyId)
+		entity, _ := datastore.ActiveDataStore.FetchEntity(ctx, keyUri)
+		signers[n] = entity
+	}
+
 	data := struct {
 		UserName string
 		User     auth.User
+		Entities []entities.Entity
 	}{
 		UserName: username,
 		User:     user,
+		Entities: signers,
 	}
 
 	RenderWebPage(ctx, "viewprofile", data, nil, w, r)

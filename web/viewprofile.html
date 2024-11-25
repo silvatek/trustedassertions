@@ -8,10 +8,13 @@
             </div>
         </div>
 
-        <h3>Key References</h3>
+        <h3>Signing Key Access</h3>
         <ul>
-            {{range $ref := .Detail.User.KeyRefs}}
-                <li>{{$ref.Summary}}</li>
+            {{range $entity := .Detail.Entities}}
+                <li>
+                    <a href="{{$entity.Uri.WebPath}}">{{$entity.CommonName}}</a>                    
+                </li>
             {{end}}
+
         </ul>
 {{end}}
