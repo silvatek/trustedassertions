@@ -37,8 +37,35 @@ func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/login", LoginWebHandler)
 	r.HandleFunc("/web/logout", LogoutWebHandler)
 	r.HandleFunc("/web/register", RegisterWebHandler)
+	r.HandleFunc("/web/profile", ProfileWebHandler)
 
 	userJwtKey = auth.MakeJwtKey()
+}
+
+func nameOnly(username string) string {
+	n := strings.Index(username, "@")
+	if n == -1 {
+		return username
+	} else {
+		return username[0:n]
+	}
+}
+
+// Returns the name of the currently authenticated user, or an empty string.
+func authUsername(r *http.Request) string {
+	cookie, err := r.Cookie("auth")
+	if err != nil {
+		return ""
+	}
+	if cookie.Value == "" {
+		return ""
+	}
+	userName, err := auth.ParseUserJwt(cookie.Value, userJwtKey)
+	if err != nil {
+		log.Errorf("Error parsing user JWT: %v", err)
+		return ""
+	}
+	return userName
 }
 
 func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -189,4 +216,29 @@ func registerUser(ctx context.Context, registration RegistrationForm, store Regi
 	store.StoreUser(ctx, user)
 
 	return nil
+}
+
+func ProfileWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+	username := authUsername(r)
+	if username == "" {
+		HandleError(ctx, ErrorNoAuth, w, r)
+		return
+	}
+
+	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
+	if err != nil {
+		HandleError(ctx, ErrorUserNotFound, w, r)
+		return
+	}
+
+	data := struct {
+		UserName string
+		User     auth.User
+	}{
+		UserName: username,
+		User:     user,
+	}
+
+	RenderWebPage(ctx, "viewprofile", data, nil, w, r)
 }

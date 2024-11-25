@@ -1,0 +1,17 @@
+{{define "content"}}		
+        <h2>View Profile</h2>
+
+        <div class="fieldset">
+            <div class="fieldprompt">User ID:</div>
+            <div class="fieldvalue">
+                {{.Detail.UserName}}
+            </div>
+        </div>
+
+        <h3>Key References</h3>
+        <ul>
+            {{range $ref := .Detail.User.KeyRefs}}
+                <li>{{$ref.Summary}}</li>
+            {{end}}
+        </ul>
+{{end}}

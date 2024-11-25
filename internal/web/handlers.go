@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"sync"
 	"text/template"
 
@@ -79,7 +78,7 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		return
 	}
 
-	username := authUser(r)
+	username := authUsername(r)
 	pageData := PageData{
 		AuthUser:  username,
 		AuthName:  nameOnly(username),
@@ -112,7 +111,7 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		rightMenu.AddRightLink("Login", "/web/login")
 		rightMenu.AddRightLink("Register", "/web/register")
 	} else {
-		rightMenu.AddRightText(nameOnly(username))
+		rightMenu.AddRightLink(nameOnly(username), "/web/profile")
 		rightMenu.AddRightLink("Logout", "/web/logout")
 	}
 	pageData.RightMenu = rightMenu
@@ -130,32 +129,6 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 
 func RenderWebPage(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
 	RenderWebPageWithStatus(ctx, pageName, data, menu, w, r, 200)
-}
-
-func nameOnly(username string) string {
-	n := strings.Index(username, "@")
-	if n == -1 {
-		return username
-	} else {
-		return username[0:n]
-	}
-}
-
-// Returns the name of the currently authenticated user, or an empty string.
-func authUser(r *http.Request) string {
-	cookie, err := r.Cookie("auth")
-	if err != nil {
-		return ""
-	}
-	if cookie.Value == "" {
-		return ""
-	}
-	userName, err := auth.ParseUserJwt(cookie.Value, userJwtKey)
-	if err != nil {
-		log.Errorf("Error parsing user JWT: %v", err)
-		return ""
-	}
-	return userName
 }
 
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -340,7 +313,7 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
-	username := authUser(r)
+	username := authUsername(r)
 	if username == "" {
 		HandleError(ctx, ErrorNoAuth, w, r)
 		return
@@ -405,7 +378,7 @@ func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
 
 func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
-	username := authUser(r)
+	username := authUsername(r)
 	if username == "" {
 		HandleError(ctx, ErrorNoAuth, w, r)
 		return
@@ -445,7 +418,7 @@ func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
-	username := authUser(r)
+	username := authUsername(r)
 	if username == "" {
 		HandleError(ctx, ErrorNoAuth, w, r)
 		return
