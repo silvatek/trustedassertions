@@ -60,7 +60,6 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Things to Do
 
-* Sort out logger initialisation (creating loggers before reading env var for structured logging)
 * Mobile web views
 * Secure management of private keys
 * Access control
@@ -91,6 +90,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * ~~QR Codes for statement entity, and assertion pages~~
 * ~~User JWT refresh~~
 * ~~Documents reference assertion not statement~~
+* ~~Sort out logger initialisation (creating loggers before reading env var for structured logging)~~
 
 
 ## Implementation Details
