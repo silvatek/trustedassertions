@@ -12,8 +12,8 @@ import (
 func AddAttackHandlers(r *mux.Router) {
 	// Specific filenames
 	for _, path := range []string{
-		"/config.json", "/web.config", "/wp-config.php", "/api/.env", "/cloud-config.yml", "/config/production.json", "/feed/",
-		"/.env", "/.env~", "/.env.dev", "/.env.local", "/.env.example", "/admin/.env",
+		"/config.json", "/web.config", "/wp-config.php", "/api/.env", "/cloud-config.yml", "/config/production.json", "/feed/", "/.DS_Store", "/about", "/server",
+		"/.env", "/.env~", "/.env.dev", "/.env.local", "/.env.example", "/admin/.env", "/_all_dbs", "/login.action",
 		"/docker-compose.yml", "/user_secrets.yml", "/secrets.json",
 		"/database.sql", "/backup.sql", "/backup.zip", "/backup.tar.gz",
 		"/config.php", "/config/database.php", "/server-status", "/phpinfo.php", "/wp-config.php", "/config/database.php", "/xmlrpc.php?rsd",
@@ -23,7 +23,7 @@ func AddAttackHandlers(r *mux.Router) {
 
 	// Entire directories
 	for _, prefix := range []string{
-		"/etc/", "/.ssh/", "/.git/", "/.svn", "/_vti_pvt/", "/.vscode/", "/.kube", "/.aws", "/.docker/",
+		"/etc/", "/.ssh/", "/.git/", "/.svn", "/_vti_pvt/", "/.vscode/", "/.kube", "/.aws", "/.docker/", "/ecp/", "/admin/", "/debug/", "/_/",
 	} {
 		r.PathPrefix(prefix).HandlerFunc(AttackHandler)
 	}

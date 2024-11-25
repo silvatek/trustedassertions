@@ -60,6 +60,8 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Things to Do
 
+* User profile page
+* Change password
 * Mobile web views
 * Secure management of private keys
 * Access control
