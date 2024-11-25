@@ -48,6 +48,7 @@ func AddHandlers(r *mux.Router) {
 	r.NotFoundHandler = http.HandlerFunc(NotFoundWebHandler)
 
 	addAuthHandlers(r)
+	AddAttackHandlers(r)
 
 	staticDir := http.Dir(TemplateDir + "/static")
 	fs := http.FileServer(staticDir)
