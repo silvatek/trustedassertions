@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 )
 
 type Logger struct {
@@ -21,10 +22,14 @@ func GetLogger(name string) Logger {
 	}
 	log, found := loggers[name]
 	if !found {
-		log = Logger{Name: name, Level: DEBUG, Structured: StructureLogs, Writer: LogWriter}
+		log = Logger{Name: name, Level: DEBUG, Structured: structuredLogging(), Writer: LogWriter}
 		loggers[name] = log
 	}
 	return log
+}
+
+func structuredLogging() bool {
+	return (os.Getenv("LOG_TYPE") == "structured") || (os.Getenv("GCLOUD_PROJECT") != "")
 }
 
 func (log Logger) Print(args ...any) {
