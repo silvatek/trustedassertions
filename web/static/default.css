@@ -1,7 +1,21 @@
+:root {
+	--main-bg-color: white;
+	--content-bg-color: #eeeeee;
+	--panel-border-color: #cccccc;
+	--control-border-color: #222222;
+	--link-color: darkblue;
+	--error-color: brown;
+
+	--text-font: Arial, sans-serif;
+	--field-text-font: monospace;
+
+	--std-padding: 1rem;
+}
+
 @media screen and (max-width:920px) {
 	body {
-		margin-left: 1em;
-		margin-right: 1em;
+		margin-left: var(--std-padding);
+		margin-right: var(--std-padding);
 	}
 	.fulluri {
 		display: none;
@@ -10,8 +24,8 @@
 
  @media screen and (min-width:921px) and (max-width:1200px) {
 	body {
-		margin-left: 1em;
-		margin-right: 1em;
+		margin-left: var(--std-padding);
+		margin-right: var(--std-padding);
 	}
 	.shorturi {
 		display: none;		
@@ -34,9 +48,16 @@
 	}
  }
 
+ @media screen {
+	body {
+		background-color: var(--main-bg-color);
+	}
+ }
+
+
 body {
-	font-family: Arial, sans-serif;
-	font-display: fallback;
+	font-family: var(--text-font);
+	font-display: fallback;	
 }	
 
  a {
@@ -55,7 +76,7 @@ body {
 .pagelogo {
 	float: left;
 	margin: 0px;
-	padding-right: 1em;
+	padding-right: var(--std-padding);
 }
 
 .pageheading {
@@ -71,9 +92,9 @@ body {
 }
 
 .homepanel {
-	border: #cccccc solid 1px;
-	border-radius: 1rem;
-	padding: 1rem;
+	border: var(--panel-border-color) solid 1px;
+	border-radius: var(--std-padding);
+	padding: var(--std-padding);
 	flex-grow: 1;
 }
 
@@ -95,7 +116,7 @@ body {
 
  .fieldset {
 	display: grid;
-	gap: 1em;
+	gap: var(--std-padding);
 	grid-template-columns: max-content max-content;
  }
 
@@ -108,20 +129,24 @@ body {
  }
 
  .fieldvalue {
-	font-family: monospace;
+	font-family: var(--field-text-font);
 	font-size: larger;
  }
 
  a {
-	color: darkblue;
+	color: var(--link-color);
  }
 
  a:hover {
 	text-decoration: underline;	
  }
 
+ a:visited {
+	color: var(--link-color);
+ }
+
  .uri {
-	font-family: monospace;
+	font-family: var(--field-text-font);
  }
 
  li {
@@ -129,17 +154,17 @@ body {
  }
 
 .error {
-	color: brown;
+	color: var(--error-color);
 }
 
 button input[type=button], input[type=submit], input[type=reset] {
 	padding: 8px 16px;
 	border-radius: 8px;
 	border-width: 2px;
-	border-color: #222222;
+	border-color: var(--control-border-color);
 	text-decoration: none;
 	font-weight: bold;
-	color: darkblue;
+	color: var(--link-color);
 	margin: 4px 2px;
 	cursor: pointer;
 }
@@ -149,15 +174,15 @@ button input[type=button], input[type=submit], input[type=reset] {
 }
 
 .docview {
-	background-color: #eeeeee;
+	background-color: var(--content-bg-color);
 	border-style: solid;
-	border-color: #aaaaaa;
+	border-color: var(--panel-border-color);
 	border-width: 2px;
-	border-radius: 8px;
-	padding-left: 1em;
-	padding-right: 1em;
-	padding-bottom: 1em;
-	margin-top: 1em;
+	border-radius: var(--std-padding);
+	padding-left: var(--std-padding);
+	padding-right: var(--std-padding);
+	padding-bottom: var(--std-padding);
+	margin-top: var(--std-padding);
 }
 
 .docpara {
@@ -171,5 +196,5 @@ table.searchresults {
 
 td, th {
 	vertical-align: top;
-	padding: 1em;
+	padding: var(--std-padding);
 }
