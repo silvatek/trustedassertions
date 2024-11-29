@@ -131,6 +131,7 @@ body {
  .fieldvalue {
 	font-family: var(--field-text-font);
 	font-size: larger;
+	padding-top: 3px;
  }
 
  a {
