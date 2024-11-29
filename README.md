@@ -60,7 +60,6 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Things to Do
 
-* User profile page
 * Change password
 * Mobile web views
 * Secure management of private keys
@@ -69,8 +68,6 @@ Any number of trust models can be created from the same set of assertions, and i
 * Add new document
 * Auto-create statements and assertions from documents
 * Document schema
-* Document search
-* Web tests for documents
 
 ### Done
 
@@ -93,6 +90,9 @@ Any number of trust models can be created from the same set of assertions, and i
 * ~~User JWT refresh~~
 * ~~Documents reference assertion not statement~~
 * ~~Sort out logger initialisation (creating loggers before reading env var for structured logging)~~
+* ~~User profile page~~
+* ~~Web tests for documents~~
+* ~~Document search~~
 
 
 ## Implementation Details
