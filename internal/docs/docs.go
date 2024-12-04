@@ -108,13 +108,13 @@ func (d Document) References() []refs.HashUri {
 	if d.Metadata.Author.Entity != "" {
 		references = append(references, refs.UriFromString(d.Metadata.Author.Entity))
 	}
-	for _, span := range d.allAssertions() {
+	for _, span := range d.Assertions() {
 		references = append(references, refs.UriFromString(span.Assertion))
 	}
 	return references
 }
 
-func (d *Document) allAssertions() []Span {
+func (d *Document) Assertions() []Span {
 	assertions := make([]Span, 0)
 
 	for _, sect := range d.Sections {
@@ -181,4 +181,9 @@ func (doc *Document) TextContent() string {
 		}
 	}
 	return sb.String()
+}
+
+func (doc Document) MakeXml() string {
+	bytes, _ := xml.MarshalIndent(doc, "", "  ")
+	return string(bytes)
 }

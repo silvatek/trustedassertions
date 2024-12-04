@@ -39,6 +39,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 	r.HandleFunc("/web/newentity", NewEntityWebHandler)
+	r.HandleFunc("/web/newdocument", NewDocumentWebHandler)
 	r.HandleFunc("/web/statements/{hash}/addassertion", AddStatementAssertionWebHandler)
 	r.HandleFunc("/web/search", SearchWebHandler)
 	r.HandleFunc("/web/share", SharePageWebHandler)
@@ -482,5 +483,49 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)
 
 		log.DebugfX(ctx, "Redirecting to %s", assertion.Uri().WebPath())
+	}
+}
+
+func NewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
+	username := authUsername(r)
+	if username == "" {
+		HandleError(ctx, ErrorNoAuth, w, r)
+		return
+	}
+	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
+	if err != nil {
+		HandleError(ctx, ErrorUserNotFound.instance("User not found when making new statement: "+username), w, r)
+		return
+	}
+
+	if r.Method == "GET" {
+		RenderWebPage(ctx, "newdocumentform", user, nil, w, r)
+	} else if r.Method == "POST" {
+		log.InfofX(ctx, "Received new document")
+		r.ParseForm()
+
+		doc, err := docs.MakeDocument(r.Form.Get("document"))
+		if err != nil {
+			HandleError(ctx, ErrorParseDocument.instance("User parsing new docuemnt"), w, r)
+			return
+		}
+
+		if doc.Metadata.Author.Entity == "" {
+			log.DebugfX(ctx, "Document has no author, assuming current")
+			doc.Metadata.Author.Entity = "CURRENT"
+		}
+
+		for _, span := range doc.Assertions() {
+			if span.Assertion == "AUTO" {
+				log.DebugfX(ctx, "Found AUTO assertion: %s", span.Body)
+				span.Assertion = ref.MakeUri("1234", "Assertion").String()
+			}
+		}
+
+		log.DebugfX(ctx, "Doc HTML: %s", doc.ToHtml())
+
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }

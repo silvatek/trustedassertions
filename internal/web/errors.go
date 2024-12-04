@@ -30,6 +30,7 @@ const UpdateError = 2000
 var ErrorMakeAssertion = AppError{ErrorCode: UpdateError + 2, UserMessage: "Error making assertion"}
 var ErrorKeyFetch = AppError{ErrorCode: UpdateError + 3, UserMessage: "Error fetching key"}
 var ErrorKeyAccess = AppError{ErrorCode: UpdateError + 4, UserMessage: "Error accessing key", HttpCode: 403}
+var ErrorParseDocument = AppError{ErrorCode: UpdateError + 5, UserMessage: "Error parsing document XML"}
 
 var ErrorFakeTest = AppError{ErrorCode: 9999, UserMessage: "Fake error for testing"}
 

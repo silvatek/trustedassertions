@@ -1,0 +1,25 @@
+{{define "content"}}		
+        <h2>New Document</h2>
+        <div>Create a new Document, along with any Statements and Assertions it relies on but that don't already exist.</div>
+        <div>Note that anything submitted here is published and freely available without restriction.</div>
+
+        <form method="POST" action="/web/newdocument">
+                {{.CsrfField}}
+                <div>
+                        <label for="document">Document content (XML):</label><br>
+                        <textarea id="document" name="document" rows="12" cols="80" autofocus></textarea>
+                </div>
+                <div>
+                        <label for="sign_as">Sign as:</label><br>
+                        <select id="sign_as" name="sign_as">
+                                {{range $ref := .Detail.KeyRefs}}
+                                        <option value="{{$ref.KeyId}}">{{$ref.Summary}}</option>
+                                {{end}}
+                        </select>
+                </div>
+                <div>
+                        <input id="submit" type="Submit">
+                </div>
+        </form>
+
+{{end}}

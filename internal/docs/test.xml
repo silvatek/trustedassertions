@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+	<metadata>
+        <title>Universal Truths</title>
+		<keywords>GL93J73C</keywords>
+	</metadata>
+	<section>
+        <title>About the Universe</title>
+		<paragraph>
+			<span>What do we know about the universe? </span>
+			<span assertion="AUTO">The universe exists</span>
+            <span>, as far as we can tell.</span>
+		</paragraph>
+		<paragraph>
+			<span>This may seem obvious, but we need to start somewhere.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>The Earth</title>
+		<paragraph>
+			<span>The Earth is a planet in the Solar System</span>
+		</paragraph>
+	</section>
+</document>
