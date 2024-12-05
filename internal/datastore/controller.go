@@ -25,7 +25,7 @@ func CreateAssertion(ctx context.Context, statementUri references.HashUri, entit
 	assertion.NotBefore = assertion.IssuedAt
 	assertion.Confidence = float32(confidence)
 	assertion.Issuer = entityUri.String()
-	assertion.Summary()
+	assertion.SetSummary(assertions.SummariseAssertion(ctx, assertion, nil, ActiveDataStore))
 	assertion.MakeJwt(privateKey)
 	ActiveDataStore.Store(ctx, &assertion)
 

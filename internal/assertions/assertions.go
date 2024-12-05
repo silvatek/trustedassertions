@@ -24,6 +24,7 @@ type Assertion struct {
 	Object     string       `json:"object,omitempty"`
 	content    string       `json:"-"`
 	uri        refs.HashUri `json:"-"`
+	summary    string       `json:"-"`
 }
 
 // Resolver used to fetch public keys for entities.
@@ -118,7 +119,14 @@ func (a *Assertion) Content() string {
 }
 
 func (a *Assertion) Summary() string {
-	return a.Category + " Assertion"
+	if a.summary == "" {
+		a.summary = a.Category + " assertion"
+	}
+	return a.summary
+}
+
+func (a *Assertion) SetSummary(summary string) {
+	a.summary = summary
 }
 
 func (a *Assertion) TextContent() string {
