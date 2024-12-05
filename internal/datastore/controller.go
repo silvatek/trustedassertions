@@ -4,10 +4,13 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
 	"silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
@@ -22,6 +25,7 @@ func CreateAssertion(ctx context.Context, statementUri references.HashUri, entit
 	assertion.NotBefore = assertion.IssuedAt
 	assertion.Confidence = float32(confidence)
 	assertion.Issuer = entityUri.String()
+	assertion.Summary()
 	assertion.MakeJwt(privateKey)
 	ActiveDataStore.Store(ctx, &assertion)
 
@@ -46,7 +50,7 @@ func CreateReferenceWithSummary(ctx context.Context, source references.HashUri, 
 	ActiveDataStore.StoreRef(ctx, ref)
 }
 
-func CreateStatementAndAssertion(ctx context.Context, content string, entityUri references.HashUri, confidence float64) (*assertions.Assertion, error) {
+func CreateStatementAndAssertion(ctx context.Context, content string, entityUri references.HashUri, kind string, confidence float64) (*assertions.Assertion, error) {
 	log.DebugfX(ctx, "Creating statement and assertion")
 
 	b64key, err := ActiveDataStore.FetchKey(entityUri)
@@ -116,4 +120,52 @@ func CreateEntityWithKey(ctx context.Context, commonName string) references.Hash
 	ActiveDataStore.StoreKey(entity.Uri(), entities.PrivateKeyToString(privateKey))
 
 	return entity.Uri()
+}
+
+func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri references.HashUri) (*docs.Document, error) {
+	entity, err := ActiveDataStore.FetchEntity(ctx, entityUri)
+	if err != nil {
+		return nil, err
+	}
+
+	doc, _ := docs.MakeDocument(content)
+
+	author := &doc.Metadata.Author
+	if author.Entity == "" {
+		log.DebugfX(ctx, "Setting document author to %s", entity.CommonName)
+		author.Entity = entity.Uri().String()
+		author.Name = entity.CommonName
+	}
+
+	for i := range doc.Sections {
+		for j := range doc.Sections[i].Paragraphs {
+			for k := range doc.Sections[i].Paragraphs[j].Spans {
+				span := &doc.Sections[i].Paragraphs[j].Spans[k]
+				if span.Assertion != "" && !strings.HasPrefix(span.Assertion, "hash://") {
+					parts := strings.Split(span.Assertion, " ")
+					assertionType := parts[0]
+					confidence, _ := strconv.ParseFloat(parts[1], 32)
+
+					assertion, _ := CreateStatementAndAssertion(ctx, span.Body, entityUri, assertionType, confidence)
+
+					span.Assertion = assertion.Uri().String()
+				}
+			}
+		}
+	}
+
+	doc.UpdateContent()
+
+	ActiveDataStore.Store(ctx, doc)
+
+	for _, uri := range doc.References() {
+		ref := references.Reference{
+			Source:  doc.Uri(),
+			Target:  uri,
+			Summary: doc.Summary(),
+		}
+		ActiveDataStore.StoreRef(ctx, ref)
+	}
+
+	return doc, nil
 }

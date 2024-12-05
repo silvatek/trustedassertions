@@ -18,14 +18,14 @@ type Document struct {
 
 type MetaData struct {
 	XMLName  xml.Name `xml:"metadata"`
-	Author   Author   `xml:"author"`
-	Title    string   `xml:"title"`
-	Keywords string   `xml:"keywords"`
+	Author   Author   `xml:"author,omitempty"`
+	Title    string   `xml:"title,omitempty"`
+	Keywords string   `xml:"keywords,omitempty"`
 }
 
 type Author struct {
 	XMLName xml.Name `xml:"author"`
-	Entity  string   `xml:"entity,attr"`
+	Entity  string   `xml:"entity,attr,omitempty"`
 	Name    string   `xml:",chardata"`
 }
 
@@ -49,8 +49,8 @@ type Paragraph struct {
 
 type Span struct {
 	XMLName   xml.Name `xml:"span"`
-	Statement string   `xml:"statement,attr"`
-	Assertion string   `xml:"assertion,attr"`
+	Statement string   `xml:"statement,attr,omitempty"`
+	Assertion string   `xml:"assertion,attr,omitempty"`
 	Body      string   `xml:",chardata"`
 }
 
@@ -181,4 +181,14 @@ func (doc *Document) TextContent() string {
 		}
 	}
 	return sb.String()
+}
+
+func (doc *Document) ToXml() string {
+	data, _ := xml.MarshalIndent(doc, "", "  ")
+	return string(data)
+}
+
+// Replaces the context text with an updated XML version.
+func (doc *Document) UpdateContent() {
+	doc.text = doc.ToXml()
 }

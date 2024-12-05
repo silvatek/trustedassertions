@@ -39,6 +39,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/error", ErrorPageHandler)
 	r.HandleFunc("/web/newstatement", NewStatementWebHandler)
 	r.HandleFunc("/web/newentity", NewEntityWebHandler)
+	r.HandleFunc("/web/newdocument", NewDocumentWebHandler)
 	r.HandleFunc("/web/statements/{hash}/addassertion", AddStatementAssertionWebHandler)
 	r.HandleFunc("/web/search", SearchWebHandler)
 	r.HandleFunc("/web/share", SharePageWebHandler)
@@ -290,26 +291,6 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	RenderWebPage(ctx, "viewentity", data, menu, w, r)
 }
 
-func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := appcontext.NewWebContext(r)
-	key := mux.Vars(r)["hash"]
-	document, _ := datastore.ActiveDataStore.FetchDocument(ctx, ref.MakeUri(key, "document"))
-
-	data := struct {
-		Doc       docs.Document
-		Title     string
-		DocHtml   string
-		AuthorUri ref.HashUri
-	}{
-		Doc:       document,
-		Title:     "Testing",
-		DocHtml:   document.ToHtml(),
-		AuthorUri: ref.UriFromString(document.Metadata.Author.Entity),
-	}
-
-	RenderWebPage(ctx, "viewdocument", data, nil, w, r)
-}
-
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
@@ -344,7 +325,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		assertion, err := datastore.CreateStatementAndAssertion(ctx, content, keyUri, confidence)
+		assertion, err := datastore.CreateStatementAndAssertion(ctx, content, keyUri, "IsTrue", confidence)
 		if err != nil {
 			HandleError(ctx, ErrorMakeAssertion.instance("Error making new statement and assertion"), w, r)
 			return
