@@ -4,7 +4,7 @@ steps:
     args:
       - -c
       - |
-        go mod vendor -o /workspace/vendor
+        curl https://github.com/sethvargo/gcs-cacher/releases/download/v0.1.3/gcs-cacher_0.1.3_linux_amd64.tgz -o gcs-cacher.tgz
         go build ./internal/...
         go build -v -o /workspace/taf-server ./cmd/server
         go test -coverprofile coverage.out -timeout 3m ./...
