@@ -17,8 +17,7 @@ FROM gcr.io/distroless/static-debian11
 WORKDIR /taf
 COPY testdata ./testdata
 #COPY --from=build /taf-server .
-COPY taf-server .
 COPY web ./web
 COPY step1.txt .
-RUN ls -l .
+COPY taf-server2 .
 ENTRYPOINT ["./taf-server"]
