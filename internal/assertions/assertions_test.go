@@ -196,7 +196,7 @@ func TestAssertionJwt(t *testing.T) {
 	if a.Type() != "Assertion" {
 		t.Errorf("Unexpected assertion type: %s", a.Type())
 	}
-	if a.Summary() != "Simple Assertion" {
+	if a.Summary() != "Simple assertion" {
 		t.Errorf("Unexpected assertion summary: %s", a.Summary())
 	}
 
