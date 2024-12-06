@@ -12,7 +12,8 @@
 #RUN go build -mod=readonly ./internal/...
 #RUN go build -mod=readonly -v -o /taf-server ./cmd/server
 #
-FROM golang:1.23
+FROM gcr.io/distroless/base:latest
+# FROM golang:1.23
 # FROM gcr.io/gcp-runtimes/ubuntu_16_0_4:latest
 
 WORKDIR /taf
