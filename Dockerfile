@@ -12,7 +12,8 @@
 #RUN go build -mod=readonly ./internal/...
 #RUN go build -mod=readonly -v -o /taf-server ./cmd/server
 #
-FROM gcr.io/distroless/static-debian11
+#FROM gcr.io/distroless/static-debian11
+FROM debian11
 
 WORKDIR /taf
 COPY testdata ./testdata
