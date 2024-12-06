@@ -4,12 +4,11 @@ steps:
     args:
       - -c
       - |
+        go mod vendor -o /workspace/vendor
         go build ./internal/...
         go build -v -o /workspace/taf-server ./cmd/server
         go test -coverprofile coverage.out -timeout 3m ./...
         go tool cover -html coverage.out -o /workspace/coverage-${SHORT_SHA}.html
-        ls -lh /workspace
-        echo Hello >${SHORT_SHA}_test.txt
     env:
       - 'CGO_ENABLED=0'
     id: Build and Test
