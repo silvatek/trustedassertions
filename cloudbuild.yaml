@@ -6,7 +6,8 @@ steps:
       - |
         go build ./internal/...
         go build -v -o /workspace/taf-server ./cmd/server
-        go test -timeout 3m ./...
+        go test -coverprofile coverage.out -timeout 3m ./...
+        go tool cover -html coverage.out -o /workspace/coverage-${SHORT_SHA}.html
         ls -lh /workspace
         echo Hello >${SHORT_SHA}_test.txt
     env:
@@ -69,4 +70,4 @@ artifacts:
   objects:
     location: gs://tabuild
     paths:
-      - ${SHORT_SHA}_test.txt
+      - /workspace/coverage-${SHORT_SHA}.html
