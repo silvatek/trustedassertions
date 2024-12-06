@@ -13,7 +13,7 @@
 #RUN go build -mod=readonly -v -o /taf-server ./cmd/server
 #
 #FROM gcr.io/distroless/static-debian11
-FROM debian-base
+FROM golang:1.23
 
 WORKDIR /taf
 COPY testdata ./testdata
