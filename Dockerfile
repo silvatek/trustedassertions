@@ -12,8 +12,8 @@
 #RUN go build -mod=readonly ./internal/...
 #RUN go build -mod=readonly -v -o /taf-server ./cmd/server
 #
-#FROM gcr.io/distroless/static-debian11
-FROM golang:1.23
+#FROM golang:1.23
+FROM gcr.io/gcp-runtimes/ubuntu_16_0_4:latest
 
 WORKDIR /taf
 COPY testdata ./testdata
