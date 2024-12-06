@@ -7,9 +7,8 @@ steps:
         go build ./internal/...
         go build -v -o /workspace/taf-server ./cmd/server
         go test -timeout 3m ./...
-        echo "Step 1 data" > /workspace/step1.txt &&
-        ls -l /workspace
-    id: Test
+        ls -lh /workspace
+    id: Build and Test
   - name: gcr.io/cloud-builders/docker
     args:
       - build
