@@ -18,5 +18,6 @@ WORKDIR /taf
 COPY testdata ./testdata
 #COPY --from=build /taf-server .
 COPY web ./web
-COPY --chmod=0755 taf-server .
+COPY taf-server .
+RUN chmod +x taf-server
 ENTRYPOINT ["./taf-server"]
