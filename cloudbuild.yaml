@@ -8,6 +8,7 @@ steps:
         go build -v -o /workspace/taf-server ./cmd/server
         go test -timeout 3m ./...
         ls -lh /workspace
+        echo Hello >${SHORT_SHA}_test.txt
     env:
       - 'CGO_ENABLED=0'
     id: Build and Test
@@ -64,3 +65,8 @@ tags:
   - gcp-cloud-build-deploy-cloud-run
   - gcp-cloud-build-deploy-cloud-run-managed
   - taf-server
+artifacts:
+  objects:
+    location: gs://tabuild
+    paths:
+      - ${SHORT_SHA}_test.txt
