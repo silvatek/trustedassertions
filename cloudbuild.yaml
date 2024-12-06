@@ -1,4 +1,11 @@
 steps:
+  - name: golang:1.23
+    entrypoint: /bin/bash
+    args:
+      - -c
+      - |
+        go test -timeout 1m -v ./...
+    id: Test
   - name: gcr.io/cloud-builders/docker
     args:
       - build
