@@ -4,7 +4,7 @@ steps:
     args:
       - -c
       - |
-        curl https://github.com/sethvargo/gcs-cacher/releases/download/v0.1.3/gcs-cacher_0.1.3_linux_amd64.tgz -o gcs-cacher.tgz
+        wget -O gcs-cacher.tgz https://github.com/sethvargo/gcs-cacher/releases/download/v0.1.3/gcs-cacher_0.1.3_linux_amd64.tgz 
         tar -xvzf gcs-cacher.tgz
         ls -l
         go build ./internal/...
