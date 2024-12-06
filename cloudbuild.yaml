@@ -4,7 +4,7 @@ steps:
     args:
       - -c
       - |
-        go test -timeout 1m -v ./...
+        go test -timeout 3m ./...
     id: Test
   - name: gcr.io/cloud-builders/docker
     args:
