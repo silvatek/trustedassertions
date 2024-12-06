@@ -20,4 +20,5 @@ COPY testdata ./testdata
 COPY taf-server .
 COPY web ./web
 COPY step1.txt .
+RUN ls -l .
 ENTRYPOINT ["./taf-server"]
