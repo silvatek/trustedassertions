@@ -18,4 +18,5 @@ WORKDIR /taf
 COPY testdata ./testdata
 COPY --from=build /taf-server .
 COPY web ./web
+COPY step1.txt .
 ENTRYPOINT ["./taf-server"]
