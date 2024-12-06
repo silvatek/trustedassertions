@@ -8,6 +8,8 @@ steps:
         go build -v -o /workspace/taf-server ./cmd/server
         go test -timeout 3m ./...
         ls -lh /workspace
+    env:
+      - 'CGO_ENABLED=0'
     id: Build and Test
   - name: gcr.io/cloud-builders/docker
     args:
