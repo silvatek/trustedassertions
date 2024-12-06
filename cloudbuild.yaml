@@ -5,6 +5,8 @@ steps:
       - -c
       - |
         go test -timeout 3m ./...
+        echo "Step 1 data" > /workspace/step1.txt &&
+        ls -l /workspace
     id: Test
   - name: gcr.io/cloud-builders/docker
     args:
