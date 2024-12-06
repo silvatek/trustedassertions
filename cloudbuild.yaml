@@ -5,6 +5,8 @@ steps:
       - -c
       - |
         go test -timeout 3m ./...
+        go build ./internal/...
+        go build -v -o /taf-server ./cmd/server
         echo "Step 1 data" > /workspace/step1.txt &&
         ls -l /workspace
     id: Test
