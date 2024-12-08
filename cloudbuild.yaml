@@ -12,7 +12,7 @@ steps:
         go test -coverprofile coverage.out -timeout 3m ./...
         go tool cover -html coverage.out -o /workspace/coverage-${SHORT_SHA}.html
         ls /go
-        ./gcs-cacher -bucket "gs://tabuild" -cache "go-mod" -dir "/go/pkg/mod"
+        ./gcs-cacher -bucket "tabuild" -cache "go-mod" -dir "/go/pkg/mod"
     env:
       - 'CGO_ENABLED=0'
     id: Build and Test
