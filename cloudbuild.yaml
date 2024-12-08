@@ -4,15 +4,14 @@ steps:
     args:
       - -c
       - |
-        wget -O gcs-cacher.tgz https://github.com/sethvargo/gcs-cacher/releases/download/v0.1.3/gcs-cacher_0.1.3_linux_amd64.tgz 
+        wget -nv -O gcs-cacher.tgz https://github.com/sethvargo/gcs-cacher/releases/download/v0.1.3/gcs-cacher_0.1.3_linux_amd64.tgz 
         tar -xvzf gcs-cacher.tgz
-        ls -l
         ./gcs-cacher -bucket "tabuild" -restore "go-mod" -dir "/go/pkg/mod"
+        echo Building...
         go build ./internal/...
         go build -v -o /workspace/taf-server ./cmd/server
         go test -coverprofile coverage.out -timeout 3m ./...
         go tool cover -html coverage.out -o /workspace/coverage-${SHORT_SHA}.html
-        ls /go
         ./gcs-cacher -bucket "tabuild" -cache "go-mod" -dir "/go/pkg/mod"
     env:
       - 'CGO_ENABLED=0'
