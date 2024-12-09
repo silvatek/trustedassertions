@@ -6,16 +6,17 @@ steps:
       - |
         wget -nv -O gcs-cacher.tgz https://github.com/sethvargo/gcs-cacher/releases/download/v0.1.3/gcs-cacher_0.1.3_linux_amd64.tgz 
         tar -xvzf gcs-cacher.tgz
-        ./gcs-cacher -bucket "tabuild" -restore "go-mod" -dir "/go/pkg/mod"
+        ./gcs-cacher -bucket "tabuild" -restore "go-mod" -dir "/workspace/gomodcache"
         echo Building...
         go build ./internal/...
         go build -v -o /workspace/taf-server ./cmd/server
         echo Testing...
         go test -coverprofile coverage.out -timeout 3m ./...
         go tool cover -html coverage.out -o /workspace/coverage-${SHORT_SHA}.html
-        ./gcs-cacher -bucket "tabuild" -cache "go-mod" -dir "/go/pkg/mod"
+        ./gcs-cacher -bucket "tabuild" -cache "go-mod" -dir "/workspace/gomodcache"
     env:
       - 'CGO_ENABLED=0'
+      - 'GOMODCACHE=/workspace/gomodcache'
     id: Build and Test
   - name: gcr.io/cloud-builders/docker
     args:
