@@ -6,7 +6,7 @@ steps:
       - -c
       - |
         wget -nv -O gcs-cacher.tgz https://github.com/sethvargo/gcs-cacher/releases/download/v0.1.3/gcs-cacher_0.1.3_linux_amd64.tgz 
-        tar -xvzf gcs-cacher.tgz
+        tar -xzf gcs-cacher.tgz
         ./gcs-cacher -bucket "tabuild" -restore "go-mod" -dir "/workspace/gomodcache"
         echo Building...
         go install ./internal/...
