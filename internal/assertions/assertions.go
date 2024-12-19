@@ -112,9 +112,6 @@ func (a *Assertion) Type() string {
 }
 
 func (a *Assertion) Content() string {
-	if a.content == "" {
-		log.Errorf("Attempting to get URI for empty assertion content")
-	}
 	return a.content
 }
 

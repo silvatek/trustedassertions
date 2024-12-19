@@ -15,6 +15,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/entities"
 	. "silvatek.uk/trustedassertions/internal/references"
+	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
 func TestJwtSymmetric(t *testing.T) {
@@ -258,5 +259,79 @@ func TestMakeReferenceable(t *testing.T) {
 		if itemType.String() != typeName {
 			t.Errorf("Unexpected type for %s: %v", key, itemType)
 		}
+	}
+}
+
+func TestParseContent(t *testing.T) {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	entity := entities.NewEntity("Signer", *big.NewInt(1234))
+	entity.MakeCertificate(privateKey)
+
+	PublicKeyResolver = TestResolver{
+		entity: entity,
+	}
+
+	assertion := NewAssertion("IsTrue")
+	assertion.SetAssertingEntity(entity)
+	assertion.Subject = "hash://sha256/123456"
+
+	assertion.MakeJwt(privateKey)
+
+	content := assertion.content
+
+	assertion2 := Assertion{}
+	err := assertion2.ParseContent(content)
+
+	if err != nil {
+		t.Errorf("Error parsing content: %v", err)
+	}
+	if assertion.Category != "IsTrue" {
+		t.Errorf("Unexpected assertion categgory: %s", assertion2.Category)
+	}
+}
+
+func TestParseEmptyContent(t *testing.T) {
+	assertion := Assertion{}
+	err := assertion.ParseContent("")
+	if err == nil {
+		t.Error("Should not be able to parse empty content")
+	}
+}
+
+func TestAssertiontextContent(t *testing.T) {
+	assertion := Assertion{}
+	assertion.SetSummary("Testing")
+	if assertion.TextContent() != "" {
+		t.Errorf("Assertions should not have text content")
+	}
+}
+
+func TestAssertionUri(t *testing.T) {
+	a := Assertion{}
+	if a.Uri() != refs.ERROR_URI {
+		t.Error("Empty assertion does not have error URI")
+	}
+	a.content = "Testing"
+	if a.Uri() == refs.ERROR_URI {
+		t.Error("Non-empty assertion does has error URI")
+	}
+}
+
+func TestAssertionCategory(t *testing.T) {
+	testdata := map[string]string{
+		"IsTrue":  "is true",
+		"IsFalse": "is false",
+		"IsSame":  "IsSame",
+		"":        "",
+	}
+	for key, expected := range testdata {
+		actual := CategoryDescription(key, "en")
+		if actual != expected {
+			t.Errorf("Unexpected category description for %s: %s", key, actual)
+		}
+	}
+
+	if CategoryDescription("IsTrue", "fr") != "IsTrue" {
+		t.Error("Non-English description does not equal category")
 	}
 }

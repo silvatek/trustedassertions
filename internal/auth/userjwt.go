@@ -28,12 +28,7 @@ func MakeUserJwt(userId string, jwtKey []byte) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signed, err := token.SignedString(jwtKey)
-	if err != nil {
-		return "", err
-	}
-
-	return signed, nil
+	return token.SignedString(jwtKey)
 }
 
 func ParseUserJwt(token string, jwtKey []byte) (string, error) {

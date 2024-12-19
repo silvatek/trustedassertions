@@ -89,38 +89,49 @@ func WriteLog(ctx context.Context, level string, template string, args ...interf
 func WriteNamedLog(ctx context.Context, output io.Writer, structured bool, name string, level string, template string, args ...interface{}) {
 	if structured {
 		encoder = json.NewEncoder(output)
-		entry := LogEntry{
-			Severity:  strings.TrimSpace(level),
-			Timestamp: time.Now(),
-			Message:   fmt.Sprintf(template, args...),
-		}
-
-		labels := map[string]string{
-			"appname":    "trustedassertions",
-			"loggername": name,
-		}
-
-		data, ok := appcontext.ContextData(ctx)
-		if ok {
-			labels["reqPath"] = data.ReqPath
-			labels["traceparent"] = data.TraceParent
-			entry.HttpRequest.RequestUrl = data.ReqPath
-			entry.HttpRequest.RequestMethod = data.ReqMethod
-			entry.TraceID, entry.SpanID = traceId(data.TraceParent)
-			entry.Sampled = true
-		}
-
-		entry.Labels = labels
-
+		entry := makeLogEntry(ctx, level, name, template, args...)
 		encoder.Encode(entry)
-
 	} else {
-		if name == "" {
-			fmt.Fprintf(output, level+" "+template+"\n", args...)
-		} else {
-			fmt.Fprintf(output, level+" ["+name+"] "+template+"\n", args...)
-		}
+		entry := simpleLogMessage(name, level, template, args...)
+		fmt.Fprintln(output, entry)
 	}
+}
+
+func simpleLogMessage(name string, level string, template string, args ...interface{}) string {
+	var template1 string
+	if name == "" {
+		template1 = level + " " + template
+	} else {
+		template1 = level + " [" + name + "] " + template
+	}
+
+	return fmt.Sprintf(template1, args...)
+}
+
+func makeLogEntry(ctx context.Context, level string, name string, template string, args ...interface{}) LogEntry {
+	entry := LogEntry{
+		Severity:  strings.TrimSpace(level),
+		Timestamp: time.Now(),
+		Message:   fmt.Sprintf(template, args...),
+	}
+
+	labels := map[string]string{
+		"appname":    "trustedassertions",
+		"loggername": name,
+	}
+
+	data, ok := appcontext.ContextData(ctx)
+	if ok {
+		labels["reqPath"] = data.ReqPath
+		labels["traceparent"] = data.TraceParent
+		entry.HttpRequest.RequestUrl = data.ReqPath
+		entry.HttpRequest.RequestMethod = data.ReqMethod
+		entry.TraceID, entry.SpanID = traceId(data.TraceParent)
+		entry.Sampled = true
+	}
+
+	entry.Labels = labels
+	return entry
 }
 
 func traceId(traceparent string) (string, string) {

@@ -91,3 +91,14 @@ func TestKeyRefs(t *testing.T) {
 		t.Error("Expected user to not have different key after addition")
 	}
 }
+
+func TestParseBadJwt(t *testing.T) {
+	jwt, err := ParseUserJwt("broken", []byte("badkey"))
+
+	if err == nil {
+		t.Error("Parsing broken JWT did not return an error")
+	}
+	if jwt != "" {
+		t.Error("Parsing broken JWT did not return an empty string")
+	}
+}
