@@ -44,3 +44,20 @@ func TestSearchWords(t *testing.T) {
 		}
 	}
 }
+
+func TestWordsEqual(t *testing.T) {
+	words0 := []string{"Red", "Cat"}
+	words1 := []string{"Red", "Cat"}
+	words2 := []string{"Cat"}
+	words3 := []string{"Blue", "Cat"}
+
+	if !WordsEqual(words0, words1) {
+		t.Errorf("Same word lists should be equal")
+	}
+	if WordsEqual(words0, words2) {
+		t.Errorf("Different sized word lists should not be equal")
+	}
+	if WordsEqual(words0, words3) {
+		t.Errorf("Different content word lists should not be equal")
+	}
+}

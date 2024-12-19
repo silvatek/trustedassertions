@@ -114,6 +114,14 @@ func TestUriFromString(t *testing.T) {
 	}
 }
 
+func TestUriFromBytes(t *testing.T) {
+	bytes := []byte("jhsdflikfh")
+	uri := MakeUriB(bytes, "statement")
+	if uri.String() != "hash://sha256/6a687364666c696b6668?type=statement" {
+		t.Errorf("Unexpected hash URI: %s", uri.String())
+	}
+}
+
 func TestUriType(t *testing.T) {
 	uri := MakeUri("12345678", "")
 	if uri.HasType() {
@@ -171,5 +179,68 @@ func TestReferenceError(t *testing.T) {
 	}
 	if err.ParseContent("some text") == nil {
 		t.Errorf("Unexpected success parsing content")
+	}
+	if err.Type() != "ERROR" {
+		t.Errorf("Unexpected error type: %s", err.Type())
+	}
+	if err.Content() != "ERROR" {
+		t.Errorf("Unexpected error Content: %s", err.Content())
+	}
+	if err.Summary() != "ERROR" {
+		t.Errorf("Unexpected error Summary: %s", err.Summary())
+	}
+	if err.TextContent() != "ERROR" {
+		t.Errorf("Unexpected error TextContent: %s", err.TextContent())
+	}
+	if len(err.References()) != 0 {
+		t.Errorf("Unexpected error references: %d", len(err.References()))
+	}
+
+}
+
+type FakeItem struct {
+}
+
+func (i FakeItem) Uri() HashUri {
+	return UriFromString("")
+}
+
+func (i FakeItem) Type() string {
+	return "fake"
+}
+
+func (i FakeItem) Content() string {
+	return "Content"
+}
+
+func (i FakeItem) Summary() string {
+	return ""
+}
+
+func (i FakeItem) TextContent() string {
+	return ""
+}
+
+func (i FakeItem) References() []HashUri {
+	return []HashUri{}
+}
+func (i FakeItem) ParseContent(content string) error {
+	return nil
+}
+
+func TestUriForReferenceable(t *testing.T) {
+	var item FakeItem
+	uri := UriFor(item)
+
+	if uri.String() != "hash://sha256/47bd29075f8b8019f0beec6d86beda7c9bf67aaf05053dcbe0b3bcb63968517f?type=fake" {
+		t.Errorf("Unexpected URI for fake referenceable: %s", uri.String())
+	}
+
+	if uri.IsEmpty() {
+		t.Error("Fake URI should not be empty")
+	}
+
+	if uri.Len() == 0 {
+		t.Error("Fake URI should not be length 0")
 	}
 }
