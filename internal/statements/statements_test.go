@@ -38,4 +38,40 @@ func TestStatementMetaData(t *testing.T) {
 	if statement.Summary() != "Test statement" {
 		t.Errorf("Unexpected statement summary: %s", statement.Summary())
 	}
+
+	if statement.TextContent() != "Test statement" {
+		t.Errorf("Unexpected statement TextContent: %s", statement.TextContent())
+	}
+
+	if len(statement.References()) != 0 {
+		t.Errorf("Unexpected number of references: %d", len(statement.References()))
+	}
+}
+
+func TestStatementSummary(t *testing.T) {
+	short := NewStatement("Testing")
+	if short.Summary() != "Testing" {
+		t.Errorf("Incorrect short statement summary: %s", short.Summary())
+	}
+
+	long := NewStatement("Testing a really really really really really really really long statement")
+	if long.Summary() != "Testing a really really really really really really real..." {
+		t.Errorf("Incorrect long statement summary: %s", long.Summary())
+	}
+}
+
+func TestParseContent(t *testing.T) {
+	statement := Statement{}
+	statement.ParseContent("test 1234")
+	if statement.Content() != "test 1234" {
+		t.Errorf("Unexpected parsed statement content: %s", statement.Content())
+	}
+}
+
+func TestNormaliseNewlines(t *testing.T) {
+	source := []byte("1\n2\r\n3\r")
+	modified := NormalizeNewlines(source)
+	if len(modified) != 6 {
+		t.Errorf("Unexpected normalised text: %v", modified)
+	}
 }
