@@ -16,6 +16,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/entities"
 	. "silvatek.uk/trustedassertions/internal/references"
 	refs "silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 func TestJwtSymmetric(t *testing.T) {
@@ -90,12 +91,17 @@ func TestJwtAsymmetric(t *testing.T) {
 }
 
 type TestResolver struct {
-	entity entities.Entity
+	entity    entities.Entity
+	statement statements.Statement
 	NullResolver
 }
 
 func (r TestResolver) FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error) {
 	return r.entity, nil
+}
+
+func (r TestResolver) FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error) {
+	return r.statement, nil
 }
 
 func TestAssertionClaims(t *testing.T) {
@@ -230,6 +236,7 @@ func TestGuessContentType(t *testing.T) {
 		"Testing":                              "Statement",
 		"-----BEGIN CERTIFICATE----" + padding: "Entity",
 		"eyJ" + padding:                        "Assertion",
+		"<?xml version=\"1.0\"?><document>":    "Document",
 		"Some text" + padding:                  "Statement",
 		padding:                                "Statement",
 		padding[0:511]:                         "Statement",
@@ -333,5 +340,88 @@ func TestAssertionCategory(t *testing.T) {
 
 	if CategoryDescription("IsTrue", "fr") != "IsTrue" {
 		t.Error("Non-English description does not equal category")
+	}
+}
+
+func TestNullResolver(t *testing.T) {
+	ctx := context.Background()
+	r := NullResolver{}
+
+	var err error
+
+	_, err = r.FetchAssertion(ctx, ERROR_URI)
+	assertErrorNotImplemented(err, t)
+
+	_, err = r.FetchStatement(ctx, ERROR_URI)
+	assertErrorNotImplemented(err, t)
+
+	_, err = r.FetchEntity(ctx, ERROR_URI)
+	assertErrorNotImplemented(err, t)
+
+	_, err = r.FetchDocument(ctx, ERROR_URI)
+	assertErrorNotImplemented(err, t)
+
+	_, err = r.FetchKey(ERROR_URI)
+	assertErrorNotImplemented(err, t)
+
+	_, err = r.FetchRefs(ctx, ERROR_URI)
+	assertErrorNotImplemented(err, t)
+
+}
+
+func assertErrorNotImplemented(err error, t *testing.T) {
+	if err != ErrNotImplemented {
+		t.Error("Expected ErrNotImplemented")
+	}
+}
+
+func TestNewBadReferenceable(t *testing.T) {
+	if NewReferenceable("broken") != nil {
+		t.Error("New broken referenceable was not null")
+	}
+}
+
+func TestSummariseAssertion(t *testing.T) {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	entity := entities.NewEntity("Tester", *big.NewInt(1234))
+	entity.MakeCertificate(privateKey)
+
+	statement := *statements.NewStatement("Some statement")
+	resolver := TestResolver{entity: entity, statement: statement}
+
+	assertion := NewAssertion("IsTrue")
+	assertion.SetAssertingEntity(entity)
+	assertion.Subject = statement.Uri().String()
+
+	summary := SummariseAssertion(context.Background(), assertion, nil, resolver)
+
+	if summary != "Tester claims that 'Some statement' is true" {
+		t.Errorf("Unexpected assertion summary: %s", summary)
+	}
+
+	cache := make(ReferenceMap)
+	cache[statement.Uri()] = &statement
+	cache[entity.Uri()] = &entity
+
+	summary = SummariseAssertion(context.Background(), assertion, cache, resolver)
+
+	if summary != "Tester claims that 'Some statement' is true" {
+		t.Errorf("Unexpected assertion summary (2): %s", summary)
+	}
+
+}
+
+func TestAssertionReferences(t *testing.T) {
+	entity := entities.NewEntity("Tester", *big.NewInt(0))
+	statement := statements.NewStatement("Some statement")
+
+	assertion := NewAssertion("IsTrue")
+	assertion.SetAssertingEntity(entity)
+	assertion.Subject = statement.Uri().String()
+
+	refs := assertion.References()
+
+	if len(refs) != 2 {
+		t.Errorf("Unexpected number of references: %d", len(refs))
 	}
 }

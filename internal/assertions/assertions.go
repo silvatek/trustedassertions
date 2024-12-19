@@ -161,22 +161,29 @@ func CategoryDescription(category string, language string) string {
 	}
 }
 
-func SummariseAssertion(ctx context.Context, assertion Assertion, target *references.Referenceable, resolver Resolver) string {
-	issuerUri := references.UriFromString(assertion.Issuer)
+func SummariseAssertion(ctx context.Context, assertion Assertion, cache references.ReferenceMap, resolver Resolver) string {
+	if cache == nil {
+		cache = make(refs.ReferenceMap)
+	}
+
 	var issuerName string
 
-	if target != nil && issuerUri.Equals((*target).Uri()) {
-		issuerName = (*target).Summary()
+	issuerUri := references.UriFromString(assertion.Issuer)
+	cached, found := cache[issuerUri]
+	if found {
+		issuerName = cached.Summary()
 	} else {
+
 		entity, _ := resolver.FetchEntity(ctx, issuerUri)
 		issuerName = entity.Summary()
 	}
 
-	subjectUri := references.UriFromString(assertion.Subject)
 	var subjectSummary string
 
-	if target != nil && subjectUri.Equals((*target).Uri()) {
-		subjectSummary = (*target).Summary()
+	subjectUri := references.UriFromString(assertion.Subject)
+	cached, found = cache[subjectUri]
+	if found {
+		subjectSummary = cached.Summary()
 	} else {
 		subject, _ := resolver.FetchStatement(ctx, subjectUri)
 		subjectSummary = subject.Summary()

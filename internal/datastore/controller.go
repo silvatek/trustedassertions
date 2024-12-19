@@ -95,7 +95,11 @@ func MakeSummary(ctx context.Context, target *references.Referenceable, ref *ref
 		} else {
 			assertion, _ = resolver.FetchAssertion(ctx, ref.Source)
 		}
-		summary := assertions.SummariseAssertion(ctx, assertion, target, resolver)
+		cache := make(references.ReferenceMap)
+		if target != nil {
+			cache[(*target).Uri()] = *target
+		}
+		summary := assertions.SummariseAssertion(ctx, assertion, cache, resolver)
 		ref.Summary = summary
 	default:
 		ref.Summary = "Unknown " + ref.Source.Kind()

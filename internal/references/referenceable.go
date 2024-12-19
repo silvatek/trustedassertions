@@ -19,6 +19,9 @@ type Referenceable interface {
 	ParseContent(content string) error
 }
 
+// A map of URIs to the Referenceables they refer to
+type ReferenceMap map[HashUri]Referenceable
+
 var REF_ERROR ReferenceError
 
 type ReferenceError struct {
