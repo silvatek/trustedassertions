@@ -6,15 +6,19 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
-	"testing"
 
 	"github.com/PuerkitoBio/goquery"
 	// "silvatek.uk/trustedassertions/internal/auth"
 )
 
+// TestContext is compatible with testing.T but can also be mocked.
+type TestContext interface {
+	Error(args ...any)
+	Errorf(format string, args ...any)
+}
+
 type WebTest struct {
-	t *testing.T
-	// User       *auth.User
+	t          TestContext
 	Server     *httptest.Server
 	Passwd     string
 	AuthCookie *http.Cookie
@@ -22,7 +26,9 @@ type WebTest struct {
 }
 
 func (wt *WebTest) Close() {
-	wt.Server.Close()
+	if wt.Server != nil && wt.Server.Config != nil {
+		wt.Server.Close()
+	}
 }
 
 type WebPage struct {
@@ -35,7 +41,7 @@ type WebPage struct {
 	html         *goquery.Document
 }
 
-func MakeWebTest(t *testing.T) *WebTest {
+func MakeWebTest(t TestContext) *WebTest {
 	wt := WebTest{t: t}
 
 	jar, _ := cookiejar.New(nil)
@@ -125,8 +131,8 @@ func (page *WebPage) AssertHtmlQuery(query string, expected string) {
 	if !page.ok() {
 		return
 	}
-	results := page.html.Find(query)
-	if !strings.Contains(results.Text(), expected) {
+	results := page.Find(query)
+	if !strings.Contains(results, expected) {
 		page.wt.t.Errorf("Did not find `%s` in [%s]", expected, query)
 	}
 }
@@ -159,7 +165,6 @@ func (page *WebPage) AssertNoCookie(name string) {
 			}
 		}
 	}
-
 }
 
 func (page *WebPage) Text() string {
