@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"image"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -36,5 +37,16 @@ func TestMakeQrCode(t *testing.T) {
 	}
 	if image.Bounds().Max.X != image.Bounds().Max.Y {
 		t.Error("Image is not square")
+	}
+}
+
+func TestQrCodeGenerator(t *testing.T) {
+	var resp httptest.ResponseRecorder
+	req := httptest.NewRequest("GET", "/qrcode?hash=1234&kind=test", nil)
+
+	qrCodeGenerator(&resp, req)
+
+	if resp.Result().Header.Get("Content-Type") != "image/png" {
+		t.Errorf("Unexpected content type: %s", resp.Result().Header.Get("Content-Type"))
 	}
 }
