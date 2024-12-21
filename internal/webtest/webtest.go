@@ -1,6 +1,7 @@
 package webtest
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -89,6 +90,7 @@ func (wt *WebTest) PostFormData(path string, data url.Values) *WebPage {
 	response, err := wt.Client.Do(req)
 	if err != nil {
 		page.requestError = err
+		wt.t.Errorf("Error posting %s, %v", url, page.requestError)
 		return &page
 	}
 
@@ -108,6 +110,19 @@ func (page *WebPage) ok() bool {
 	return (page.requestError == nil) && (page.statusCode < 400) && (page.htmlError == nil)
 }
 
+func (page *WebPage) errorSummary() string {
+	if page.requestError != nil {
+		return fmt.Sprintf("Request error: %v", page.requestError)
+	}
+	if page.statusCode >= 400 {
+		return fmt.Sprintf("Error response code: %d", page.statusCode)
+	}
+	if page.htmlError != nil {
+		return fmt.Sprintf("HTML error: %v", page.htmlError)
+	}
+	return ""
+}
+
 func (page *WebPage) Find(q string) string {
 	if !page.ok() {
 		return ""
@@ -116,14 +131,14 @@ func (page *WebPage) Find(q string) string {
 }
 
 func (page *WebPage) AssertSuccessResponse() {
-	if page.statusCode >= 400 {
-		page.wt.t.Errorf("Response code indicates error: %d", page.statusCode)
+	if !page.ok() {
+		page.wt.t.Error(page.errorSummary())
 	}
 }
 
 func (page *WebPage) AssertErrorResponse() {
-	if page.statusCode < 400 {
-		page.wt.t.Errorf("Response code does not indicate error: %d", page.statusCode)
+	if page.ok() {
+		page.wt.t.Error("Unexpected success response")
 	}
 }
 
