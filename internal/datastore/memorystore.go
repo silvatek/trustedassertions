@@ -165,7 +165,7 @@ func (ds *InMemoryDataStore) Search(ctx context.Context, query string) ([]Search
 			uri := UnescapeUri(key, assertions.GuessContentType(value.Content))
 			result := SearchResult{
 				Uri:       uri,
-				Content:   summarise(uri, value.Content),
+				Content:   Summarise(uri, value.Content),
 				Relevance: 0.8,
 			}
 			results = append(results, result)

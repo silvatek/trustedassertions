@@ -18,6 +18,30 @@ import (
 
 var ActiveDataStore DataStore
 
+func Summarise(uri references.HashUri, content string) string {
+	kind := strings.ToLower(uri.Kind())
+	switch kind {
+	case "statement":
+		return leftChars(content, 100)
+	case "entity":
+		entity := entities.ParseCertificate(content)
+		return entity.CommonName
+	case "document":
+		doc, _ := docs.MakeDocument(content)
+		return doc.Summary()
+	default:
+		return content
+	}
+}
+
+func leftChars(text string, maxChars int) string {
+	if len(text) > maxChars {
+		return text[0 : maxChars-1]
+	} else {
+		return text
+	}
+}
+
 func CreateAssertion(ctx context.Context, statementUri references.HashUri, entityUri references.HashUri, kind string, confidence float64, privateKey *rsa.PrivateKey) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
 	assertion.Subject = statementUri.String()

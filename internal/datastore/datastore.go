@@ -2,7 +2,6 @@ package datastore
 
 import (
 	"context"
-	"strings"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
 	"silvatek.uk/trustedassertions/internal/auth"
@@ -63,28 +62,4 @@ var log = logging.GetLogger("datastore")
 
 func (e *KeyNotFoundError) Error() string {
 	return "Key not found"
-}
-
-func summarise(uri refs.HashUri, content string) string {
-	kind := strings.ToLower(uri.Kind())
-	switch kind {
-	case "statement":
-		return leftChars(content, 100)
-	case "entity":
-		entity := entities.ParseCertificate(content)
-		return entity.CommonName
-	case "document":
-		doc, _ := docs.MakeDocument(content)
-		return doc.Summary()
-	default:
-		return content
-	}
-}
-
-func leftChars(text string, maxChars int) string {
-	if len(text) > maxChars {
-		return text[0 : maxChars-1]
-	} else {
-		return text
-	}
 }
