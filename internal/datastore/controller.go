@@ -18,30 +18,6 @@ import (
 
 var ActiveDataStore DataStore
 
-func Summarise(uri references.HashUri, content string) string {
-	kind := strings.ToLower(uri.Kind())
-	switch kind {
-	case "statement":
-		return leftChars(content, 100)
-	case "entity":
-		entity := entities.ParseCertificate(content)
-		return entity.CommonName
-	case "document":
-		doc, _ := docs.MakeDocument(content)
-		return doc.Summary()
-	default:
-		return content
-	}
-}
-
-func leftChars(text string, maxChars int) string {
-	if len(text) > maxChars {
-		return text[0 : maxChars-1]
-	} else {
-		return text
-	}
-}
-
 func CreateAssertion(ctx context.Context, statementUri references.HashUri, entityUri references.HashUri, kind string, confidence float64, privateKey *rsa.PrivateKey) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
 	assertion.Subject = statementUri.String()
@@ -70,7 +46,7 @@ func CreateReferenceWithSummary(ctx context.Context, source references.HashUri, 
 		Source: source,
 		Target: target,
 	}
-	MakeSummary(ctx, nil, &ref, ActiveDataStore)
+	MakeReferenceSummary(ctx, nil, &ref, ActiveDataStore)
 	ActiveDataStore.StoreRef(ctx, ref)
 }
 
@@ -101,7 +77,8 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 	return assertion, nil
 }
 
-func MakeSummary(ctx context.Context, target *references.Referenceable, ref *references.Reference, resolver assertions.Resolver) {
+// Populates the summary field of a Reference based on the source of the reference.
+func MakeReferenceSummary(ctx context.Context, target *references.Referenceable, ref *references.Reference, resolver assertions.Resolver) {
 	switch ref.Source.Kind() {
 	case "statement":
 		statement, _ := resolver.FetchStatement(ctx, ref.Source)

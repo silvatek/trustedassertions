@@ -2,10 +2,16 @@ package datastore
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"math/big"
 	"strings"
 	"testing"
+	"time"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/docs"
+	"silvatek.uk/trustedassertions/internal/entities"
 	"silvatek.uk/trustedassertions/internal/references"
 )
 
@@ -21,11 +27,6 @@ func TestMakeSummary(t *testing.T) {
 		t.Error(err)
 	}
 
-	// refs := assertion.References()
-
-	// if len(refs) != 2 {
-	// 	t.Errorf("Did not find exactly 2 references in assertion: %d", len(refs))
-	// }
 	ref := references.Reference{
 		Source:  assertion.Uri(),
 		Target:  issuerUri,
@@ -33,7 +34,7 @@ func TestMakeSummary(t *testing.T) {
 	}
 
 	target := references.Referenceable(assertion)
-	MakeSummary(context.TODO(), &target, &ref, ActiveDataStore)
+	MakeReferenceSummary(context.TODO(), &target, &ref, ActiveDataStore)
 
 	if ref.Summary != "Unit Tester claims that 'Test 123' is true" {
 		t.Errorf("Unexpected assertion summary: %s", ref.Summary)
@@ -93,5 +94,71 @@ func TestCreateDocumentAndAssertions(t *testing.T) {
 	_, err = ActiveDataStore.FetchAssertion(ctx, references.UriFromString(doc.Sections[0].Paragraphs[1].Spans[0].Assertion))
 	if err != nil {
 		t.Errorf("Could not load assertion 2: %v", err)
+	}
+}
+
+func TestCreateStatement(t *testing.T) {
+	ActiveDataStore = NewInMemoryDataStore()
+	ctx := context.Background()
+
+	content := "Testing " + time.Now().Format(time.RFC3339)
+
+	uri := CreateStatement(ctx, content)
+	statement, err := ActiveDataStore.FetchStatement(ctx, uri)
+
+	if err != nil {
+		t.Errorf("Error creating statement: %v", err)
+	}
+	if statement.Content() != content {
+		t.Errorf("Unexpected statement content: %s", statement.Content())
+	}
+}
+
+func TestCreateDocumentWithMissingEntity(t *testing.T) {
+	ActiveDataStore = NewInMemoryDataStore()
+	ctx := context.Background()
+
+	_, err := CreateDocumentAndAssertions(ctx, "<docco/>", references.MakeUri("1234", "entity"))
+
+	if err == nil {
+		t.Error("Creating document for missing entity did not fail")
+	}
+}
+
+func TestCreateAssertionMissingEntity(t *testing.T) {
+	ActiveDataStore = NewInMemoryDataStore()
+	ctx := context.Background()
+
+	entity := entities.NewEntity("tester", *big.NewInt(1234))
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	entity.MakeCertificate(privateKey)
+
+	_, err := CreateStatementAndAssertion(ctx, "testing", references.MakeUri("1234", "entity"), "IsTrue", 0.9)
+
+	if err == nil {
+		t.Errorf("Unexpected lack of error with no key stored")
+	}
+
+	ActiveDataStore.StoreKey(entity.Uri(), entities.PrivateKeyToString(privateKey))
+
+	_, err = CreateStatementAndAssertion(ctx, "testing", entity.Uri(), "IsTrue", 0.9)
+
+	if err == nil {
+		t.Errorf("Unexpected lack of error with no entity stored")
+	}
+}
+
+func TestMakeDocumentReferenceSummary(t *testing.T) {
+	ActiveDataStore = NewInMemoryDataStore()
+	ctx := context.Background()
+
+	doc, _ := docs.MakeDocument("<document><metadata><title>Test 123</title></metadata></document>")
+	ActiveDataStore.Store(ctx, doc)
+
+	ref := references.Reference{Source: doc.Uri()}
+	MakeReferenceSummary(ctx, nil, &ref, ActiveDataStore)
+
+	if ref.Summary != "Test 123" {
+		t.Errorf("Unexpected reference summary: %s", ref.Summary)
 	}
 }

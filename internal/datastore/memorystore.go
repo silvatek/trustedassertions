@@ -56,7 +56,7 @@ func (ds *InMemoryDataStore) StoreRaw(uri HashUri, content string) {
 }
 
 func (ds *InMemoryDataStore) Store(ctx context.Context, value Referenceable) {
-	ds.StoreRecord(value.Uri(), DbRecord{Uri: value.Uri().String(), DataType: value.Type(), Content: value.Content()})
+	ds.StoreRecord(value.Uri(), DbRecord{Uri: value.Uri().String(), DataType: value.Type(), Content: value.Content(), Summary: value.Summary()})
 }
 
 func (ds *InMemoryDataStore) StoreKey(entityUri HashUri, key string) {
@@ -164,8 +164,9 @@ func (ds *InMemoryDataStore) Search(ctx context.Context, query string) ([]Search
 		if strings.Contains(strings.ToLower(value.Content), query) {
 			uri := UnescapeUri(key, assertions.GuessContentType(value.Content))
 			result := SearchResult{
-				Uri:       uri,
-				Content:   Summarise(uri, value.Content),
+				Uri: uri,
+				//Content:   Summarise(uri, value.Content),
+				Content:   value.Summary,
 				Relevance: 0.8,
 			}
 			results = append(results, result)

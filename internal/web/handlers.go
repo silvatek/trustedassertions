@@ -184,7 +184,7 @@ func enrichReferencesTo(ctx context.Context, target ref.Referenceable, refs []re
 			wg.Add(1)
 			go func(ref *ref.Reference) {
 				// Construct a summary for the reference
-				datastore.MakeSummary(ctx, &target, ref, datastore.ActiveDataStore)
+				datastore.MakeReferenceSummary(ctx, &target, ref, datastore.ActiveDataStore)
 
 				// Store the newly summarised reference back in the datastore
 				datastore.ActiveDataStore.StoreRef(ctx, *ref)
