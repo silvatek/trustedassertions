@@ -162,3 +162,37 @@ func TestMakeDocumentReferenceSummary(t *testing.T) {
 		t.Errorf("Unexpected reference summary: %s", ref.Summary)
 	}
 }
+
+func TestMakeAssertionReferenceSummary(t *testing.T) {
+	ActiveDataStore = NewInMemoryDataStore()
+	assertions.PublicKeyResolver = ActiveDataStore
+	ctx := context.Background()
+
+	entityUri := CreateEntityWithKey(ctx, "Tester")
+	assertion, err := CreateStatementAndAssertion(ctx, "Testing", entityUri, assertions.IsTrue.String(), 0.9)
+
+	if err != nil {
+		t.Errorf("Error creating assertion: %v", err)
+		return
+	}
+
+	var ref references.Reference
+	ref.Source = assertion.Uri()
+
+	MakeReferenceSummary(ctx, nil, &ref, ActiveDataStore)
+
+	if ref.Summary != "Tester claims that 'Testing' is true" {
+		t.Errorf("Unexpected reference summary: %s", ref.Summary)
+	}
+}
+
+func TestMakeUnknownReferenceSummary(t *testing.T) {
+	var ref references.Reference
+	ref.Source = references.MakeUri("1234", "unknown")
+
+	MakeReferenceSummary(context.Background(), nil, &ref, nil)
+
+	if ref.Summary != "Unknown unknown" {
+		t.Errorf("Unexpected reference summary: %s", ref.Summary)
+	}
+}
