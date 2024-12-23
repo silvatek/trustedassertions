@@ -1,6 +1,7 @@
 package assertions
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/entities"
+	"silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
 	refs "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
@@ -423,5 +425,35 @@ func TestAssertionReferences(t *testing.T) {
 
 	if len(refs) != 2 {
 		t.Errorf("Unexpected number of references: %d", len(refs))
+	}
+}
+
+func TestMakeJwtError(t *testing.T) {
+	var logs bytes.Buffer
+	log = logging.Logger{
+		Writer: &logs,
+	}
+
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey.E = 0
+
+	assertion := NewAssertion("IsTrue")
+	assertion.MakeJwt(privateKey)
+
+	logged := logs.String()
+	if !strings.Contains(logged, "Error creating signed JWT") {
+		t.Errorf("Unexpected log content: %s", logged)
+	}
+
+	if assertion.content != "" {
+		t.Errorf("Unexpected assertion content after failed MakeJwt: %s", assertion.content)
+	}
+}
+
+func TestParseEmptyJwt(t *testing.T) {
+	_, err := ParseAssertionJwt("")
+
+	if err == nil {
+		t.Errorf("Parsing empty JWT did not result in an error")
 	}
 }

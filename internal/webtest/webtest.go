@@ -9,17 +9,12 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"silvatek.uk/trustedassertions/internal/testcontext"
 	// "silvatek.uk/trustedassertions/internal/auth"
 )
 
-// TestContext is compatible with testing.T but can also be mocked.
-type TestContext interface {
-	Error(args ...any)
-	Errorf(format string, args ...any)
-}
-
 type WebTest struct {
-	t          TestContext
+	t          testcontext.TestContext
 	Server     *httptest.Server
 	Passwd     string
 	AuthCookie *http.Cookie
@@ -42,7 +37,7 @@ type WebPage struct {
 	html         *goquery.Document
 }
 
-func MakeWebTest(t TestContext) *WebTest {
+func MakeWebTest(t testcontext.TestContext) *WebTest {
 	wt := WebTest{t: t}
 
 	jar, _ := cookiejar.New(nil)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"silvatek.uk/trustedassertions/internal/testcontext"
 )
 
 func MockHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,24 +26,6 @@ func MockHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 	w.Write([]byte("<html><body><h1>Test Heading</h1></body></html>"))
-}
-
-type MockTestContext struct {
-	ErrorsFound bool
-}
-
-func (t *MockTestContext) Error(args ...any) {
-	t.ErrorsFound = true
-}
-
-func (t *MockTestContext) Errorf(format string, args ...any) {
-	t.ErrorsFound = true
-}
-
-func (t *MockTestContext) AssertErrorsFound(t1 *testing.T) {
-	if !t.ErrorsFound {
-		t.Error("No errors reported to MockTestContext")
-	}
 }
 
 func SetupTestServer(wt *WebTest) {
@@ -74,7 +57,7 @@ func TestWebTesterHappyPath(t *testing.T) {
 }
 
 func TestRequestError(t *testing.T) {
-	t1 := MockTestContext{}
+	t1 := testcontext.MockTestContext{}
 	wt := MakeWebTest(&t1)
 
 	wt.Server = &httptest.Server{}
@@ -103,7 +86,7 @@ func TestExpectedErrorResponse(t *testing.T) {
 }
 
 func TestUnexpectedErrorResponse(t *testing.T) {
-	t1 := MockTestContext{}
+	t1 := testcontext.MockTestContext{}
 	wt := MakeWebTest(&t1)
 	SetupTestServer(wt)
 	defer wt.Close()
@@ -115,7 +98,7 @@ func TestUnexpectedErrorResponse(t *testing.T) {
 }
 
 func TestUnexpectedSuccessResponse(t *testing.T) {
-	t1 := MockTestContext{}
+	t1 := testcontext.MockTestContext{}
 	wt := MakeWebTest(&t1)
 	SetupTestServer(wt)
 	defer wt.Close()
@@ -137,7 +120,7 @@ func TestCookiePresent(t *testing.T) {
 }
 
 func TestCookieIncorrectlyFound(t *testing.T) {
-	t1 := MockTestContext{}
+	t1 := testcontext.MockTestContext{}
 	wt := MakeWebTest(&t1)
 	SetupTestServer(wt)
 	defer wt.Close()
@@ -150,7 +133,7 @@ func TestCookieIncorrectlyFound(t *testing.T) {
 }
 
 func TestExpectedCookieNotFound(t *testing.T) {
-	t1 := MockTestContext{}
+	t1 := testcontext.MockTestContext{}
 	wt := MakeWebTest(&t1)
 	SetupTestServer(wt)
 	defer wt.Close()
@@ -182,7 +165,7 @@ func MakeAuthCookie(userId string) *http.Cookie {
 }
 
 func TestBrokenPage(t *testing.T) {
-	wtc := MockTestContext{}
+	wtc := testcontext.MockTestContext{}
 	wt := MakeWebTest(&wtc)
 	page := WebPage{wt: wt, htmlError: errors.New("request failed")}
 
@@ -217,7 +200,7 @@ func TestErrorSummary(t *testing.T) {
 }
 
 func TestPostErrorStatus(t *testing.T) {
-	t1 := MockTestContext{}
+	t1 := testcontext.MockTestContext{}
 	wt := MakeWebTest(&t1)
 	SetupTestServer(wt)
 	defer wt.Close()
@@ -229,7 +212,7 @@ func TestPostErrorStatus(t *testing.T) {
 }
 
 func TestElementNotfound(t *testing.T) {
-	wtc := MockTestContext{}
+	wtc := testcontext.MockTestContext{}
 	wt := MakeWebTest(&wtc)
 	SetupTestServer(wt)
 	defer wt.Close()

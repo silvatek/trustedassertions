@@ -65,25 +65,29 @@ func (a *Assertion) ParseContent(content string) error {
 }
 
 func ParseAssertionJwt(token string) (Assertion, error) {
-	template := Assertion{
+	assertion := Assertion{
 		RegisteredClaims: &jwt.RegisteredClaims{},
 	}
 
 	if token == "" {
-		return template, errors.New("unable to parse empty JWT")
+		return assertion, errors.New("unable to parse empty JWT")
 	}
 
-	parsed, err := jwt.ParseWithClaims(token, &template, verificationKey)
-	if err != nil {
-		return template, err
-	}
+	err := assertion.ParseContent(token)
 
-	if assertion, ok := parsed.Claims.(*Assertion); ok && parsed.Valid {
-		assertion.content = token
-		return *assertion, nil
-	} else {
-		return *assertion, errors.New("unable to parse JWT claims")
-	}
+	return assertion, err
+
+	// parsed, err := jwt.ParseWithClaims(token, &assertion, verificationKey)
+	// if err != nil {
+	// 	return assertion, err
+	// }
+
+	// if assertion, ok := parsed.Claims.(*Assertion); ok && parsed.Valid {
+	// 	assertion.content = token
+	// 	return *assertion, nil
+	// } else {
+	// 	return *assertion, errors.New("unable to parse JWT claims")
+	// }
 }
 
 func (a *Assertion) MakeJwt(privateKey *rsa.PrivateKey) {
