@@ -54,9 +54,9 @@ var PublicKeyResolver Resolver
 
 var log = logging.GetLogger("assertions")
 
-func NewAssertion(category string) Assertion {
+func NewAssertion(category AssertionType) Assertion {
 	return Assertion{
-		Category:   category,
+		Category:   category.String(),
 		Confidence: 0.0,
 		RegisteredClaims: &jwt.RegisteredClaims{
 			Audience: []string{DEFAULT_AUDIENCE},
@@ -98,18 +98,6 @@ func ParseAssertionJwt(token string) (Assertion, error) {
 	err := assertion.ParseContent(token)
 
 	return assertion, err
-
-	// parsed, err := jwt.ParseWithClaims(token, &assertion, verificationKey)
-	// if err != nil {
-	// 	return assertion, err
-	// }
-
-	// if assertion, ok := parsed.Claims.(*Assertion); ok && parsed.Valid {
-	// 	assertion.content = token
-	// 	return *assertion, nil
-	// } else {
-	// 	return *assertion, errors.New("unable to parse JWT claims")
-	// }
 }
 
 func (a *Assertion) MakeJwt(privateKey *rsa.PrivateKey) {

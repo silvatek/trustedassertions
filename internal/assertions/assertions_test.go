@@ -457,3 +457,12 @@ func TestParseEmptyJwt(t *testing.T) {
 		t.Errorf("Parsing empty JWT did not result in an error")
 	}
 }
+
+func TestAssertionTypes(t *testing.T) {
+	if AssertionTypeOf("IsTrue") != IsTrue {
+		t.Error("IsTrue assertion type not correctly identified")
+	}
+	if AssertionTypeOf("Something completely different") != Unknown {
+		t.Error("Unknown assertion type not correctly handled")
+	}
+}

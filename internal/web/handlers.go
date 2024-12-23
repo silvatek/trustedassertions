@@ -325,7 +325,7 @@ func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		assertion, err := datastore.CreateStatementAndAssertion(ctx, content, keyUri, "IsTrue", confidence)
+		assertion, err := datastore.CreateStatementAndAssertion(ctx, content, keyUri, assertions.IsTrue, confidence)
 		if err != nil {
 			HandleError(ctx, ErrorMakeAssertion.instance("Error making new statement and assertion"), w, r)
 			return
@@ -457,7 +457,7 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 		confidence, _ := strconv.ParseFloat(r.Form.Get("confidence"), 32)
 		kind := r.Form.Get("assertion_type")
 
-		assertion := datastore.CreateAssertion(ctx, su, entity.Uri(), kind, confidence, privateKey)
+		assertion := datastore.CreateAssertion(ctx, su, entity.Uri(), assertions.AssertionTypeOf(kind), confidence, privateKey)
 
 		// Redirect the user to the assertion
 		http.Redirect(w, r, assertion.Uri().WebPath(), http.StatusSeeOther)

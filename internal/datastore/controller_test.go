@@ -169,7 +169,7 @@ func TestMakeAssertionReferenceSummary(t *testing.T) {
 	ctx := context.Background()
 
 	entityUri := CreateEntityWithKey(ctx, "Tester")
-	assertion, err := CreateStatementAndAssertion(ctx, "Testing", entityUri, assertions.IsTrue.String(), 0.9)
+	assertion, err := CreateStatementAndAssertion(ctx, "Testing", entityUri, assertions.IsTrue, 0.9)
 
 	if err != nil {
 		t.Errorf("Error creating assertion: %v", err)

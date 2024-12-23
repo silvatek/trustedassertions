@@ -18,7 +18,7 @@ import (
 
 var ActiveDataStore DataStore
 
-func CreateAssertion(ctx context.Context, statementUri references.HashUri, entityUri references.HashUri, kind string, confidence float64, privateKey *rsa.PrivateKey) *assertions.Assertion {
+func CreateAssertion(ctx context.Context, statementUri references.HashUri, entityUri references.HashUri, kind assertions.AssertionType, confidence float64, privateKey *rsa.PrivateKey) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
 	assertion.Subject = statementUri.String()
 	assertion.IssuedAt = jwt.NewNumericDate(time.Now())
@@ -50,7 +50,7 @@ func CreateReferenceWithSummary(ctx context.Context, source references.HashUri, 
 	ActiveDataStore.StoreRef(ctx, ref)
 }
 
-func CreateStatementAndAssertion(ctx context.Context, content string, entityUri references.HashUri, kind string, confidence float64) (*assertions.Assertion, error) {
+func CreateStatementAndAssertion(ctx context.Context, content string, entityUri references.HashUri, kind assertions.AssertionType, confidence float64) (*assertions.Assertion, error) {
 	log.DebugfX(ctx, "Creating statement and assertion")
 
 	b64key, err := ActiveDataStore.FetchKey(entityUri)
@@ -148,7 +148,7 @@ func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri 
 				span := &doc.Sections[i].Paragraphs[j].Spans[k]
 				if span.Assertion != "" && !strings.HasPrefix(span.Assertion, "hash://") {
 					parts := strings.Split(span.Assertion, " ")
-					assertionType := parts[0]
+					assertionType := assertions.AssertionTypeOf(parts[0])
 					confidence, _ := strconv.ParseFloat(parts[1], 32)
 
 					assertion, _ := CreateStatementAndAssertion(ctx, span.Body, entityUri, assertionType, confidence)
