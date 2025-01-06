@@ -94,3 +94,15 @@ func TestEntityUriRoundTrip(t *testing.T) {
 		t.Errorf("Round trip URI mismatch: %s != %s", u1, u2)
 	}
 }
+
+func TestPrivateKeyToFromString(t *testing.T) {
+	key1, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+	keyStr := PrivateKeyToString(key1)
+
+	key2 := PrivateKeyFromString(keyStr)
+
+	if key2.N.Cmp(key1.N) != 0 {
+		t.Errorf("Key does not match after round trip: %v != %v", key2.N, key1.N)
+	}
+}
