@@ -38,6 +38,7 @@ func AddAttackHandlers(r *mux.Router) {
 // Respond with a 404 status code and no body
 func AttackHandler(w http.ResponseWriter, r *http.Request) {
 	log.DebugfX(appcontext.NewWebContext(r), "Dropping suspect request: %v", r.URL)
+	SetCacheControl(w, 7*24*60*60)
 	w.WriteHeader(404)
 }
 

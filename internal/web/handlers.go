@@ -31,6 +31,7 @@ var log = logging.GetLogger("web")
 
 func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeWebHandler)
+	r.HandleFunc("/web", HomeWebHandler)
 	r.HandleFunc("/web/statements/{hash}", ViewStatementWebHandler)
 	r.HandleFunc("/web/entities/{hash}", ViewEntityWebHandler)
 	r.HandleFunc("/web/assertions/{hash}", ViewAssertionWebHandler)
@@ -50,12 +51,27 @@ func AddHandlers(r *mux.Router) {
 	addAuthHandlers(r)
 	AddAttackHandlers(r)
 
-	staticDir := http.Dir(TemplateDir + "/static")
-	fs := http.FileServer(staticDir)
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
-	r.PathPrefix("/google").Handler(fs)
+	// staticDir := http.Dir(TemplateDir + "/static")
+	// fs := http.FileServer(staticDir)
+	// r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+	r.PathPrefix("/static").Handler(StaticHandler())
+	r.PathPrefix("/google").Handler(StaticHandler())
 
 	errors = make(map[string]AppError)
+}
+
+func StaticHandler() http.Handler {
+	staticDir := http.Dir(TemplateDir + "/static")
+	fs := http.FileServer(staticDir)
+	h := http.StripPrefix("/static", CacheControlWrapper(fs))
+	return h
+}
+
+func CacheControlWrapper(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		SetCacheControl(w, 5*60)
+		h.ServeHTTP(w, r)
+	})
 }
 
 type PageData struct {
@@ -88,6 +104,12 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		Detail:    data,
 	}
 
+	if r.URL.Path == "/" {
+		SetCacheControl(w, 10*60)
+	} else {
+		SetCacheControl(w, 0)
+	}
+
 	if pageName == "loggedout" {
 		SetAuthCookie("", w)
 	} else {
@@ -96,7 +118,7 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 
 	leftMenu := PageMenu{}
 	if pageName != "index" {
-		leftMenu.AddLink("Home", "/")
+		leftMenu.AddLink("Home", "/web")
 	}
 	for _, item := range menu {
 		leftMenu.AddItem(&item)
@@ -126,6 +148,10 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		msg := http.StatusText(http.StatusInternalServerError)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
+}
+
+func SetCacheControl(w http.ResponseWriter, cacheLifeInSeconds int) {
+	w.Header().Set("Cache-Control", "public, max-age="+strconv.Itoa(cacheLifeInSeconds))
 }
 
 func RenderWebPage(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
