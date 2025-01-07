@@ -43,7 +43,9 @@ func AddAttackHandlers(r *mux.Router) {
 func AttackHandler(w http.ResponseWriter, r *http.Request) {
 	log.DebugfX(appcontext.NewWebContext(r), "Dropping suspect request: %v", r.URL)
 	SetCacheControl(w, 7*24*60*60)
+	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(404)
+	w.Write([]byte("Not found"))
 }
 
 func RobotsTxtHandler(w http.ResponseWriter, r *http.Request) {
