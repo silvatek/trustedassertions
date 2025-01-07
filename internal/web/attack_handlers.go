@@ -44,7 +44,7 @@ func AttackHandler(w http.ResponseWriter, r *http.Request) {
 	log.DebugfX(appcontext.NewWebContext(r), "Dropping suspect request: %v", r.URL)
 	SetCacheControl(w, 7*24*60*60)
 	//w.Header().Add("Content-Type", "text/plain")
-	w.WriteHeader(204)
+	w.WriteHeader(410)
 }
 
 func RobotsTxtHandler(w http.ResponseWriter, r *http.Request) {
