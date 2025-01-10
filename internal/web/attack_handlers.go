@@ -8,7 +8,9 @@ import (
 	"silvatek.uk/trustedassertions/internal/appcontext"
 )
 
-// Add handlers for URL paths only used by attackers
+// Add handlers for URL paths only used by attackers.
+//
+// Note that with the current deployment model, all these requests should be handled by the LoadBalancer and Cloud Storage Bucket.
 func AddAttackHandlers(r *mux.Router) {
 	// Specific filenames
 	for _, path := range []string{
@@ -43,8 +45,7 @@ func AddAttackHandlers(r *mux.Router) {
 func AttackHandler(w http.ResponseWriter, r *http.Request) {
 	log.DebugfX(appcontext.NewWebContext(r), "Dropping suspect request: %v", r.URL)
 	SetCacheControl(w, 7*24*60*60)
-	//w.Header().Add("Content-Type", "text/plain")
-	w.WriteHeader(410)
+	w.WriteHeader(404)
 }
 
 func RobotsTxtHandler(w http.ResponseWriter, r *http.Request) {

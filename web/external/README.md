@@ -1,0 +1,1 @@
+Files in the `external` folder are deployed alongside the Trusted Assertions application, not as part of it.

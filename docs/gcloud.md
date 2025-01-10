@@ -14,7 +14,7 @@ Services In Use
 
 The load balancer routes all unknown paths to the Cloud Storage bucket so that those requests don't wake up the Cloud Run instance if it is inactive.
 
-The Cloud Storage bucket has an error page defined in its Website Configuration, for 404 response codes.
+The Cloud Storage bucket has an error page defined in its Website Configuration, for 404 response codes. It also has a robots.txt file to prevent crawling.
 
 Abandoned Investigations
 ========================
