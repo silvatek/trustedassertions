@@ -100,7 +100,7 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 
 		SetAuthCookie(userId, w)
 
-		http.Redirect(w, r, "/web", http.StatusSeeOther)
+		http.Redirect(w, r, HomePath, http.StatusSeeOther)
 	}
 }
 

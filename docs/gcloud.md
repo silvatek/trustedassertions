@@ -13,6 +13,7 @@ Services In Use
 * Certificate Manager
 
 The load balancer routes all unknown paths to the Cloud Storage bucket so that those requests don't wake up the Cloud Run instance if it is inactive.
+Load Balancer base price includes 5 forwarding rules, with each additional one costing 40% of the base price.
 
 The Cloud Storage bucket has an error page defined in its Website Configuration, for 404 response codes. It also has a robots.txt file to prevent crawling.
 

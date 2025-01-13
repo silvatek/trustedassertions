@@ -29,9 +29,12 @@ var DefaultEntityUri ref.HashUri
 
 var log = logging.GetLogger("web")
 
+const HomePath = "/web/home"
+
 func AddHandlers(r *mux.Router) {
-	r.HandleFunc("/", HomeWebHandler)
-	r.HandleFunc("/web", HomeWebHandler)
+	r.HandleFunc("/", HomeRedirectWebHandler)
+	r.HandleFunc("/web", HomeRedirectWebHandler)
+	r.HandleFunc("/web/home", HomeWebHandler)
 	r.HandleFunc("/web/statements/{hash}", ViewStatementWebHandler)
 	r.HandleFunc("/web/entities/{hash}", ViewEntityWebHandler)
 	r.HandleFunc("/web/assertions/{hash}", ViewAssertionWebHandler)
@@ -51,11 +54,7 @@ func AddHandlers(r *mux.Router) {
 	addAuthHandlers(r)
 	AddAttackHandlers(r)
 
-	// staticDir := http.Dir(TemplateDir + "/static")
-	// fs := http.FileServer(staticDir)
-	// r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
-	r.PathPrefix("/static").Handler(StaticHandler())
-	r.PathPrefix("/google").Handler(StaticHandler())
+	r.PathPrefix("/web/static").Handler(StaticHandler())
 
 	errors = make(map[string]AppError)
 }
@@ -63,7 +62,7 @@ func AddHandlers(r *mux.Router) {
 func StaticHandler() http.Handler {
 	staticDir := http.Dir(TemplateDir + "/static")
 	fs := http.FileServer(staticDir)
-	h := http.StripPrefix("/static", CacheControlWrapper(fs))
+	h := http.StripPrefix("/web/static", CacheControlWrapper(fs))
 	return h
 }
 
@@ -104,7 +103,7 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		Detail:    data,
 	}
 
-	if r.URL.Path == "/" {
+	if r.URL.Path == HomePath {
 		SetCacheControl(w, 10*60)
 	} else {
 		SetCacheControl(w, 0)
@@ -118,7 +117,7 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 
 	leftMenu := PageMenu{}
 	if pageName != "index" {
-		leftMenu.AddLink("Home", "/web")
+		leftMenu.AddLink("Home", HomePath)
 	}
 	for _, item := range menu {
 		leftMenu.AddItem(&item)
@@ -156,6 +155,10 @@ func SetCacheControl(w http.ResponseWriter, cacheLifeInSeconds int) {
 
 func RenderWebPage(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
 	RenderWebPageWithStatus(ctx, pageName, data, menu, w, r, 200)
+}
+
+func HomeRedirectWebHandler(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, HomePath, http.StatusSeeOther)
 }
 
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
