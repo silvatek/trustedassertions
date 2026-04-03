@@ -29,3 +29,4 @@ go.work.sum
 keys.txt
 
 .vscode
+.DS_Store
