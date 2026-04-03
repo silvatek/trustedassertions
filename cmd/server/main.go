@@ -38,7 +38,7 @@ func main() {
 	r := setupHandlers()
 
 	CSRF := csrf.Protect(
-		[]byte(os.Getenv("CSRF_KEY")),
+		[]byte(getEnvWithDefault("CSRF_KEY", "default_csrf_key")),
 		csrf.SameSite(csrf.SameSiteStrictMode),
 		csrf.FieldName("authenticity_token"),
 		csrf.Path("/"),
@@ -54,6 +54,15 @@ func main() {
 	}
 
 	srv.ListenAndServe()
+}
+
+func getEnvWithDefault(env_var string, defaultValue string) string {
+	value, found := os.LookupEnv(env_var)
+	if !found {
+		log.Infof("Using default value for %s", env_var)
+		return defaultValue
+	}
+	return value
 }
 
 func setupHandlers() *mux.Router {

@@ -60,6 +60,7 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Things to Do
 
+* PassKey support
 * Change password
 * Mobile web views
 * Secure management of private keys
