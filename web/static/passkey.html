@@ -1,0 +1,66 @@
+<html>
+    <head>
+        <title>Passkey POC</title>
+    </head>
+    <body>
+        <h1>Passkey POC</h1>
+        <div id="status">&nbsp;</div>
+        <button id="registerButton">Register</button>
+        <hr/>
+        <h2>Registration start API response...</h2>
+        <pre id="response1">
+            TBC
+        </pre>
+        <hr/>
+        <h2>Local Attestation response...</h2>
+        <pre id="attestation">
+            TBC
+        </pre>
+        <hr/>
+        <h2>Registration finish API response...</h2>
+        <pre id="response2">
+            TBC
+        </pre>
+    </body>
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+    <script type="text/javascript">
+
+document.getElementById('registerButton').addEventListener('click', beginRegistration);
+
+async function beginRegistration() {
+    document.getElementById('status').innerText = "Calling API..."
+    
+    response = await fetch("/api/v1/passkey/beginregistration")
+    options = await response.json()
+    csrfToken = response.headers.get('X-CSRF-Token')
+
+    document.getElementById("response1").innerText = JSON.stringify(options, null, "\t")
+
+    document.getElementById('status').innerText = "Starting local registration..."
+    try {
+        attestationResponse = await SimpleWebAuthnBrowser.startRegistration({
+            optionsJSON: options.publicKey, 
+        });
+        document.getElementById("attestation").innerText = "attestationResponse: " + JSON.stringify(attestationResponse, null, "\t")
+    } catch (error) {
+        document.getElementById("attestation").innerText = "error: " + error
+    }
+
+    response = await fetch(
+        "/api/v1/passkey/completeregistration", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken,
+            },
+            body: JSON.stringify(attestationResponse),
+        }
+    )
+    data = await response.json()
+    document.getElementById("response2").innerText = JSON.stringify(data, null, "\t")
+
+    
+    document.getElementById('status').innerText = "Done."
+}
+    </script>
+</html>
