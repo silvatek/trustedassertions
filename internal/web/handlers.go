@@ -74,16 +74,22 @@ func CacheControlWrapper(h http.Handler) http.Handler {
 }
 
 type PageData struct {
-	LeftMenu  PageMenu
-	RightMenu PageMenu
-	AuthUser  string
-	AuthName  string
-	LoggedIn  bool
-	CsrfField interface{}
-	Detail    interface{}
+	LeftMenu        PageMenu
+	RightMenu       PageMenu
+	AuthUser        string
+	AuthName        string
+	LoggedIn        bool
+	ContentFragment string
+	CsrfField       interface{}
+	Detail          interface{}
 }
 
 func RenderWebPageWithStatus(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request, status int) {
+	if isFragmentRequest(r) {
+		RenderFragmentWithStatus(ctx, pageName, data, menu, w, r, status)
+		return
+	}
+
 	dir := TemplateDir
 
 	t, err := template.ParseFiles(dir+"/"+"base.html", dir+"/"+pageName+".html")
@@ -149,12 +155,110 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 	}
 }
 
+func RenderFragmentWithStatus(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request, status int) {
+	log.InfofX(ctx, "Rendering fragment %v", pageName)
+
+	dir := TemplateDir
+
+	t, err := template.ParseFiles(dir + "/fragments/" + pageName + ".html")
+	if err != nil {
+		msg := http.StatusText(http.StatusInternalServerError)
+		log.ErrorfX(ctx, "Error parsing template: %+v", err)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	fragmentName := if pageName == "base" {
+		"base2"
+	} else {
+		pageName
+	}
+
+	username := authUsername(r)
+	pageData := PageData{
+		AuthUser:        username,
+		AuthName:        nameOnly(username),
+		LoggedIn:        username != "",
+		CsrfField:       csrf.TemplateField(r),
+		ContentFragment: pageName,
+		Detail:          data,
+	}
+
+	if r.URL.Path == HomePath {
+		SetCacheControl(w, 10*60)
+	} else {
+		SetCacheControl(w, 0)
+	}
+
+	if pageName == "loggedout" {
+		SetAuthCookie("", w)
+	} else {
+		SetAuthCookie(username, w) // Refresh the auth cookie
+	}
+
+	leftMenu := PageMenu{}
+	if pageName != "index" && pageName != "homepanel" {
+		leftMenu.AddLink("Home", HomePath)
+	}
+	for _, item := range menu {
+		leftMenu.AddItem(&item)
+	}
+
+	pageData.LeftMenu = leftMenu
+
+	rightMenu := PageMenu{}
+
+	if pageName == "loggedout" || pageName == "loginform" {
+		//
+	} else if username == "" {
+		rightMenu.AddRightLink("Login", "/web/login")
+		rightMenu.AddRightLink("Register", "/web/register")
+	} else {
+		rightMenu.AddRightLink(nameOnly(username), "/web/profile")
+		rightMenu.AddRightLink("Logout", "/web/logout")
+	}
+	pageData.RightMenu = rightMenu
+
+	if status != 0 {
+		w.WriteHeader(status)
+	}
+
+	if err := t.ExecuteTemplate(w, pageName+".html", pageData); err != nil {
+		log.ErrorfX(ctx, "template.Execute: %v", err)
+		msg := http.StatusText(http.StatusInternalServerError)
+		http.Error(w, msg, http.StatusInternalServerError)
+	}
+}
+
 func SetCacheControl(w http.ResponseWriter, cacheLifeInSeconds int) {
 	w.Header().Set("Cache-Control", "public, max-age="+strconv.Itoa(cacheLifeInSeconds))
 }
 
 func RenderWebPage(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
 	RenderWebPageWithStatus(ctx, pageName, data, menu, w, r, 200)
+}
+
+func RenderFragment(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
+	RenderFragmentWithStatus(ctx, pageName, data, menu, w, r, 200)
+}
+
+func RenderHtmxPage(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request) {
+	RenderHtmxPageWithStatus(ctx, pageName, data, menu, w, r, 200)
+}
+
+func RenderHtmxPageWithStatus(ctx context.Context, pageName string, data interface{}, menu []PageMenuItem, w http.ResponseWriter, r *http.Request, status int) {
+	if isFragmentRequest(r) {
+		log.DebugfX(ctx, "Rendering htmx fragment %s", pageName)
+		RenderFragmentWithStatus(ctx, pageName, data, menu, w, r, status)
+	} else {
+		log.DebugfX(ctx, "Rendering page with htmx %s", pageName)
+		data1 := struct {
+			ContentFragment string
+		}{
+			ContentFragment: pageName,
+		}
+		RenderFragmentWithStatus(ctx, "base", data1, menu, w, r, status)
+	}
 }
 
 func HomeRedirectWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +275,7 @@ func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 		DefaultDocument: docs.DefaultDocumentUri,
 	}
 
-	RenderWebPage(ctx, "index", data, nil, w, r)
+	RenderHtmxPage(ctx, "home", data, nil, w, r)
 }
 
 func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -318,6 +422,14 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RenderWebPage(ctx, "viewentity", data, menu, w, r)
+}
+
+func isFragmentRequest(r *http.Request) bool {
+	hxRequestType := r.Header[http.CanonicalHeaderKey("HX-Request-Type")]
+	if len(hxRequestType) == 0 {
+		return false
+	}
+	return true
 }
 
 func NewStatementWebHandler(w http.ResponseWriter, r *http.Request) {

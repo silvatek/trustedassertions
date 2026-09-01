@@ -1,0 +1,33 @@
+    <div id="content">
+        <div class="homecontainer">
+            <div class="homepanel">
+                <form id="searchform" hx-get="/web/search" hx-select-oob="#content"  hx-push-url="true">
+                    <!-- {{.CsrfField}} -->
+                    <div>
+                        <label for="query">Search for:</label><br>
+                        <input id="query" name="query" width="30" autofocus></input>
+                    </div>
+                    <div>
+                        <input id="submitsearch" type="Submit" value="Search">
+                </div>
+
+                </form>
+            </div>
+            {{if .LoggedIn}}
+            <div class="homepanel">
+                <div>Create new...</div>
+                <ul>
+                    <li>
+                        <a hx-get="/web/newstatement" hx-select-oob="#content" hx-push-url="true">Statement and Assertion</a>
+                    </li>    
+                    <li>
+                        <a hx-get="/web/newdocument" hx-select-oob="#content" hx-push-url="true">New Document with Statements and Assertions</a>
+                    </li>    
+                    <li>
+                        <a hx-get="/web/newentity" hx-select-oob="#content" hx-push-url="true">Entity with signing key</a>
+                    </li>    
+                </ul>
+            </div>
+            {{end}}
+        </div>
+    </div>

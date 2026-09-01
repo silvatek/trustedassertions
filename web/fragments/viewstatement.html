@@ -1,0 +1,28 @@
+      <div id="content">
+        <h2>View Statement (htmx)</h2>
+
+        <div class="fieldset">
+            <div class="fieldprompt">ID:</div>
+            <div id="uri" class="fieldvalue">
+                <span class="fulluri">{{.Detail.Uri}}</span>
+                <span class="shorturi">{{.Detail.Uri.Short}}</span>
+            </div>
+
+            <div class="fieldprompt">Text:</div>
+            <div id="content" class="fieldvalue" disabled>{{.Detail.Content}}</div>   
+        </div>
+
+        <h3>References</h3>
+        <ul>
+            {{range $ref := .Detail.References}}
+                <li><a href="{{$ref.Source.WebPath}}">{{$ref.Summary}} [{{$ref.Source.Short}}]</a></li>
+            {{end}}
+        </ul>
+
+        {{if .LoggedIn}}
+        <div>
+            <a href="./{{.Detail.Uri.Hash}}/addassertion">Add a new assertion for this statement.</a>
+        </div>
+        {{end}}
+
+      </div>

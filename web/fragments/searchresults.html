@@ -1,5 +1,5 @@
-{{define "content"}}		
-        <h2>Search results</h2>
+    <div id="content">
+        <h2>Search results (htmx)</h2>
 
         <div>Searching for: {{.Detail.Query}}</div>
         
@@ -19,7 +19,7 @@
                     {{$ref.Content}}
                 </td>
                 <td>
-                    <a hx-get="{{$ref.Uri.WebPath}}" hx-select-oob="#content">{{$ref.Uri.Short}}</a>
+                    <a hx-get="{{$ref.Uri.WebPath}}" hx-select-oob="#content" hx-push-url="true">{{$ref.Uri.Short}}</a>
                 </td>
             </tr>           
             {{end}}    
@@ -30,4 +30,4 @@
         </div>
         {{end}}
 
-{{end}}
+    </div>

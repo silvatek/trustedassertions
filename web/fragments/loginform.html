@@ -1,0 +1,20 @@
+      <div id="content">
+        <h2>Login (htmx)</h2>
+
+        <div class="error">{{.Detail}}</div>
+
+        <form method="POST" action="/web/login">
+                {{.CsrfField}}
+                <div>
+                    <label for="user_id">ID:</label><br>
+                    <input id="user_id" name="user_id" autofocus>
+                </div>
+                <div>
+                    <label for="password">Password:</label><br>
+                    <input id="password" name="password" type="password">
+                </div>
+                <div>
+                        <input id="login" type="Submit" value="Login">
+                </div>
+        </form>
+      </div>
