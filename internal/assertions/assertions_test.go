@@ -434,8 +434,9 @@ func TestMakeJwtError(t *testing.T) {
 		Writer: &logs,
 	}
 
-	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
-	privateKey.E = 0
+	// A key with no modulus fails to sign; setting E=0 no longer does
+	// (crypto/rsa ignores an invalid public exponent when signing).
+	privateKey := &rsa.PrivateKey{}
 
 	assertion := NewAssertion("IsTrue")
 	assertion.MakeJwt(privateKey)
