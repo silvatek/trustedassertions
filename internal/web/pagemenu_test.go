@@ -11,4 +11,13 @@ func TestBasicPageMenu(t *testing.T) {
 	if len(menu.Items) != 3 {
 		t.Errorf("Unexpected menu item count: %d", len(menu.Items))
 	}
+
+	if !menu.Items[0].UseHtmx() {
+		t.Errorf("Web menu link should use htmx")
+	}
+
+	raw := PageMenuItem{Text: "Raw", Target: "/api/v1/statements/abc"}
+	if raw.UseHtmx() {
+		t.Errorf("API menu link should not use htmx")
+	}
 }

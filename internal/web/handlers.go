@@ -103,7 +103,11 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		Detail:    data,
 	}
 
-	if r.URL.Path == HomePath {
+	htmxRequest := IsHtmxRequest(r)
+	w.Header().Add("Vary", "HX-Request")
+	if htmxRequest {
+		SetCacheControl(w, 0)
+	} else if r.URL.Path == HomePath {
 		SetCacheControl(w, 10*60)
 	} else {
 		SetCacheControl(w, 0)
@@ -142,11 +146,20 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		w.WriteHeader(status)
 	}
 
-	if err := t.ExecuteTemplate(w, "base", pageData); err != nil {
+	templateName := "base"
+	if htmxRequest {
+		templateName = "htmx"
+	}
+
+	if err := t.ExecuteTemplate(w, templateName, pageData); err != nil {
 		log.ErrorfX(ctx, "template.Execute: %v", err)
 		msg := http.StatusText(http.StatusInternalServerError)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
+}
+
+func IsHtmxRequest(r *http.Request) bool {
+	return r.Header.Get("HX-Request") == "true"
 }
 
 func SetCacheControl(w http.ResponseWriter, cacheLifeInSeconds int) {

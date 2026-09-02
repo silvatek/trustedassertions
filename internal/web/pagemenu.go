@@ -1,5 +1,7 @@
 package web
 
+import "strings"
+
 type PageMenu struct {
 	Items []PageMenuItem
 }
@@ -14,6 +16,11 @@ type PageMenuItem struct {
 
 func (i PageMenuItem) IsLink() bool {
 	return i.Target != ""
+}
+
+// UseHtmx is false for API/raw links so the browser loads them as full documents.
+func (i PageMenuItem) UseHtmx() bool {
+	return i.IsLink() && !strings.HasPrefix(i.Target, "/api")
 }
 
 func (m *PageMenu) AddItem(item *PageMenuItem) {

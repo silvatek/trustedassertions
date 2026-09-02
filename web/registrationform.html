@@ -4,7 +4,7 @@
         <div class="error">{{.Detail}}</div>
 
 
-        <form method="POST" action="/web/register">
+        <form method="POST" action="/web/register" hx-boost="false">
                 {{.CsrfField}}
                 <div>In order to register you must have been supplied with a registration code by an administrator.<br>&nbsp;</div>
                 <div>
