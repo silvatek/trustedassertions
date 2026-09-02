@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
-	"text/template"
+	"html/template"
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
@@ -174,13 +174,17 @@ func HomeRedirectWebHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, HomePath, http.StatusSeeOther)
 }
 
+type homePageData struct {
+	DefaultDocument ref.HashUri
+	Query           string
+	Results         []datastore.SearchResult
+}
+
 func HomeWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	log.DebugfX(ctx, "Home page accessed")
 
-	data := struct {
-		DefaultDocument ref.HashUri
-	}{
+	data := homePageData{
 		DefaultDocument: docs.DefaultDocumentUri,
 	}
 
@@ -388,15 +392,13 @@ func SearchWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	results, _ := datastore.ActiveDataStore.Search(ctx, query)
 
-	data := struct {
-		Query   string
-		Results []datastore.SearchResult
-	}{
-		Query:   query,
-		Results: results,
+	data := homePageData{
+		DefaultDocument: docs.DefaultDocumentUri,
+		Query:           query,
+		Results:         results,
 	}
 
-	RenderWebPage(ctx, "searchresults", data, nil, w, r)
+	RenderWebPage(ctx, "index", data, nil, w, r)
 }
 
 func NewEntityWebHandler(w http.ResponseWriter, r *http.Request) {

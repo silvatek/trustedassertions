@@ -1,11 +1,15 @@
 {{define "content"}}		
         <div class="homecontainer">
             <div class="homepanel">
-                <form id="searchform" method="get" action="/web/search">
+                <form id="searchform" method="get" action="/web/search"
+                    hx-get="/web/search"
+                    hx-target="#searchresults"
+                    hx-select="#searchresults"
+                    hx-swap="outerHTML">
                     {{.CsrfField}}
                     <div>
                         <label for="query">Search for:</label><br>
-                        <input id="query" name="query" width="30" autofocus></input>
+                        <input id="query" name="query" width="30" autofocus value="{{.Detail.Query}}"></input>
                     </div>
                     <div>
                         <input id="submitsearch" type="Submit" value="Search">
@@ -46,5 +50,39 @@
                     </li>
                 </ul>
             </div> -->
+        </div>
+        <div id="searchresults">
+            {{if .Detail.Query}}
+            <h2>Search results</h2>
+
+            <div>Searching for: {{.Detail.Query}}</div>
+            
+            {{if .Detail.Results}}
+            <table class="searchresults">
+                <tr>
+                    <th>Type</th>
+                    <th>Summary</th>
+                    <th>URI</th>
+                </tr>
+                {{range $ref := .Detail.Results}}
+                <tr>
+                    <td>
+                        {{$ref.Uri.Kind}}
+                    </td>
+                    <td>
+                        {{$ref.Content}}
+                    </td>
+                    <td>
+                        <a href="{{$ref.Uri.WebPath}}">{{$ref.Uri.Short}}</a>
+                    </td>
+                </tr>           
+                {{end}}    
+            </table>
+            {{else}}
+            <div id="noresults">
+                No matching values found.
+            </div>
+            {{end}}
+            {{end}}
         </div>
 {{end}}

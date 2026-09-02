@@ -1,6 +1,7 @@
 package web
 
 import (
+	"html/template"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -19,12 +20,12 @@ func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Doc       docs.Document
 		Title     string
-		DocHtml   string
+		DocHtml   template.HTML
 		AuthorUri ref.HashUri
 	}{
 		Doc:       document,
 		Title:     document.Summary(),
-		DocHtml:   document.ToHtml(),
+		DocHtml:   template.HTML(document.ToHtml()),
 		AuthorUri: ref.UriFromString(document.Metadata.Author.Entity),
 	}
 
