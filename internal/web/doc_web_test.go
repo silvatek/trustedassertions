@@ -16,4 +16,6 @@ func TestViewDoc(t *testing.T) {
 
 	page := wt.GetPage("/web/documents/" + docHash)
 	page.AssertHtmlQuery("h2", "View Document")
+	page.AssertHtmlQuery("h1", "About the Universe")
+	page.AssertHtmlQuery("a", "The universe exists")
 }

@@ -177,11 +177,45 @@ func TestSearch(t *testing.T) {
 
 	page := wt.GetPage("/")
 	page.AssertHtmlQuery("#searchform", "Search for")
+	if page.Attr("#searchform", "hx-target") != "#searchresults" {
+		t.Errorf("Expected search form to target #searchresults, got %s", page.Attr("#searchform", "hx-target"))
+	}
 
-	page = wt.PostFormData("/web/search", url.Values{"query": {"universe"}})
+	page = wt.GetPage("/web/search?query=universe")
 	page.AssertSuccessResponse()
+	page.AssertHtmlQuery("#searchform", "Search for")
 	page.AssertHtmlQuery("h2", "Search results")
 	page.AssertHtmlQuery(".searchresults", "The universe exists")
+}
+
+func TestSearchQueryEscaped(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	payload := `" onfocus="alert(1)" x="`
+	page := wt.GetPage("/web/search?query=" + url.QueryEscape(payload))
+	page.AssertSuccessResponse()
+	if page.Attr("#query", "onfocus") != "" {
+		t.Errorf("Search query was interpolated into HTML attributes: onfocus=%q", page.Attr("#query", "onfocus"))
+	}
+	if page.Attr("#query", "value") != payload {
+		t.Errorf("Expected escaped query to round-trip as the input value, got %q", page.Attr("#query", "value"))
+	}
+	page.AssertHtmlQuery("#searchresults", payload)
+}
+
+func TestSearchHtmx(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.GetPageWithHeaders("/web/search?query=universe", map[string]string{"HX-Request": "true"})
+	page.AssertSuccessResponse()
+	page.AssertHtmlQuery("#searchform", "Search for")
+	page.AssertHtmlQuery("#searchresults", "The universe exists")
+	page.AssertHtmlQuery(".searchresults", "The universe exists")
+	if page.Attr("body", "hx-boost") == "true" {
+		t.Errorf("HTMX fragment should not include the full page shell")
+	}
 }
 
 func TestQrCode(t *testing.T) {
