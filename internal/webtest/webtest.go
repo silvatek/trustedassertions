@@ -49,12 +49,19 @@ func MakeWebTest(t testcontext.TestContext) *WebTest {
 }
 
 func (wt *WebTest) GetPage(path string) *WebPage {
+	return wt.GetPageWithHeaders(path, nil)
+}
+
+func (wt *WebTest) GetPageWithHeaders(path string, headers map[string]string) *WebPage {
 	url := wt.Server.URL + path
 	page := WebPage{url: url, wt: wt}
 
 	req, _ := http.NewRequest("GET", url, nil)
 	if wt.AuthCookie != nil {
 		req.AddCookie(wt.AuthCookie)
+	}
+	for name, value := range headers {
+		req.Header.Set(name, value)
 	}
 
 	page.response, page.requestError = wt.Client.Do(req)
@@ -179,4 +186,22 @@ func (page *WebPage) AssertNoCookie(name string) {
 
 func (page *WebPage) Text() string {
 	return page.html.Text()
+}
+
+func (page *WebPage) Attr(query string, name string) string {
+	if !page.ok() {
+		return ""
+	}
+	value, exists := page.html.Find(query).Attr(name)
+	if !exists {
+		return ""
+	}
+	return value
+}
+
+func (page *WebPage) Header(name string) string {
+	if page.response == nil {
+		return ""
+	}
+	return page.response.Header.Get(name)
 }

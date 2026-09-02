@@ -181,7 +181,7 @@ func TestSearch(t *testing.T) {
 	page = wt.PostFormData("/web/search", url.Values{"query": {"universe"}})
 	page.AssertSuccessResponse()
 	page.AssertHtmlQuery("h2", "Search results")
-	page.AssertHtmlQuery("#content", "The universe exists")
+	page.AssertHtmlQuery(".searchresults", "The universe exists")
 }
 
 func TestQrCode(t *testing.T) {
@@ -194,4 +194,50 @@ func TestQrCode(t *testing.T) {
 	page = wt.GetPage("/web/share?hash=33fe9d5eedb329c5a662d3c206d8938a33f94795c3f715be0bcd53fbdcadc7e8&type=entity")
 	page.AssertHtmlQuery("h2", "Share Item")
 	page.AssertSuccessResponse()
+}
+
+func TestHtmxFullPage(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.GetPage("/web/home")
+	page.AssertSuccessResponse()
+	if page.Attr("body", "hx-boost") != "true" {
+		t.Errorf("Expected hx-boost on body")
+	}
+	if page.Attr("body", "hx-target") != "#page" {
+		t.Errorf("Expected hx-target of #page, got %s", page.Attr("body", "hx-target"))
+	}
+	src := page.Attr("script[src*='htmx']", "src")
+	if !strings.Contains(src, "htmx.org") {
+		t.Errorf("Expected htmx script, got src %s", src)
+	}
+	if !strings.Contains(page.Header("Vary"), "HX-Request") {
+		t.Errorf("Expected Vary: HX-Request, got %s", page.Header("Vary"))
+	}
+
+	page = wt.GetPage("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f")
+	page.AssertSuccessResponse()
+	if page.Attr(`a[href^="/api/"]`, "hx-boost") != "false" {
+		t.Errorf("API/raw links should disable htmx boosting")
+	}
+}
+
+func TestHtmxFragment(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.GetPageWithHeaders("/web/home", map[string]string{"HX-Request": "true"})
+	page.AssertSuccessResponse()
+	page.AssertHtmlQuery("#searchform", "Search for")
+	page.AssertHtmlQuery("#page", "Search for")
+	if page.Attr("#pagemenu", "hx-swap-oob") != "true" {
+		t.Errorf("Expected out-of-band pagemenu swap")
+	}
+	if page.Attr("body", "hx-boost") == "true" {
+		t.Errorf("HTMX fragment should not include the full page shell")
+	}
+	if strings.Contains(page.Find("script"), "htmx.org") {
+		t.Errorf("HTMX fragment should not reload the htmx library")
+	}
 }
