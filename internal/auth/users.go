@@ -11,6 +11,7 @@ type User struct {
 	Id       string `json:"id"`
 	PassHash string `json:"passhash"`
 	KeyRefs  []KeyRef
+	Passkeys []Passkey `json:"passkeys"`
 }
 
 type KeyRef struct {

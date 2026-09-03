@@ -17,5 +17,9 @@ func (u *User) WebAuthnDisplayName() string {
 }
 
 func (u *User) WebAuthnCredentials() []webauthn.Credential {
-	return []webauthn.Credential{}
+	creds := make([]webauthn.Credential, len(u.Passkeys))
+	for i, pk := range u.Passkeys {
+		creds[i] = pk.Credential()
+	}
+	return creds
 }
