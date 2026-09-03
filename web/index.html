@@ -55,7 +55,7 @@
             {{if .Detail.Query}}
             <h2>Search results</h2>
 
-            <div>Searching for: {{.Detail.Query}}</div>
+            <div>Searching for: <span id="searchterm">{{.Detail.Query}}</span></div>
             
             {{if .Detail.Results}}
             <table class="searchresults">

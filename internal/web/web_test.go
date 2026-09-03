@@ -195,13 +195,7 @@ func TestSearchQueryEscaped(t *testing.T) {
 	payload := `" onfocus="alert(1)" x="`
 	page := wt.GetPage("/web/search?query=" + url.QueryEscape(payload))
 	page.AssertSuccessResponse()
-	if page.Attr("#query", "onfocus") != "" {
-		t.Errorf("Search query was interpolated into HTML attributes: onfocus=%q", page.Attr("#query", "onfocus"))
-	}
-	if page.Attr("#query", "value") != payload {
-		t.Errorf("Expected escaped query to round-trip as the input value, got %q", page.Attr("#query", "value"))
-	}
-	page.AssertHtmlQuery("#searchresults", payload)
+	page.AssertHtmlQueryEscaped("#searchterm", payload)
 }
 
 func TestSearchHtmx(t *testing.T) {
@@ -213,9 +207,7 @@ func TestSearchHtmx(t *testing.T) {
 	page.AssertHtmlQuery("#searchform", "Search for")
 	page.AssertHtmlQuery("#searchresults", "The universe exists")
 	page.AssertHtmlQuery(".searchresults", "The universe exists")
-	if page.Attr("body", "hx-boost") == "true" {
-		t.Errorf("HTMX fragment should not include the full page shell")
-	}
+	page.AssertHtmxFragment(true)
 }
 
 func TestQrCode(t *testing.T) {
@@ -236,25 +228,11 @@ func TestHtmxFullPage(t *testing.T) {
 
 	page := wt.GetPage("/web/home")
 	page.AssertSuccessResponse()
-	if page.Attr("body", "hx-boost") != "true" {
-		t.Errorf("Expected hx-boost on body")
-	}
-	if page.Attr("body", "hx-target") != "#page" {
-		t.Errorf("Expected hx-target of #page, got %s", page.Attr("body", "hx-target"))
-	}
-	src := page.Attr("script[src*='htmx']", "src")
-	if !strings.Contains(src, "htmx.org") {
-		t.Errorf("Expected htmx script, got src %s", src)
-	}
-	if !strings.Contains(page.Header("Vary"), "HX-Request") {
-		t.Errorf("Expected Vary: HX-Request, got %s", page.Header("Vary"))
-	}
+	page.AssertHtmxFragment(false)
 
 	page = wt.GetPage("/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f")
 	page.AssertSuccessResponse()
-	if page.Attr(`a[href^="/api/"]`, "hx-boost") != "false" {
-		t.Errorf("API/raw links should disable htmx boosting")
-	}
+	page.AssertHtmxFragment(false)
 }
 
 func TestHtmxFragment(t *testing.T) {
@@ -265,13 +243,5 @@ func TestHtmxFragment(t *testing.T) {
 	page.AssertSuccessResponse()
 	page.AssertHtmlQuery("#searchform", "Search for")
 	page.AssertHtmlQuery("#page", "Search for")
-	if page.Attr("#pagemenu", "hx-swap-oob") != "true" {
-		t.Errorf("Expected out-of-band pagemenu swap")
-	}
-	if page.Attr("body", "hx-boost") == "true" {
-		t.Errorf("HTMX fragment should not include the full page shell")
-	}
-	if strings.Contains(page.Find("script"), "htmx.org") {
-		t.Errorf("HTMX fragment should not reload the htmx library")
-	}
+	page.AssertHtmxFragment(true)
 }

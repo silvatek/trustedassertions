@@ -28,6 +28,35 @@ func MockHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("<html><body><h1>Test Heading</h1></body></html>"))
 }
 
+func MockEscapedHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	if r.URL.Query().Get("elsewhere") == "true" {
+		w.Write([]byte(`<html><body><div id="other">&#34; onfocus=&#34;alert(1)&#34; x=&#34;</div><span id="searchterm">plain</span></body></html>`))
+		return
+	}
+	w.Write([]byte(`<html><body><span id="searchterm">&#34; onfocus=&#34;alert(1)&#34; x=&#34;</span></body></html>`))
+}
+
+func MockHtmxHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Vary", "HX-Request")
+	w.WriteHeader(http.StatusOK)
+	rawBoost := `hx-boost="false"`
+	if r.URL.Query().Get("boostedapi") == "true" {
+		rawBoost = ""
+	}
+	if r.URL.Query().Get("fragment") == "true" {
+		w.Write([]byte(`<div id="pagemenu" hx-swap-oob="true"><a href="/api/v1/statements/abc" ` + rawBoost + `>Raw</a></div><div id="page">content</div>`))
+		return
+	}
+	w.Write([]byte(`<!doctype html><html><head><script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"></script></head><body hx-boost="true" hx-target="#page" hx-swap="outerHTML"><div id="pagemenu" hx-swap-oob="true"><a href="/api/v1/statements/abc" ` + rawBoost + `>Raw</a></div><div id="page">content</div></body></html>`))
+}
+
+func SetupHtmxTestServer(wt *WebTest) {
+	router := mux.NewRouter()
+	router.HandleFunc("/", MockHtmxHandler)
+	wt.Server = httptest.NewServer(router)
+}
+
 func SetupTestServer(wt *WebTest) {
 	router := mux.NewRouter()
 	router.HandleFunc("/", MockHandler)
@@ -222,4 +251,98 @@ func TestElementNotfound(t *testing.T) {
 	page.AssertHtmlQuery("h1", "**TextNotInPage**")
 
 	wtc.AssertErrorsFound(t)
+}
+
+func TestAssertHtmxFullPage(t *testing.T) {
+	wt := MakeWebTest(t)
+	SetupHtmxTestServer(wt)
+	defer wt.Close()
+
+	page := wt.GetPage("/")
+	page.AssertSuccessResponse()
+	page.AssertHtmxFragment(false)
+}
+
+func TestAssertHtmxFragment(t *testing.T) {
+	wt := MakeWebTest(t)
+	SetupHtmxTestServer(wt)
+	defer wt.Close()
+
+	page := wt.GetPage("/?fragment=true")
+	page.AssertSuccessResponse()
+	page.AssertHtmxFragment(true)
+}
+
+func TestAssertHtmxFragmentMismatch(t *testing.T) {
+	t1 := testcontext.MockTestContext{}
+	wt := MakeWebTest(&t1)
+	SetupHtmxTestServer(wt)
+	defer wt.Close()
+
+	page := wt.GetPage("/")
+	page.AssertSuccessResponse()
+	page.AssertHtmxFragment(true)
+
+	t1.AssertErrorsFound(t)
+}
+
+func TestAssertHtmxFullPageMismatch(t *testing.T) {
+	t1 := testcontext.MockTestContext{}
+	wt := MakeWebTest(&t1)
+	SetupHtmxTestServer(wt)
+	defer wt.Close()
+
+	page := wt.GetPage("/?fragment=true")
+	page.AssertSuccessResponse()
+	page.AssertHtmxFragment(false)
+
+	t1.AssertErrorsFound(t)
+}
+
+func TestAssertHtmxFragmentBrokenPage(t *testing.T) {
+	t1 := testcontext.MockTestContext{}
+	wt := MakeWebTest(&t1)
+	page := WebPage{wt: wt, htmlError: errors.New("request failed")}
+	page.AssertHtmxFragment(false)
+	t1.AssertErrorsFound(t)
+}
+
+func TestAssertHtmxBoostedApiLink(t *testing.T) {
+	t1 := testcontext.MockTestContext{}
+	wt := MakeWebTest(&t1)
+	SetupHtmxTestServer(wt)
+	defer wt.Close()
+
+	page := wt.GetPage("/?boostedapi=true")
+	page.AssertSuccessResponse()
+	page.AssertHtmxFragment(false)
+
+	t1.AssertErrorsFound(t)
+}
+
+func TestAssertHtmlQueryEscaped(t *testing.T) {
+	wt := MakeWebTest(t)
+	router := mux.NewRouter()
+	router.HandleFunc("/", MockEscapedHandler)
+	wt.Server = httptest.NewServer(router)
+	defer wt.Close()
+
+	page := wt.GetPage("/")
+	page.AssertSuccessResponse()
+	page.AssertHtmlQueryEscaped("#searchterm", `" onfocus="alert(1)" x="`)
+}
+
+func TestAssertHtmlQueryEscapedOnlyInQuery(t *testing.T) {
+	t1 := testcontext.MockTestContext{}
+	wt := MakeWebTest(&t1)
+	router := mux.NewRouter()
+	router.HandleFunc("/", MockEscapedHandler)
+	wt.Server = httptest.NewServer(router)
+	defer wt.Close()
+
+	page := wt.GetPage("/?elsewhere=true")
+	page.AssertSuccessResponse()
+	page.AssertHtmlQueryEscaped("#searchterm", `" onfocus="alert(1)" x="`)
+
+	t1.AssertErrorsFound(t)
 }

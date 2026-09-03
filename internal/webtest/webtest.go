@@ -1,7 +1,10 @@
 package webtest
 
 import (
+	"bytes"
 	"fmt"
+	"html"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -35,6 +38,7 @@ type WebPage struct {
 	statusCode   int
 	htmlError    error
 	html         *goquery.Document
+	body         []byte
 }
 
 func MakeWebTest(t testcontext.TestContext) *WebTest {
@@ -74,7 +78,11 @@ func (wt *WebTest) GetPageWithHeaders(path string, headers map[string]string) *W
 	page.statusCode = page.response.StatusCode
 
 	defer page.response.Body.Close()
-	page.html, page.htmlError = goquery.NewDocumentFromReader(page.response.Body)
+	page.body, page.htmlError = io.ReadAll(page.response.Body)
+	if page.htmlError != nil {
+		return &page
+	}
+	page.html, page.htmlError = goquery.NewDocumentFromReader(bytes.NewReader(page.body))
 
 	return &page
 }
@@ -103,7 +111,13 @@ func (wt *WebTest) PostFormData(path string, data url.Values) *WebPage {
 	}
 
 	defer page.response.Body.Close()
-	page.html, page.htmlError = goquery.NewDocumentFromReader(page.response.Body)
+	body, err := io.ReadAll(page.response.Body)
+	if err != nil {
+		page.htmlError = err
+		return &page
+	}
+	page.body = body
+	page.html, page.htmlError = goquery.NewDocumentFromReader(bytes.NewReader(page.body))
 
 	return &page
 }
@@ -152,6 +166,31 @@ func (page *WebPage) AssertHtmlQuery(query string, expected string) {
 	if !strings.Contains(results, expected) {
 		page.wt.t.Errorf("Did not find `%s` in [%s]", expected, query)
 	}
+}
+
+func (page *WebPage) AssertHtmlQueryEscaped(query string, expected string) {
+	if !page.ok() {
+		page.wt.t.Error(page.errorSummary())
+		return
+	}
+	sel := page.html.Find(query)
+	if sel.Length() == 0 {
+		page.wt.t.Errorf("Did not find [%s]", query)
+		return
+	}
+	fragment, err := goquery.OuterHtml(sel)
+	if err != nil {
+		page.wt.t.Errorf("Error reading HTML for [%s]: %v", query, err)
+		return
+	}
+	escaped := html.EscapeString(expected)
+	if !strings.Contains(fragment, escaped) {
+		page.wt.t.Errorf("Did not find escaped `%s` in [%s]", escaped, query)
+	}
+	if escaped != expected && strings.Contains(fragment, expected) {
+		page.wt.t.Errorf("Unescaped `%s` found in [%s]", expected, query)
+	}
+	page.AssertHtmlQuery(query, expected)
 }
 
 func (page *WebPage) AssertHasCookie(name string) {
@@ -204,4 +243,72 @@ func (page *WebPage) Header(name string) string {
 		return ""
 	}
 	return page.response.Header.Get(name)
+}
+
+// AssertHtmxFragment checks that the response is a well-formed HTMX fragment
+// when fragment is true, or a well-formed full page (with the HTMX library and
+// boost attributes) when fragment is false. Both forms must send Vary: HX-Request
+// and must disable boosting on any /api/ links.
+func (page *WebPage) AssertHtmxFragment(fragment bool) {
+	if !page.ok() {
+		page.wt.t.Error(page.errorSummary())
+		return
+	}
+	if !strings.Contains(page.Header("Vary"), "HX-Request") {
+		page.wt.t.Errorf("Expected Vary: HX-Request, got %s", page.Header("Vary"))
+	}
+	if fragment {
+		page.assertHtmxFragment()
+	} else {
+		page.assertHtmxFullPage()
+	}
+	page.assertApiLinksNotBoosted()
+}
+
+func (page *WebPage) assertHtmxFragment() {
+	if page.html.Find("#page").Length() == 0 {
+		page.wt.t.Error("HTMX fragment should include #page")
+	}
+	if page.Attr("#pagemenu", "hx-swap-oob") != "true" {
+		page.wt.t.Error("HTMX fragment should include an out-of-band pagemenu swap")
+	}
+	if page.Attr("body", "hx-boost") == "true" {
+		page.wt.t.Error("HTMX fragment should not include the full page shell")
+	}
+	if strings.Contains(page.Find("script"), "htmx.org") {
+		page.wt.t.Error("HTMX fragment should not reload the htmx library")
+	}
+}
+
+func (page *WebPage) assertHtmxFullPage() {
+	if page.Attr("body", "hx-boost") != "true" {
+		page.wt.t.Error("Expected hx-boost on body")
+	}
+	if page.Attr("body", "hx-target") != "#page" {
+		page.wt.t.Errorf("Expected hx-target of #page, got %s", page.Attr("body", "hx-target"))
+	}
+	if page.Attr("body", "hx-swap") != "outerHTML" {
+		page.wt.t.Errorf("Expected hx-swap of outerHTML, got %s", page.Attr("body", "hx-swap"))
+	}
+	src := page.Attr("script[src*='htmx']", "src")
+	if !strings.Contains(src, "htmx.org") {
+		page.wt.t.Errorf("Expected htmx script, got src %s", src)
+	}
+	if page.html.Find("#page").Length() == 0 {
+		page.wt.t.Error("Full page should include #page")
+	}
+}
+
+func (page *WebPage) assertApiLinksNotBoosted() {
+	links := page.html.Find(`a[href^="/api/"]`)
+	if links.Length() == 0 {
+		return
+	}
+	links.Each(func(_ int, s *goquery.Selection) {
+		boost, _ := s.Attr("hx-boost")
+		if boost != "false" {
+			href, _ := s.Attr("href")
+			page.wt.t.Errorf("API/raw link %s should disable htmx boosting, hx-boost=%q", href, boost)
+		}
+	})
 }
