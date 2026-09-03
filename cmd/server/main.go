@@ -35,10 +35,18 @@ func main() {
 	initDataStore(ctx)
 
 	web.TemplateDir = "./web"
+	csrfKey := getEnvWithDefault("CSRF_KEY", "default_csrf_key")
+	if err := web.InitWebAuthn(
+		getEnvWithDefault("WEBAUTHN_RP_ORIGIN", "http://127.0.0.1:8080"),
+		getEnvWithDefault("WEBAUTHN_RP_NAME", "Trusted Assertions"),
+		csrfKey,
+	); err != nil {
+		log.Errorf("WebAuthn init failed: %v", err)
+	}
 	r := setupHandlers()
 
 	CSRF := csrf.Protect(
-		[]byte(getEnvWithDefault("CSRF_KEY", "default_csrf_key")),
+		[]byte(csrfKey),
 		csrf.SameSite(csrf.SameSiteStrictMode),
 		csrf.FieldName("authenticity_token"),
 		csrf.Path("/"),
