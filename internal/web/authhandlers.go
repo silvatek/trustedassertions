@@ -98,7 +98,7 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		SetAuthCookie(userId, w)
+		SetAuthCookie(userId, w, r)
 
 		http.Redirect(w, r, HomePath, http.StatusSeeOther)
 	}
@@ -107,8 +107,7 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
-	cookie := http.Cookie{Name: "auth", Path: "/", Value: "", MaxAge: -1, SameSite: http.SameSiteStrictMode}
-	http.SetCookie(w, &cookie)
+	SetAuthCookie("", w, r)
 
 	log.DebugfX(ctx, "Cleared auth cookie")
 
