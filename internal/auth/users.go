@@ -1,10 +1,21 @@
 package auth
 
 import (
+	"bytes"
 	"encoding/base64"
+	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 	log "silvatek.uk/trustedassertions/internal/logging"
+)
+
+const MaxPasskeys = 5
+
+var (
+	ErrEmptyPasskeyID  = errors.New("passkey credential id is required")
+	ErrTooManyPasskeys = errors.New("user already has the maximum number of passkeys")
+	ErrPasskeyExists   = errors.New("passkey already registered")
+	ErrPasskeyNotFound = errors.New("passkey not found")
 )
 
 type User struct {
@@ -63,4 +74,42 @@ func (u *User) HasKey(keyId string) bool {
 	}
 
 	return false
+}
+
+func (u *User) AddPasskey(pk Passkey) error {
+	if len(pk.ID) == 0 {
+		return ErrEmptyPasskeyID
+	}
+	if len(u.Passkeys) >= MaxPasskeys {
+		return ErrTooManyPasskeys
+	}
+	if u.passkeyIndex(pk.ID) >= 0 {
+		return ErrPasskeyExists
+	}
+	u.Passkeys = append(u.Passkeys, pk)
+	return nil
+}
+
+func (u *User) RemovePasskey(credentialID []byte) error {
+	if len(credentialID) == 0 {
+		return ErrEmptyPasskeyID
+	}
+	i := u.passkeyIndex(credentialID)
+	if i < 0 {
+		return ErrPasskeyNotFound
+	}
+	kept := make([]Passkey, 0, len(u.Passkeys)-1)
+	kept = append(kept, u.Passkeys[:i]...)
+	kept = append(kept, u.Passkeys[i+1:]...)
+	u.Passkeys = kept
+	return nil
+}
+
+func (u *User) passkeyIndex(credentialID []byte) int {
+	for i, pk := range u.Passkeys {
+		if bytes.Equal(pk.ID, credentialID) {
+			return i
+		}
+	}
+	return -1
 }

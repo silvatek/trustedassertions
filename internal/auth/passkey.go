@@ -1,21 +1,10 @@
 package auth
 
 import (
-	"bytes"
-	"errors"
 	"time"
 
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
-)
-
-const MaxPasskeys = 5
-
-var (
-	ErrEmptyPasskeyID  = errors.New("passkey credential id is required")
-	ErrTooManyPasskeys = errors.New("user already has the maximum number of passkeys")
-	ErrPasskeyExists   = errors.New("passkey already registered")
-	ErrPasskeyNotFound = errors.New("passkey not found")
 )
 
 type Passkey struct {
@@ -55,6 +44,7 @@ func PasskeyFromCredential(cred webauthn.Credential, name string) Passkey {
 		CloneWarning:    cred.Authenticator.CloneWarning,
 		Attachment:      string(cred.Authenticator.Attachment),
 		Name:            name,
+		CreatedAt:       time.Now().UTC(),
 	}
 }
 
@@ -93,43 +83,4 @@ func (p Passkey) authenticatorFlags() protocol.AuthenticatorFlags {
 		flags |= protocol.FlagBackupState
 	}
 	return flags
-}
-
-func (u *User) AddPasskey(pk Passkey) error {
-	if len(pk.ID) == 0 {
-		return ErrEmptyPasskeyID
-	}
-	if len(u.Passkeys) >= MaxPasskeys {
-		return ErrTooManyPasskeys
-	}
-	for _, existing := range u.Passkeys {
-		if bytes.Equal(existing.ID, pk.ID) {
-			return ErrPasskeyExists
-		}
-	}
-	if pk.CreatedAt.IsZero() {
-		pk.CreatedAt = time.Now().UTC()
-	}
-	u.Passkeys = append(u.Passkeys, pk)
-	return nil
-}
-
-func (u *User) RemovePasskey(credentialID []byte) error {
-	if len(credentialID) == 0 {
-		return ErrEmptyPasskeyID
-	}
-	kept := make([]Passkey, 0, len(u.Passkeys))
-	found := false
-	for _, pk := range u.Passkeys {
-		if bytes.Equal(pk.ID, credentialID) {
-			found = true
-			continue
-		}
-		kept = append(kept, pk)
-	}
-	if !found {
-		return ErrPasskeyNotFound
-	}
-	u.Passkeys = kept
-	return nil
 }

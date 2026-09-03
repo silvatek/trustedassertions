@@ -38,9 +38,6 @@ func TestAddRemovePasskey(t *testing.T) {
 	if len(user.Passkeys) != 1 {
 		t.Fatalf("passkey count = %d", len(user.Passkeys))
 	}
-	if user.Passkeys[0].CreatedAt.IsZero() {
-		t.Error("CreatedAt should be set")
-	}
 
 	if err := user.AddPasskey(pk); !errors.Is(err, ErrPasskeyExists) {
 		t.Errorf("duplicate AddPasskey error = %v", err)
@@ -107,6 +104,9 @@ func TestPasskeyCredentialRoundTrip(t *testing.T) {
 	}
 	if pk.Name != "Phone" {
 		t.Errorf("name = %q", pk.Name)
+	}
+	if pk.CreatedAt.IsZero() {
+		t.Error("CreatedAt should be set when the passkey is created")
 	}
 }
 
