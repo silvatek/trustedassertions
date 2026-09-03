@@ -1,6 +1,8 @@
 {{define "content"}}		
         <h2>View Profile</h2>
 
+        {{.CsrfField}}
+
         <div class="fieldset">
             <div class="fieldprompt">User ID:</div>
             <div class="fieldvalue">
@@ -17,4 +19,33 @@
             {{end}}
 
         </ul>
+
+        <h3>Passkeys</h3>
+        <table id="passkeys" class="searchresults">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Added</th>
+                    <th>Last used</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{range $pk := .Detail.Passkeys}}
+                <tr>
+                    <td class="passkey-name">{{$pk.Name}}</td>
+                    <td class="passkey-created">{{$pk.CreatedAt}}</td>
+                    <td class="passkey-last-used">{{$pk.LastUsedAt}}</td>
+                </tr>
+            {{else}}
+                <tr>
+                    <td id="no-passkeys" colspan="3">No passkeys registered.</td>
+                </tr>
+            {{end}}
+            </tbody>
+        </table>
+        <div>
+            <button type="button" id="add-passkey" hx-boost="false" onclick="window.taPasskeys && taPasskeys.add()">Add passkey</button>
+        </div>
+        <p id="passkey-status" class="error"></p>
+        <script src="/web/static/passkey.js"></script>
 {{end}}

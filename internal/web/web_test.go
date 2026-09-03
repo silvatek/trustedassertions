@@ -49,6 +49,10 @@ func NewWebTest(t *testing.T) *webtest.WebTest {
 	wt.AuthCookie = MakeAuthCookie(user.Id)
 	datastore.ActiveDataStore.StoreUser(context.TODO(), *user)
 
+	if err := InitWebAuthn("http://127.0.0.1:8080", "Trusted Assertions", "default_csrf_key"); err != nil {
+		t.Fatalf("InitWebAuthn: %v", err)
+	}
+
 	wt.Server = httptest.NewServer(router)
 
 	return wt

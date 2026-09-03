@@ -40,6 +40,7 @@ func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/logout", LogoutWebHandler)
 	r.HandleFunc("/web/register", RegisterWebHandler)
 	r.HandleFunc("/web/profile", ProfileWebHandler)
+	addPasskeyHandlers(r)
 
 	userJwtKey = auth.MakeJwtKey()
 }
@@ -240,14 +241,29 @@ func ProfileWebHandler(w http.ResponseWriter, r *http.Request) {
 		signers[n] = entity
 	}
 
+	passkeys := make([]passkeyView, len(user.Passkeys))
+	for i, pk := range user.Passkeys {
+		name := pk.Name
+		if name == "" {
+			name = "Passkey"
+		}
+		passkeys[i] = passkeyView{
+			Name:       name,
+			CreatedAt:  formatPasskeyTime(pk.CreatedAt),
+			LastUsedAt: formatPasskeyTime(pk.LastUsedAt),
+		}
+	}
+
 	data := struct {
 		UserName string
 		User     auth.User
 		Entities []entities.Entity
+		Passkeys []passkeyView
 	}{
 		UserName: username,
 		User:     user,
 		Entities: signers,
+		Passkeys: passkeys,
 	}
 
 	RenderWebPage(ctx, "viewprofile", data, nil, w, r)
