@@ -330,6 +330,7 @@ func (fs *FireStore) FetchRefs(ctx context.Context, uri ref.HashUri) ([]ref.Refe
 func (fs *FireStore) StoreUser(ctx context.Context, user auth.User) {
 	client := fs.client(ctx)
 
+	// The whole User document is stored, including Passkeys.
 	client.Collection(UserCollection).Doc(user.Id).Set(ctx, user)
 
 	log.Debugf("Stored user %s", user.Id)

@@ -154,7 +154,17 @@ func (ds *InMemoryDataStore) FetchUser(ctx context.Context, id string) (auth.Use
 			user.KeyRefs = append(user.KeyRefs, value)
 		}
 	}
+	user.Passkeys = copyPasskeys(user.Passkeys)
 	return user, nil
+}
+
+func copyPasskeys(passkeys []auth.Passkey) []auth.Passkey {
+	if passkeys == nil {
+		return nil
+	}
+	copied := make([]auth.Passkey, len(passkeys))
+	copy(copied, passkeys)
+	return copied
 }
 
 func (ds *InMemoryDataStore) Search(ctx context.Context, query string) ([]SearchResult, error) {
