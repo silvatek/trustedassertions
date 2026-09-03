@@ -52,6 +52,37 @@ func MakeWebTest(t testcontext.TestContext) *WebTest {
 	return &wt
 }
 
+func (wt *WebTest) PostJSON(path string, body []byte) *WebPage {
+	reqURL := wt.Server.URL + path
+	req, _ := http.NewRequest("POST", reqURL, bytes.NewReader(body))
+	if wt.AuthCookie != nil {
+		req.AddCookie(wt.AuthCookie)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	page := WebPage{url: reqURL, wt: wt}
+	response, err := wt.Client.Do(req)
+	if err != nil {
+		page.requestError = err
+		wt.t.Errorf("Error posting %s, %v", reqURL, page.requestError)
+		return &page
+	}
+	page.response = response
+	page.statusCode = response.StatusCode
+	defer page.response.Body.Close()
+	page.body, page.htmlError = io.ReadAll(page.response.Body)
+	return &page
+}
+
+func (page *WebPage) Status() int {
+	return page.statusCode
+}
+
+func (page *WebPage) RawBody() []byte {
+	return page.body
+}
+
 func (wt *WebTest) GetPage(path string) *WebPage {
 	return wt.GetPageWithHeaders(path, nil)
 }

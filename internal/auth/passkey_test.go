@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -87,7 +88,7 @@ func TestPasskeyCredentialRoundTrip(t *testing.T) {
 		},
 	}
 
-	pk := PasskeyFromCredential(cred, "Phone")
+	pk := PasskeyFromCredential(cred)
 	got := pk.Credential()
 
 	if !bytes.Equal(got.ID, cred.ID) || !bytes.Equal(got.PublicKey, cred.PublicKey) {
@@ -102,7 +103,7 @@ func TestPasskeyCredentialRoundTrip(t *testing.T) {
 	if !got.Flags.UserPresent || !got.Flags.UserVerified {
 		t.Error("flags did not round-trip")
 	}
-	if pk.Name != "Phone" {
+	if pk.Name != "This device" {
 		t.Errorf("name = %q", pk.Name)
 	}
 	if pk.CreatedAt.IsZero() {
@@ -153,5 +154,63 @@ func TestWebAuthnCredentialsFromPasskeys(t *testing.T) {
 	}
 	if !bytes.Equal(creds[0].ID, []byte("cred-1")) {
 		t.Errorf("credential id = %q", creds[0].ID)
+	}
+}
+
+func TestDerivedPasskeyName(t *testing.T) {
+	icloud, err := hex.DecodeString("fbfc3007154e4ecc8c0b6e020557d7bd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		name string
+		cred webauthn.Credential
+		want string
+	}{
+		{
+			name: "known aaguid",
+			cred: webauthn.Credential{Authenticator: webauthn.Authenticator{AAGUID: icloud}},
+			want: "iCloud Keychain",
+		},
+		{
+			name: "security key",
+			cred: webauthn.Credential{Transport: []protocol.AuthenticatorTransport{protocol.USB}},
+			want: "Security key",
+		},
+		{
+			name: "phone",
+			cred: webauthn.Credential{Transport: []protocol.AuthenticatorTransport{protocol.Hybrid}},
+			want: "Phone",
+		},
+		{
+			name: "this device",
+			cred: webauthn.Credential{
+				Transport:     []protocol.AuthenticatorTransport{protocol.Internal},
+				Authenticator: webauthn.Authenticator{Attachment: protocol.Platform},
+			},
+			want: "This device",
+		},
+		{
+			name: "synced platform",
+			cred: webauthn.Credential{
+				Transport:     []protocol.AuthenticatorTransport{protocol.Internal},
+				Flags:         webauthn.NewCredentialFlags(protocol.FlagBackupEligible),
+				Authenticator: webauthn.Authenticator{Attachment: protocol.Platform},
+			},
+			want: "Synced passkey",
+		},
+		{
+			name: "unknown",
+			cred: webauthn.Credential{},
+			want: "Passkey",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := derivedPasskeyName(tc.cred)
+			if got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
