@@ -125,6 +125,11 @@ There are multiple levels at which we can produce a new "thing".
 * `Store???` - stores an instance in the datastore
 * `Create???` - produces a new instance and stores in the active datastore
 
+### AI Agent Guidance
+
+* Do not rewrite README "Done" history.
+* Do not commit or open a PR unless asked.
+
 ### Build time analysis
 
 Build ID: afb6877e-02e5-4363-84c9-ffc88d4cb818
