@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
 	"silvatek.uk/trustedassertions/internal/references"
@@ -194,5 +195,59 @@ func TestMakeUnknownReferenceSummary(t *testing.T) {
 
 	if ref.Summary != "Unknown unknown" {
 		t.Errorf("Unexpected reference summary: %s", ref.Summary)
+	}
+}
+
+func TestAddRemovePasskey(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+
+	user := auth.User{Id: "Tester", PassHash: "zzz"}
+	ActiveDataStore.StoreUser(ctx, user)
+
+	pk := auth.Passkey{
+		ID:        []byte("cred-1"),
+		PublicKey: []byte{1, 2, 3, 4},
+		SignCount: 9,
+		Name:      "YubiKey",
+	}
+	if err := AddPasskey(ctx, "Tester", pk); err != nil {
+		t.Fatalf("AddPasskey: %v", err)
+	}
+
+	got, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("FetchUser: %v", err)
+	}
+	if got.PassHash != "zzz" {
+		t.Error("password hash should be unchanged")
+	}
+	if len(got.Passkeys) != 1 {
+		t.Fatalf("passkeys = %d", len(got.Passkeys))
+	}
+	if string(got.Passkeys[0].ID) != "cred-1" {
+		t.Errorf("id = %q", got.Passkeys[0].ID)
+	}
+	if got.Passkeys[0].SignCount != 9 {
+		t.Errorf("sign count = %d", got.Passkeys[0].SignCount)
+	}
+
+	if err := RemovePasskey(ctx, "Tester", []byte("cred-1")); err != nil {
+		t.Fatalf("RemovePasskey: %v", err)
+	}
+	got, err = ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Passkeys) != 0 {
+		t.Errorf("passkeys after remove = %d", len(got.Passkeys))
+	}
+}
+
+func TestAddPasskeyUnknownUser(t *testing.T) {
+	InitInMemoryDataStore()
+	err := AddPasskey(context.TODO(), "missing", auth.Passkey{ID: []byte("cred-1")})
+	if err == nil {
+		t.Error("expected error for unknown user")
 	}
 }

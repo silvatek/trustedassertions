@@ -1,9 +1,13 @@
 package datastore
 
 import (
+	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
+	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
@@ -48,5 +52,40 @@ func TestFirestoreSearch(t *testing.T) {
 
 	if len(matches) != 4 {
 		t.Errorf("Unexpected number of matches: %d", len(matches))
+	}
+}
+
+func TestUserPasskeyDocumentRoundTrip(t *testing.T) {
+	user := auth.User{Id: "alice", PassHash: "hash"}
+	pk := auth.Passkey{
+		ID:         []byte{0xff, 0x00, 0xab},
+		PublicKey:  []byte{1, 2, 3},
+		SignCount:  4,
+		Name:       "Phone",
+		CreatedAt:  time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC),
+		LastUsedAt: time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC),
+		Transports: []string{"internal"},
+	}
+	if err := user.AddPasskey(pk); err != nil {
+		t.Fatal(err)
+	}
+
+	raw, err := json.Marshal(user)
+	if err != nil {
+		t.Fatalf("marshal user document: %v", err)
+	}
+	var got auth.User
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatalf("unmarshal user document: %v", err)
+	}
+
+	if len(got.Passkeys) != 1 {
+		t.Fatalf("passkeys = %d", len(got.Passkeys))
+	}
+	if !bytes.Equal(got.Passkeys[0].ID, pk.ID) || !bytes.Equal(got.Passkeys[0].PublicKey, pk.PublicKey) {
+		t.Error("binary passkey fields did not survive document encoding")
+	}
+	if got.Passkeys[0].SignCount != 4 || got.Passkeys[0].Name != "Phone" {
+		t.Errorf("passkey = %+v", got.Passkeys[0])
 	}
 }

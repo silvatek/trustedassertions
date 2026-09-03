@@ -98,6 +98,12 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Implementation Details
 
+### Persistence
+
+Firestore is one backend for the `datastore` package. Application code should depend on the `DataStore` interface (`Store`, `FetchUser`, and so on), not on Firestore types, collection names, or document layout.
+
+Assume Firestore only inside Firestore-specific files (today that is `internal/datastore/firestore.go` and its tests). Domain types such as `auth.User` must stay backend-agnostic so the in-memory store and any future store can persist them.
+
 ### Package hierarchy
 
 Packages can only depend on other packages lower than them in the hierarchy.

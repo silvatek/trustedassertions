@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
 	"silvatek.uk/trustedassertions/internal/references"
@@ -173,4 +174,28 @@ func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri 
 	}
 
 	return doc, nil
+}
+
+func AddPasskey(ctx context.Context, userID string, pk auth.Passkey) error {
+	user, err := ActiveDataStore.FetchUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if err := user.AddPasskey(pk); err != nil {
+		return err
+	}
+	ActiveDataStore.StoreUser(ctx, user)
+	return nil
+}
+
+func RemovePasskey(ctx context.Context, userID string, credentialID []byte) error {
+	user, err := ActiveDataStore.FetchUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if err := user.RemovePasskey(credentialID); err != nil {
+		return err
+	}
+	ActiveDataStore.StoreUser(ctx, user)
+	return nil
 }
