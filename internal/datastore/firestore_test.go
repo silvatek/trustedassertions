@@ -55,7 +55,7 @@ func TestFirestoreSearch(t *testing.T) {
 	}
 }
 
-func TestFireStoreUserPasskeyDocumentRoundTrip(t *testing.T) {
+func TestUserPasskeyDocumentRoundTrip(t *testing.T) {
 	user := auth.User{Id: "alice", PassHash: "hash"}
 	pk := auth.Passkey{
 		ID:         []byte{0xff, 0x00, 0xab},
