@@ -17,4 +17,9 @@
                         <input id="login" type="Submit" value="Login">
                 </div>
         </form>
+        <div>
+            <button type="button" id="use-passkey" hx-boost="false" onclick="window.taPasskeys && taPasskeys.login()">Use a passkey</button>
+        </div>
+        <p id="passkey-status" class="error"></p>
+        <script src="/web/static/passkey.js"></script>
 {{end}}

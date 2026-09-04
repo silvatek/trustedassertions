@@ -251,3 +251,84 @@ func TestAddPasskeyUnknownUser(t *testing.T) {
 		t.Error("expected error for unknown user")
 	}
 }
+
+func TestRecordPasskeyUse(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+	created := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+
+	ActiveDataStore.StoreUser(ctx, auth.User{Id: "Tester", PassHash: "zzz"})
+	pk := auth.Passkey{
+		ID:        []byte("cred-1"),
+		PublicKey: []byte{1, 2, 3, 4},
+		SignCount: 9,
+		Name:      "YubiKey",
+		CreatedAt: created,
+	}
+	if err := AddPasskey(ctx, "Tester", pk); err != nil {
+		t.Fatalf("AddPasskey: %v", err)
+	}
+
+	usedAt := time.Date(2026, 9, 4, 10, 0, 0, 0, time.UTC)
+	update := auth.Passkey{
+		ID:           []byte("cred-1"),
+		SignCount:    11,
+		CloneWarning: true,
+		UserVerified: true,
+		Name:         "should not persist",
+		CreatedAt:    time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+	if err := RecordPasskeyUse(ctx, "Tester", update, usedAt); err != nil {
+		t.Fatalf("RecordPasskeyUse: %v", err)
+	}
+
+	got, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("FetchUser: %v", err)
+	}
+	if got.PassHash != "zzz" {
+		t.Error("password hash should be unchanged")
+	}
+	if len(got.Passkeys) != 1 {
+		t.Fatalf("passkeys = %d", len(got.Passkeys))
+	}
+	if got.Passkeys[0].SignCount != 11 {
+		t.Errorf("sign count = %d", got.Passkeys[0].SignCount)
+	}
+	if !got.Passkeys[0].CloneWarning {
+		t.Error("clone warning should be persisted")
+	}
+	if !got.Passkeys[0].UserVerified {
+		t.Error("user verified should be persisted")
+	}
+	if got.Passkeys[0].Name != "YubiKey" {
+		t.Errorf("name = %q, should be unchanged", got.Passkeys[0].Name)
+	}
+	if !got.Passkeys[0].CreatedAt.Equal(created) {
+		t.Errorf("created at = %v, should be unchanged", got.Passkeys[0].CreatedAt)
+	}
+	if !got.Passkeys[0].LastUsedAt.Equal(usedAt) {
+		t.Errorf("last used = %v", got.Passkeys[0].LastUsedAt)
+	}
+}
+
+func TestRecordPasskeyUseUnknownUser(t *testing.T) {
+	InitInMemoryDataStore()
+	err := RecordPasskeyUse(context.TODO(), "missing", auth.Passkey{ID: []byte("cred-1")}, time.Now())
+	if err == nil {
+		t.Error("expected error for unknown user")
+	}
+}
+
+func TestRecordPasskeyUseUnknownID(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+	ActiveDataStore.StoreUser(ctx, auth.User{Id: "Tester"})
+	if err := AddPasskey(ctx, "Tester", auth.Passkey{ID: []byte("cred-1"), PublicKey: []byte{1}}); err != nil {
+		t.Fatal(err)
+	}
+	err := RecordPasskeyUse(ctx, "Tester", auth.Passkey{ID: []byte("other")}, time.Now())
+	if err == nil {
+		t.Error("expected error for unknown passkey")
+	}
+}

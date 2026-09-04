@@ -29,6 +29,101 @@ func samplePasskey(id string) Passkey {
 	}
 }
 
+func TestPasskeyRecordUse(t *testing.T) {
+	pk := samplePasskey("cred-1")
+	created := pk.CreatedAt
+	usedAt := time.Date(2026, 9, 4, 15, 0, 0, 0, time.UTC)
+	update := Passkey{
+		ID:             pk.ID,
+		SignCount:      42,
+		CloneWarning:   true,
+		UserPresent:    false,
+		UserVerified:   true,
+		BackupEligible: false,
+		BackupState:    true,
+		Name:           "should not apply",
+		CreatedAt:      time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+
+	pk.RecordUse(update, usedAt)
+
+	if pk.SignCount != 42 {
+		t.Errorf("sign count = %d", pk.SignCount)
+	}
+	if !pk.CloneWarning {
+		t.Error("clone warning should be updated")
+	}
+	if pk.UserPresent {
+		t.Error("user present should be updated")
+	}
+	if !pk.UserVerified {
+		t.Error("user verified should be updated")
+	}
+	if pk.BackupEligible {
+		t.Error("backup eligible should be updated")
+	}
+	if !pk.BackupState {
+		t.Error("backup state should be updated")
+	}
+	if !pk.LastUsedAt.Equal(usedAt) {
+		t.Errorf("last used = %v", pk.LastUsedAt)
+	}
+	if pk.Name != "Laptop" {
+		t.Errorf("name = %q, should be unchanged", pk.Name)
+	}
+	if !pk.CreatedAt.Equal(created) {
+		t.Errorf("created at = %v, should be unchanged", pk.CreatedAt)
+	}
+}
+
+func TestUserRecordPasskeyUseUnknownID(t *testing.T) {
+	user := User{Id: "alice"}
+	if err := user.AddPasskey(samplePasskey("cred-1")); err != nil {
+		t.Fatal(err)
+	}
+	if err := user.RecordPasskeyUse(samplePasskey("other"), time.Now()); !errors.Is(err, ErrPasskeyNotFound) {
+		t.Errorf("unknown id error = %v", err)
+	}
+	if err := user.RecordPasskeyUse(Passkey{}, time.Now()); !errors.Is(err, ErrEmptyPasskeyID) {
+		t.Errorf("empty id error = %v", err)
+	}
+}
+
+func TestUserRecordPasskeyUse(t *testing.T) {
+	user := User{Id: "alice"}
+	pk := samplePasskey("cred-1")
+	if err := user.AddPasskey(pk); err != nil {
+		t.Fatal(err)
+	}
+
+	usedAt := time.Date(2026, 9, 4, 12, 0, 0, 0, time.UTC)
+	update := samplePasskey("cred-1")
+	update.SignCount = 99
+	update.CloneWarning = true
+	update.Name = "ignored"
+	update.CreatedAt = time.Date(1999, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	if err := user.RecordPasskeyUse(update, usedAt); err != nil {
+		t.Fatalf("RecordPasskeyUse: %v", err)
+	}
+	got := user.Passkeys[0]
+	if got.SignCount != 99 {
+		t.Errorf("sign count = %d", got.SignCount)
+	}
+	if !got.CloneWarning {
+		t.Error("clone warning should be updated")
+	}
+	if got.Name != "Laptop" {
+		t.Errorf("name = %q, should be unchanged", got.Name)
+	}
+	if !got.CreatedAt.Equal(pk.CreatedAt) {
+		t.Errorf("created at = %v, should be unchanged", got.CreatedAt)
+	}
+	if !got.LastUsedAt.Equal(usedAt) {
+		t.Errorf("last used = %v", got.LastUsedAt)
+	}
+}
+
 func TestAddRemovePasskey(t *testing.T) {
 	user := User{Id: "alice"}
 	pk := samplePasskey("cred-1")

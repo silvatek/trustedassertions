@@ -65,6 +65,34 @@
     };
   }
 
+  function prepareGetOptions(publicKey) {
+    var opts = Object.assign({}, publicKey);
+    opts.challenge = b64urlToBuf(publicKey.challenge);
+    if (publicKey.allowCredentials) {
+      opts.allowCredentials = publicKey.allowCredentials.map(function (cred) {
+        return Object.assign({}, cred, { id: b64urlToBuf(cred.id) });
+      });
+    }
+    return { publicKey: opts };
+  }
+
+  function assertionToJSON(cred) {
+    var response = {
+      clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+      authenticatorData: bufToB64url(cred.response.authenticatorData),
+      signature: bufToB64url(cred.response.signature),
+    };
+    if (cred.response.userHandle) {
+      response.userHandle = bufToB64url(cred.response.userHandle);
+    }
+    return {
+      id: cred.id,
+      rawId: bufToB64url(cred.rawId),
+      type: cred.type,
+      response: response,
+    };
+  }
+
   async function parseError(res) {
     try {
       var data = await res.json();
@@ -113,6 +141,54 @@
     }
   }
 
+  async function login() {
+    if (!window.PublicKeyCredential) {
+      setStatus("Passkeys are not supported in this browser.");
+      return;
+    }
+    var userIdInput = document.getElementById("user_id");
+    var userId = userIdInput ? userIdInput.value.trim() : "";
+    if (!userId) {
+      setStatus("Enter your ID to use a passkey.");
+      return;
+    }
+    setStatus("");
+    try {
+      var begin = await fetch("/web/passkey/login/begin", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken(),
+        },
+        body: JSON.stringify({ user_id: userId }),
+      });
+      if (!begin.ok) {
+        setStatus(await parseError(begin));
+        return;
+      }
+      var options = await begin.json();
+      var cred = await navigator.credentials.get(prepareGetOptions(options.publicKey));
+      var finish = await fetch("/web/passkey/login/finish", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken(),
+        },
+        body: JSON.stringify(assertionToJSON(cred)),
+      });
+      if (!finish.ok) {
+        setStatus(await parseError(finish));
+        return;
+      }
+      var result = await finish.json();
+      window.location.assign(result.redirect);
+    } catch (err) {
+      setStatus(err && err.message ? err.message : "Could not sign in with passkey");
+    }
+  }
+
   function hideUnsupported() {
     if (window.PublicKeyCredential) {
       return;
@@ -121,8 +197,12 @@
     if (add) {
       add.hidden = true;
     }
+    var usePasskey = document.getElementById("use-passkey");
+    if (usePasskey) {
+      usePasskey.hidden = true;
+    }
   }
 
-  window.taPasskeys = { add: add };
+  window.taPasskeys = { add: add, login: login };
   hideUnsupported();
 })();
