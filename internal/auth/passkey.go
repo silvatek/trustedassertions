@@ -44,6 +44,16 @@ type Passkey struct {
 	LastUsedAt      time.Time `json:"lastUsedAt"`
 }
 
+func (p *Passkey) RecordUse(update Passkey, usedAt time.Time) {
+	p.SignCount = update.SignCount
+	p.CloneWarning = update.CloneWarning
+	p.UserPresent = update.UserPresent
+	p.UserVerified = update.UserVerified
+	p.BackupEligible = update.BackupEligible
+	p.BackupState = update.BackupState
+	p.LastUsedAt = usedAt
+}
+
 func PasskeyFromCredential(cred webauthn.Credential) Passkey {
 	transports := make([]string, len(cred.Transport))
 	for i, t := range cred.Transport {

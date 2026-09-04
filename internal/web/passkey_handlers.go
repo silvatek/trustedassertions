@@ -13,9 +13,13 @@ import (
 	"silvatek.uk/trustedassertions/internal/datastore"
 )
 
+const passkeyLoginFailMessage = "Unable to verify identity"
+
 func addPasskeyHandlers(r *mux.Router) {
 	r.HandleFunc("/web/passkey/register/begin", PasskeyRegisterBeginHandler)
 	r.HandleFunc("/web/passkey/register/finish", PasskeyRegisterFinishHandler)
+	r.HandleFunc("/web/passkey/login/begin", PasskeyLoginBeginHandler)
+	r.HandleFunc("/web/passkey/login/finish", PasskeyLoginFinishHandler)
 }
 
 func PasskeyRegisterBeginHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,6 +105,133 @@ func PasskeyRegisterFinishHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func PasskeyLoginBeginHandler(w http.ResponseWriter, r *http.Request) {
+	user, ok := getPasskeyLoginUser(w, r)
+	if !ok {
+		return
+	}
+
+	assertion, session, err := webAuthn.BeginLogin(
+		&user,
+		wa.WithUserVerification(protocol.VerificationRequired),
+	)
+	if err != nil {
+		log.Errorf("BeginLogin: %v", err)
+		writePasskeyLoginFailure(w)
+		return
+	}
+
+	writePasskeyLoginBeginResponse(w, r, assertion, session)
+}
+
+func PasskeyLoginFinishHandler(w http.ResponseWriter, r *http.Request) {
+	user, session, ok := getPasskeyLoginSession(w, r)
+	if !ok {
+		return
+	}
+	defer ClearWebAuthnSession(w, r)
+
+	cred, err := webAuthn.FinishLogin(&user, *session, r)
+	if err != nil {
+		log.Errorf("FinishLogin: %v", err)
+		writePasskeyLoginFailure(w)
+		return
+	}
+
+	writePasskeyLoginFinishResponse(w, r, user, cred)
+}
+
+func getPasskeyLoginUser(w http.ResponseWriter, r *http.Request) (auth.User, bool) {
+	if !requirePasskeyPOST(w, r) {
+		return auth.User{}, false
+	}
+
+	var body struct {
+		UserID string `json:"user_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writePasskeyLoginFailure(w)
+		return auth.User{}, false
+	}
+	return fetchPasskeyLoginUser(w, r, body.UserID)
+}
+
+func writePasskeyLoginBeginResponse(w http.ResponseWriter, r *http.Request, assertion *protocol.CredentialAssertion, session *wa.SessionData) {
+	if err := SetWebAuthnSession(session, w, r); err != nil {
+		log.Errorf("SetWebAuthnSession: %v", err)
+		writePasskeyLoginFailure(w)
+		return
+	}
+	writeJSON(w, http.StatusOK, assertion)
+}
+
+func getPasskeyLoginSession(w http.ResponseWriter, r *http.Request) (auth.User, *wa.SessionData, bool) {
+	if !requirePasskeyPOST(w, r) {
+		return auth.User{}, nil, false
+	}
+
+	session, err := ReadWebAuthnSession(r)
+	if err != nil {
+		writePasskeyLoginFailure(w)
+		return auth.User{}, nil, false
+	}
+
+	user, ok := fetchPasskeyLoginUser(w, r, string(session.UserID))
+	if !ok {
+		return auth.User{}, nil, false
+	}
+	if string(session.UserID) != user.Id {
+		writePasskeyLoginFailure(w)
+		return auth.User{}, nil, false
+	}
+	return user, session, true
+}
+
+func writePasskeyLoginFinishResponse(w http.ResponseWriter, r *http.Request, user auth.User, cred *wa.Credential) {
+	if err := datastore.RecordPasskeyUse(appcontext.NewWebContext(r), user.Id, auth.PasskeyFromCredential(*cred), time.Now().UTC()); err != nil {
+		log.Errorf("RecordPasskeyUse: %v", err)
+		writePasskeyLoginFailure(w)
+		return
+	}
+	if cred.Authenticator.CloneWarning {
+		log.Errorf("passkey clone warning for user %s", user.Id)
+		writePasskeyLoginFailure(w)
+		return
+	}
+
+	SetAuthCookie(user.Id, w, r)
+	writeJSON(w, http.StatusOK, map[string]string{"redirect": HomePath})
+}
+
+func requirePasskeyPOST(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return false
+	}
+	if webAuthn == nil {
+		writeJSONError(w, http.StatusServiceUnavailable, "passkeys are not available")
+		return false
+	}
+	return true
+}
+
+func fetchPasskeyLoginUser(w http.ResponseWriter, r *http.Request, userID string) (auth.User, bool) {
+	if userID == "" {
+		writePasskeyLoginFailure(w)
+		return auth.User{}, false
+	}
+	user, err := datastore.ActiveDataStore.FetchUser(appcontext.NewWebContext(r), userID)
+	if err != nil || len(user.Passkeys) == 0 {
+		writePasskeyLoginFailure(w)
+		return auth.User{}, false
+	}
+	return user, true
+}
+
+func writePasskeyLoginFailure(w http.ResponseWriter) {
+	writeJSONError(w, http.StatusUnauthorized, passkeyLoginFailMessage)
 }
 
 func loggedInUser(w http.ResponseWriter, r *http.Request) (auth.User, bool) {
