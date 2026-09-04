@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"testing"
+	"time"
 
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
@@ -78,6 +79,10 @@ func TestRegistrationCopiesInviteRoles(t *testing.T) {
 }
 
 func TestFailedRegistration(t *testing.T) {
+	savedDelay := invalidRegCodeDelay
+	invalidRegCodeDelay = 0
+	t.Cleanup(func() { invalidRegCodeDelay = savedDelay })
+
 	ctx := context.Background()
 
 	store := datastore.NewInMemoryDataStore()
@@ -107,5 +112,22 @@ func TestFailedRegistration(t *testing.T) {
 		} else if err.ErrorCode != cfg.err {
 			t.Errorf("Unexpected error for `%s`: %d", cfg.name, err.ErrorCode)
 		}
+	}
+}
+
+func TestInvalidRegCodeDelay(t *testing.T) {
+	savedDelay := invalidRegCodeDelay
+	invalidRegCodeDelay = 50 * time.Millisecond
+	t.Cleanup(func() { invalidRegCodeDelay = savedDelay })
+
+	store := datastore.NewInMemoryDataStore()
+	start := time.Now()
+	err := registerUser(context.Background(), RegistrationForm{regCode: "nope"}, store)
+	elapsed := time.Since(start)
+	if err == nil || err.ErrorCode != ErrorRegCode.ErrorCode {
+		t.Fatalf("expected ErrorRegCode, got %v", err)
+	}
+	if elapsed < invalidRegCodeDelay {
+		t.Errorf("expected delay of at least %s, got %s", invalidRegCodeDelay, elapsed)
 	}
 }
