@@ -125,6 +125,91 @@ func TestFetchUserCopiesRoles(t *testing.T) {
 	}
 }
 
+func TestStoreFetchRegistrationCopiesRoles(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+
+	code := auth.NormalizeInviteCode("oak tree blue sky")
+	ActiveDataStore.StoreRegistration(ctx, auth.Registration{
+		Code:   code,
+		Status: "Pending",
+		Roles:  []string{auth.RoleAuthor},
+	})
+
+	reg, err := ActiveDataStore.FetchRegistration(ctx, code)
+	if err != nil {
+		t.Fatalf("FetchRegistration: %v", err)
+	}
+	if !containsRole(reg.Roles, auth.RoleAuthor) {
+		t.Errorf("fetched registration missing Author role: %v", reg.Roles)
+	}
+
+	reg.Roles = append(reg.Roles, auth.RoleAdministrator)
+
+	again, err := ActiveDataStore.FetchRegistration(ctx, code)
+	if err != nil {
+		t.Fatalf("refetch registration: %v", err)
+	}
+	if containsRole(again.Roles, auth.RoleAdministrator) {
+		t.Errorf("mutating fetched registration roles mutated store: %v", again.Roles)
+	}
+}
+
+func TestListRegistrations(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+
+	ActiveDataStore.StoreRegistration(ctx, auth.Registration{
+		Code:   "oaktreebluesky",
+		Status: "Pending",
+		Roles:  []string{auth.RoleAuthor},
+	})
+	ActiveDataStore.StoreRegistration(ctx, auth.Registration{
+		Code:   "riverstonehillpath",
+		Status: "Complete",
+	})
+
+	regs, err := ActiveDataStore.ListRegistrations(ctx)
+	if err != nil {
+		t.Fatalf("ListRegistrations: %v", err)
+	}
+	if len(regs) != 2 {
+		t.Fatalf("expected 2 registrations, got %d", len(regs))
+	}
+
+	byCode := make(map[string]auth.Registration, len(regs))
+	for _, reg := range regs {
+		byCode[reg.Code] = reg
+	}
+	pending := byCode["oaktreebluesky"]
+	if pending.Status != "Pending" {
+		t.Errorf("pending status: %s", pending.Status)
+	}
+	if !containsRole(pending.Roles, auth.RoleAuthor) {
+		t.Errorf("pending missing Author: %v", pending.Roles)
+	}
+
+	pending.Roles = append(pending.Roles, auth.RoleAdministrator)
+	listed, err := ActiveDataStore.ListRegistrations(ctx)
+	if err != nil {
+		t.Fatalf("ListRegistrations again: %v", err)
+	}
+	for _, reg := range listed {
+		if reg.Code == "oaktreebluesky" && containsRole(reg.Roles, auth.RoleAdministrator) {
+			t.Errorf("mutating listed registration roles mutated store: %v", reg.Roles)
+		}
+	}
+}
+
+func containsRole(roles []string, role string) bool {
+	for _, r := range roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
+}
+
 func TestStoreFetchReference(t *testing.T) {
 	InitInMemoryDataStore()
 

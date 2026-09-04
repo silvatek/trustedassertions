@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/nbutton23/zxcvbn-go"
@@ -33,6 +34,9 @@ var ErrorWeakPassword = AppError{ErrorCode: RegistrationError + 5, UserMessage: 
 var ErrorRegistering = AppError{ErrorCode: RegistrationError + 6, UserMessage: "Unexpected error during registration"}
 
 var RegistrationErrors = []AppError{ErrorRegCode, ErrorPasswordMismatch, ErrorBadUsername, ErrorUserExists, ErrorWeakPassword, ErrorRegistering}
+
+// invalidRegCodeDelay slows responses for unknown or already-used codes so guessing is less practical.
+var invalidRegCodeDelay = 300 * time.Millisecond
 
 var userJwtKey []byte
 
@@ -163,22 +167,28 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func rejectInvalidRegCode() *AppError {
+	time.Sleep(invalidRegCodeDelay)
+	return &ErrorRegCode
+}
+
 func registerUser(ctx context.Context, registration RegistrationForm, store RegistrationStore) *AppError {
-	if registration.regCode == "" {
-		return &ErrorRegCode
+	code := auth.NormalizeInviteCode(registration.regCode)
+	if code == "" {
+		return rejectInvalidRegCode()
 	}
 
-	reg, err := store.FetchRegistration(ctx, registration.regCode)
+	reg, err := store.FetchRegistration(ctx, code)
 	if err != nil {
-		log.DebugfX(ctx, "Could not load registration code %s, %v", registration.regCode, err)
-		return &ErrorRegCode
+		log.DebugfX(ctx, "Could not load registration code %s, %v", code, err)
+		return rejectInvalidRegCode()
 	}
 	if reg.Status != "Pending" {
-		log.DebugfX(ctx, "Attempt to reuse registration code %s (%s)", registration.regCode, reg.Status)
-		return &ErrorRegCode
+		log.DebugfX(ctx, "Attempt to reuse registration code %s (%s)", code, reg.Status)
+		return rejectInvalidRegCode()
 	}
 
-	log.DebugfX(ctx, "Registering with valid registration code %s", registration.regCode)
+	log.DebugfX(ctx, "Registering with valid registration code %s", code)
 
 	user := auth.User{}
 	user.Id = registration.userId
@@ -207,7 +217,11 @@ func registerUser(ctx context.Context, registration RegistrationForm, store Regi
 
 	user.HashPassword(registration.password1)
 
-	reg.Code = registration.regCode
+	for _, role := range reg.Roles {
+		user.AddRole(role)
+	}
+
+	reg.Code = code
 	reg.UserName = user.Id
 	reg.Status = "Complete"
 	err = store.StoreRegistration(ctx, reg)

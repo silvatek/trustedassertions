@@ -550,3 +550,26 @@ func (fs *FireStore) FetchRegistration(ctx context.Context, code string) (auth.R
 
 	return reg, nil
 }
+
+func (fs *FireStore) ListRegistrations(ctx context.Context) ([]auth.Registration, error) {
+	client := fs.client(ctx)
+	regs := make([]auth.Registration, 0)
+
+	docs := client.Collection(RegistrationCollection).Documents(ctx)
+	defer docs.Stop()
+	for {
+		doc, err := docs.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		var reg auth.Registration
+		if err := doc.DataTo(&reg); err != nil {
+			return nil, err
+		}
+		regs = append(regs, reg)
+	}
+	return regs, nil
+}
