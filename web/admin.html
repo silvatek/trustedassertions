@@ -1,0 +1,56 @@
+{{define "content"}}
+        <h2>Admin</h2>
+
+        <h3>Create registration code</h3>
+        <p>Generate a registration code and share with the new user; they will need this when registering to use the site.</p>
+        <form method="POST" action="/web/admin/invites">
+                {{.CsrfField}}
+                <div>
+                        <label>
+                                <input type="checkbox" name="role" value="Author" id="role-author" checked="checked">
+                                Author
+                        </label>
+                </div>
+                <div>
+                        <label>
+                                <input type="checkbox" name="role" value="Administrator" id="role-administrator">
+                                Administrator
+                        </label>
+                </div>
+                <div>
+                        <input id="create-invite" type="submit" value="Create registration code">
+                </div>
+        </form>
+
+        {{if .Detail.CreatedCode}}
+        <p id="created-invite">New registration code: <span class="invite-code">{{.Detail.CreatedCode}}</span></p>
+        {{end}}
+
+        <h3>Registrations</h3>
+        <table id="registrations" class="searchresults">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{range .Detail.Registrations}}
+                <tr class="registration">
+                    <td class="invite-code">{{.Code}}</td>
+                    {{if .Roles}}
+                        <td class="invite-roles">{{range $i, $role := .Roles}}{{if $i}}, {{end}}{{$role}}{{end}}</td>
+                    {{else}}
+                        <td class="invite-roles">No roles</td>
+                    {{end}}
+                    <td class="invite-status">{{.Status}}</td>
+                </tr>
+            {{else}}
+                <tr>
+                    <td id="no-registrations" colspan="3">No registrations.</td>
+                </tr>
+            {{end}}
+            </tbody>
+        </table>
+{{end}}

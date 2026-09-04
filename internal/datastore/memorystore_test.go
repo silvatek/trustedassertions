@@ -129,14 +129,13 @@ func TestStoreFetchRegistrationCopiesRoles(t *testing.T) {
 	InitInMemoryDataStore()
 	ctx := context.TODO()
 
-	code := auth.NormalizeInviteCode("oak tree blue sky")
 	ActiveDataStore.StoreRegistration(ctx, auth.Registration{
-		Code:   code,
+		Code:   "oak tree blue sky",
 		Status: "Pending",
 		Roles:  []string{auth.RoleAuthor},
 	})
 
-	reg, err := ActiveDataStore.FetchRegistration(ctx, code)
+	reg, err := ActiveDataStore.FetchRegistration(ctx, "oak tree blue sky")
 	if err != nil {
 		t.Fatalf("FetchRegistration: %v", err)
 	}
@@ -144,9 +143,13 @@ func TestStoreFetchRegistrationCopiesRoles(t *testing.T) {
 		t.Errorf("fetched registration missing Author role: %v", reg.Roles)
 	}
 
+	if reg.Code != "oak tree blue sky" {
+		t.Errorf("fetched code: %q", reg.Code)
+	}
+
 	reg.Roles = append(reg.Roles, auth.RoleAdministrator)
 
-	again, err := ActiveDataStore.FetchRegistration(ctx, code)
+	again, err := ActiveDataStore.FetchRegistration(ctx, "oak tree blue sky")
 	if err != nil {
 		t.Fatalf("refetch registration: %v", err)
 	}
@@ -160,12 +163,12 @@ func TestListRegistrations(t *testing.T) {
 	ctx := context.TODO()
 
 	ActiveDataStore.StoreRegistration(ctx, auth.Registration{
-		Code:   "oaktreebluesky",
+		Code:   "oak tree blue sky",
 		Status: "Pending",
 		Roles:  []string{auth.RoleAuthor},
 	})
 	ActiveDataStore.StoreRegistration(ctx, auth.Registration{
-		Code:   "riverstonehillpath",
+		Code:   "river stone hill path",
 		Status: "Complete",
 	})
 
@@ -181,7 +184,7 @@ func TestListRegistrations(t *testing.T) {
 	for _, reg := range regs {
 		byCode[reg.Code] = reg
 	}
-	pending := byCode["oaktreebluesky"]
+	pending := byCode["oak tree blue sky"]
 	if pending.Status != "Pending" {
 		t.Errorf("pending status: %s", pending.Status)
 	}
@@ -195,7 +198,7 @@ func TestListRegistrations(t *testing.T) {
 		t.Fatalf("ListRegistrations again: %v", err)
 	}
 	for _, reg := range listed {
-		if reg.Code == "oaktreebluesky" && containsRole(reg.Roles, auth.RoleAdministrator) {
+		if reg.Code == "oak tree blue sky" && containsRole(reg.Roles, auth.RoleAdministrator) {
 			t.Errorf("mutating listed registration roles mutated store: %v", reg.Roles)
 		}
 	}

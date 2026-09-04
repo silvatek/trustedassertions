@@ -11,13 +11,14 @@ func TestNormalizeInviteCode(t *testing.T) {
 		input string
 		want  string
 	}{
-		{name: "spaced mixed case", input: "Oak Tree Blue Sky", want: "oaktreebluesky"},
-		{name: "already normalized", input: "oaktreebluesky", want: "oaktreebluesky"},
-		{name: "upper spaced", input: "OAK TREE BLUE SKY", want: "oaktreebluesky"},
-		{name: "extra spaces", input: "  oak   tree blue  sky ", want: "oaktreebluesky"},
+		{name: "spaced mixed case", input: "Oak Tree Blue Sky", want: "oak tree blue sky"},
+		{name: "already normalized", input: "oak tree blue sky", want: "oak tree blue sky"},
+		{name: "upper spaced", input: "OAK TREE BLUE SKY", want: "oak tree blue sky"},
+		{name: "extra spaces", input: "  oak   tree blue  sky ", want: "oak tree blue sky"},
+		{name: "tabs and newlines", input: "oak\ttree\nblue\r\nsky", want: "oak tree blue sky"},
 		{name: "empty", input: "", want: ""},
 		{name: "whitespace only", input: "   ", want: ""},
-		{name: "keeps hyphen", input: "TESTCODE-1001", want: "testcode-1001"},
+		{name: "single token", input: "ABC", want: "abc"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -34,20 +35,17 @@ func TestGenerateInviteCode(t *testing.T) {
 		t.Fatalf("invite word list too small: %d", InviteWordCount())
 	}
 
-	display, normalized, err := GenerateInviteCode()
-	if err != nil {
-		t.Fatalf("GenerateInviteCode: %v", err)
-	}
+	code := GenerateInviteCode()
 
-	words := strings.Fields(display)
+	words := strings.Fields(code)
 	if len(words) != InviteCodeWordCount {
-		t.Fatalf("display %q has %d words, want %d", display, len(words), InviteCodeWordCount)
+		t.Fatalf("code %q has %d words, want %d", code, len(words), InviteCodeWordCount)
 	}
-	if normalized != NormalizeInviteCode(display) {
-		t.Errorf("normalized %q does not match display %q", normalized, display)
+	if code != strings.Join(words, " ") {
+		t.Errorf("code should be words joined by single spaces: %q", code)
 	}
-	if strings.ContainsAny(normalized, " \t\n") {
-		t.Errorf("normalized code still has whitespace: %q", normalized)
+	if code != strings.ToLower(code) {
+		t.Errorf("code should be lowercase: %q", code)
 	}
 
 	seen := make(map[string]struct{}, len(words))
@@ -60,7 +58,7 @@ func TestGenerateInviteCode(t *testing.T) {
 			t.Errorf("word %q is not in the invite list", w)
 		}
 		if _, dup := seen[w]; dup {
-			t.Errorf("duplicate word %q in %q", w, display)
+			t.Errorf("duplicate word %q in %q", w, code)
 		}
 		seen[w] = struct{}{}
 	}
