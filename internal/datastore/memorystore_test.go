@@ -98,6 +98,33 @@ func TestStoreFetchUser(t *testing.T) {
 	}
 }
 
+func TestFetchUserCopiesRoles(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+
+	user1 := auth.User{Id: "Tester"}
+	user1.AddRole(auth.RoleAuthor)
+	ActiveDataStore.StoreUser(ctx, user1)
+
+	user2, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("Error fetching user: %v", err)
+	}
+	if !user2.HasRole(auth.RoleAuthor) {
+		t.Errorf("Fetched user missing Author role")
+	}
+
+	user2.AddRole(auth.RoleAdministrator)
+
+	user3, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("Error refetching user: %v", err)
+	}
+	if user3.HasRole(auth.RoleAdministrator) {
+		t.Errorf("AddRole on fetched user mutated stored roles: %v", user3.Roles)
+	}
+}
+
 func TestStoreFetchReference(t *testing.T) {
 	InitInMemoryDataStore()
 

@@ -32,6 +32,8 @@ func SetupTestData(ctx context.Context, testDataDir string, defaultEntityUri str
 	initialUser := auth.User{Id: os.Getenv("INITIAL_USER")}
 	initialUser.HashPassword(os.Getenv("INITIAL_PW"))
 	initialUser.AddKeyRef(defaultEntityUri, "Default")
+	initialUser.AddRole(auth.RoleAuthor)
+	initialUser.AddRole(auth.RoleAdministrator)
 	datastore.ActiveDataStore.StoreUser(ctx, initialUser)
 
 	datastore.ActiveDataStore.StoreRegistration(ctx, auth.Registration{Code: "TESTCODE-1001", Status: "Pending"})

@@ -40,6 +40,37 @@ func TestBadLogin(t *testing.T) {
 	page.AssertHtmlQuery(".error", "Unable to verify identity")
 }
 
+func TestProfileShowsRoles(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.GetPage("/web/profile")
+	page.AssertHtmlQuery("h3", "Roles")
+	page.AssertHtmlQuery(".user-role", auth.RoleAuthor)
+	page.AssertHtmlQuery(".user-role", auth.RoleAdministrator)
+	if page.Find("#no-roles") != "" {
+		t.Error("expected no empty-roles message when roles are assigned")
+	}
+}
+
+func TestProfileShowsNoRoles(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	stored, err := datastore.ActiveDataStore.FetchUser(context.Background(), user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored.Roles = nil
+	datastore.ActiveDataStore.StoreUser(context.TODO(), stored)
+
+	page := wt.GetPage("/web/profile")
+	page.AssertHtmlQuery("#no-roles", "No roles assigned.")
+	if page.Find(".user-role") != "" {
+		t.Error("expected no role items when none are assigned")
+	}
+}
+
 func TestRegistration(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()

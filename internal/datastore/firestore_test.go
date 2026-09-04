@@ -69,6 +69,7 @@ func TestUserPasskeyDocumentRoundTrip(t *testing.T) {
 	if err := user.AddPasskey(pk); err != nil {
 		t.Fatal(err)
 	}
+	user.AddRole(auth.RoleAuthor)
 
 	raw, err := json.Marshal(user)
 	if err != nil {
@@ -87,5 +88,8 @@ func TestUserPasskeyDocumentRoundTrip(t *testing.T) {
 	}
 	if got.Passkeys[0].SignCount != 4 || got.Passkeys[0].Name != "Phone" {
 		t.Errorf("passkey = %+v", got.Passkeys[0])
+	}
+	if !got.HasRole(auth.RoleAuthor) {
+		t.Errorf("roles did not survive document encoding: %v", got.Roles)
 	}
 }

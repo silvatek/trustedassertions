@@ -12,6 +12,11 @@ import (
 
 const MaxPasskeys = 5
 
+const (
+	RoleAuthor        = "Author"
+	RoleAdministrator = "Administrator"
+)
+
 var (
 	ErrEmptyPasskeyID  = errors.New("passkey credential id is required")
 	ErrTooManyPasskeys = errors.New("user already has the maximum number of passkeys")
@@ -20,10 +25,11 @@ var (
 )
 
 type User struct {
-	Id       string `json:"id"`
-	PassHash string `json:"passhash"`
+	Id       string   `json:"id"`
+	PassHash string   `json:"passhash"`
 	KeyRefs  []KeyRef
 	Passkeys []Passkey `json:"passkeys"`
+	Roles    []string  `json:"roles"`
 }
 
 type KeyRef struct {
@@ -75,6 +81,22 @@ func (u *User) HasKey(keyId string) bool {
 	}
 
 	return false
+}
+
+func (u *User) HasRole(role string) bool {
+	for _, r := range u.Roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) AddRole(role string) {
+	if u.HasRole(role) {
+		return
+	}
+	u.Roles = append(u.Roles, role)
 }
 
 func (u *User) AddPasskey(pk Passkey) error {

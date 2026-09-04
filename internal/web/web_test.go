@@ -46,6 +46,8 @@ func NewWebTest(t *testing.T) *webtest.WebTest {
 	wt.Passwd = "testing"
 	user.HashPassword(wt.Passwd)
 	user.KeyRefs = append(user.KeyRefs, auth.KeyRef{UserId: user.Id, KeyId: signer.Uri().Unadorned(), Summary: ""})
+	user.AddRole(auth.RoleAuthor)
+	user.AddRole(auth.RoleAdministrator)
 	wt.AuthCookie = MakeAuthCookie(user.Id)
 	datastore.ActiveDataStore.StoreUser(context.TODO(), *user)
 

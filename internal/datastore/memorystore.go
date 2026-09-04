@@ -155,7 +155,17 @@ func (ds *InMemoryDataStore) FetchUser(ctx context.Context, id string) (auth.Use
 		}
 	}
 	user.Passkeys = copyPasskeys(user.Passkeys)
+	user.Roles = copyRoles(user.Roles)
 	return user, nil
+}
+
+func copyRoles(roles []string) []string {
+	if roles == nil {
+		return nil
+	}
+	copied := make([]string, len(roles))
+	copy(copied, roles)
+	return copied
 }
 
 func copyPasskeys(passkeys []auth.Passkey) []auth.Passkey {
