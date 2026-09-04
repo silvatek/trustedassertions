@@ -199,3 +199,15 @@ func RemovePasskey(ctx context.Context, userID string, credentialID []byte) erro
 	ActiveDataStore.StoreUser(ctx, user)
 	return nil
 }
+
+func RecordPasskeyUse(ctx context.Context, userID string, pk auth.Passkey, usedAt time.Time) error {
+	user, err := ActiveDataStore.FetchUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if err := user.RecordPasskeyUse(pk, usedAt); err != nil {
+		return err
+	}
+	ActiveDataStore.StoreUser(ctx, user)
+	return nil
+}

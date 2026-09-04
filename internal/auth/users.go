@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	log "silvatek.uk/trustedassertions/internal/logging"
@@ -102,6 +103,18 @@ func (u *User) RemovePasskey(credentialID []byte) error {
 	kept = append(kept, u.Passkeys[:i]...)
 	kept = append(kept, u.Passkeys[i+1:]...)
 	u.Passkeys = kept
+	return nil
+}
+
+func (u *User) RecordPasskeyUse(update Passkey, usedAt time.Time) error {
+	if len(update.ID) == 0 {
+		return ErrEmptyPasskeyID
+	}
+	i := u.passkeyIndex(update.ID)
+	if i < 0 {
+		return ErrPasskeyNotFound
+	}
+	u.Passkeys[i].RecordUse(update, usedAt)
 	return nil
 }
 
