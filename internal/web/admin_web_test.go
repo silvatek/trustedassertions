@@ -19,9 +19,7 @@ func TestAdminPageRequiresLogin(t *testing.T) {
 	wt.AuthCookie = nil
 	page := wt.GetPage("/web/admin")
 	page.AssertErrorResponse()
-	if !strings.Contains(string(page.RawBody()), "Not logged in") {
-		t.Errorf("expected not-logged-in error, got %s", page.RawBody())
-	}
+	page.AssertHtmlQuery("#message", "Not logged in")
 }
 
 func TestAdminPageRequiresAdministrator(t *testing.T) {
@@ -36,9 +34,7 @@ func TestAdminPageRequiresAdministrator(t *testing.T) {
 
 	page := wt.GetPage("/web/admin")
 	page.AssertErrorResponse()
-	if !strings.Contains(string(page.RawBody()), "Not authorized") {
-		t.Errorf("expected not-authorized error, got %s", page.RawBody())
-	}
+	page.AssertHtmlQuery("#message", "Not authorized")
 
 	page = wt.PostFormData("/web/admin/invites", url.Values{"role": {auth.RoleAuthor}})
 	page.AssertErrorResponse()
@@ -50,9 +46,7 @@ func TestAdminMenuLinkForAdministrator(t *testing.T) {
 
 	page := wt.GetPage("/web/home")
 	page.AssertSuccessResponse()
-	if page.Attr(`a[href="/web/admin"]`, "href") != "/web/admin" {
-		t.Error("administrator should see the Admin menu link")
-	}
+	page.AssertHtmlQuery(`a[href="/web/admin"]`, "Admin")
 }
 
 func TestAdminMenuLinkHiddenForAuthor(t *testing.T) {
@@ -91,6 +85,8 @@ func TestAdminCreatesAndListsInvite(t *testing.T) {
 	page := wt.GetPage("/web/admin")
 	page.AssertSuccessResponse()
 	page.AssertHtmlQuery("h2", "Admin")
+	page.AssertHtmlQuery("h3", "Create registration code")
+	page.AssertHtmlQuery("h3", "Registrations")
 	if page.Attr("#role-author", "checked") != "checked" {
 		t.Error("Author should be checked by default")
 	}
