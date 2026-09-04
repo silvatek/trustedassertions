@@ -21,6 +21,9 @@ func TestProfileShowsPasskeyControls(t *testing.T) {
 	page.AssertHtmlQuery("h3", "Passkeys")
 	page.AssertHtmlQuery("#add-passkey", "Add passkey")
 	page.AssertHtmlQuery("#no-passkeys", "No passkeys registered.")
+	if page.Find(".revoke-passkey") != "" {
+		t.Error("expected no revoke link when there are no passkeys")
+	}
 	if page.Attr("script[src*='passkey.js']", "src") != "/web/static/passkey.js" {
 		t.Errorf("passkey script src = %q", page.Attr("script[src*='passkey.js']", "src"))
 	}
@@ -38,6 +41,14 @@ func TestProfileListsPasskeys(t *testing.T) {
 	page := wt.GetPage("/web/profile")
 	page.AssertHtmlQuery(".passkey-name", "Laptop")
 	page.AssertHtmlQuery(".passkey-last-used", "Never")
+	page.AssertHtmlQuery(".revoke-passkey", "Revoke")
+	if page.Attr(".revoke-passkey", "hx-boost") != "false" {
+		t.Errorf("revoke hx-boost = %q", page.Attr(".revoke-passkey", "hx-boost"))
+	}
+	wantID := base64.RawURLEncoding.EncodeToString([]byte("cred-1"))
+	if page.Attr(".revoke-passkey", "data-id") != wantID {
+		t.Errorf("data-id = %q, want %q", page.Attr(".revoke-passkey", "data-id"), wantID)
+	}
 }
 
 func TestPasskeyRegisterBeginRequiresAuth(t *testing.T) {

@@ -189,6 +189,34 @@
     }
   }
 
+  async function revoke(id) {
+    if (!id) {
+      return;
+    }
+    if (!window.confirm("Revoke this passkey?")) {
+      return;
+    }
+    setStatus("");
+    try {
+      var res = await fetch("/web/passkey/revoke", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken(),
+        },
+        body: JSON.stringify({ id: id }),
+      });
+      if (!res.ok) {
+        setStatus(await parseError(res));
+        return;
+      }
+      window.location.assign("/web/profile");
+    } catch (err) {
+      setStatus("Could not revoke passkey");
+    }
+  }
+
   function hideUnsupported() {
     if (window.PublicKeyCredential) {
       return;
@@ -203,6 +231,6 @@
     }
   }
 
-  window.taPasskeys = { add: add, login: login };
+  window.taPasskeys = { add: add, login: login, revoke: revoke };
   hideUnsupported();
 })();
