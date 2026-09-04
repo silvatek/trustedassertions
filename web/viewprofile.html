@@ -10,6 +10,15 @@
             </div>
         </div>
 
+        <h3>Roles</h3>
+        <ul>
+            {{range .Detail.User.Roles}}
+                <li class="user-role">{{.}}</li>
+            {{else}}
+                <li id="no-roles">No roles assigned.</li>
+            {{end}}
+        </ul>
+
         <h3>Signing Key Access</h3>
         <ul>
             {{range $entity := .Detail.Entities}}

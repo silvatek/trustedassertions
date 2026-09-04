@@ -13,7 +13,7 @@ The data in the core data model is immutable; data is only added, never modified
 
 In addition to these core data types, there is also the `Reference` which is a combination of a target, a source and a reference type. References are identified from within assertions and stored separately as a form of index.
 
-For servers that will be creating new Entities or Assertions, it will also be necessary to store (or at least have access to) the private keys for the signing entities. The design of this data model is implementation-specific: the reference implementation has `User` objects, each with one or more `KeyReference` objects which link the user to a `SigningKey` object.
+For servers that will be creating new Entities or Assertions, it will also be necessary to store (or at least have access to) the private keys for the signing entities. The design of this data model is implementation-specific: the reference implementation has `User` objects, each with one or more `KeyReference` objects which link the user to a `SigningKey` object. A `User` also has roles (`Author`, `Administrator`).
 
 
 ### Data URIs
@@ -68,6 +68,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * Add new document
 * Auto-create statements and assertions from documents
 * Document schema
+* Switch memorystore to store json strings not Go stucts
 
 ### Done
 
@@ -130,6 +131,7 @@ There are multiple levels at which we can produce a new "thing".
 
 * Do not rewrite README "Done" history.
 * Do not commit or open a PR unless asked.
+* Tests belong with the change they cover. Do not plan or track unit tests or web tests as separate tasks.
 
 ### Build time analysis
 
