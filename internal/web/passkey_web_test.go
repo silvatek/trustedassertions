@@ -2,8 +2,10 @@ package web
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/url"
+	"strings"
 	"testing"
 
 	"silvatek.uk/trustedassertions/internal/auth"
@@ -195,6 +197,103 @@ func TestPasskeyLoginFinishRequiresSession(t *testing.T) {
 	assertNoAuthCookie(t, wt)
 }
 
+func TestPasskeyRevokeRequiresAuth(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+	wt.AuthCookie = nil
+
+	id := base64.RawURLEncoding.EncodeToString([]byte("cred-1"))
+	page := wt.PostJSON("/web/passkey/revoke", []byte(`{"id":"`+id+`"}`))
+	if page.Status() != 401 {
+		t.Errorf("status = %d, want 401", page.Status())
+	}
+}
+
+func TestPasskeyRevokeSuccess(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	pk := auth.Passkey{ID: []byte("cred-revoke-1"), Name: "Laptop", PublicKey: []byte{1}}
+	if err := datastore.AddPasskey(context.TODO(), user.Id, pk); err != nil {
+		t.Fatal(err)
+	}
+
+	id := base64.RawURLEncoding.EncodeToString(pk.ID)
+	page := wt.PostJSON("/web/passkey/revoke", []byte(`{"id":"`+id+`"}`))
+	if page.Status() != 200 {
+		t.Fatalf("status = %d, body = %s", page.Status(), page.RawBody())
+	}
+
+	var body map[string]string
+	if err := json.Unmarshal(page.RawBody(), &body); err != nil {
+		t.Fatalf("json: %v", err)
+	}
+	if body["status"] != "ok" {
+		t.Errorf("status = %q, want ok", body["status"])
+	}
+	assertAuthCookieUnchanged(t, page)
+
+	stored, err := datastore.ActiveDataStore.FetchUser(context.TODO(), user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stored.Passkeys) != 0 {
+		t.Errorf("passkeys remaining = %d, want 0", len(stored.Passkeys))
+	}
+
+	profile := wt.GetPage("/web/profile")
+	profile.AssertHtmlQuery("#no-passkeys", "No passkeys registered.")
+}
+
+func TestPasskeyRevokeEmptyID(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	pk := auth.Passkey{ID: []byte("cred-keep-1"), PublicKey: []byte{1}}
+	if err := datastore.AddPasskey(context.TODO(), user.Id, pk); err != nil {
+		t.Fatal(err)
+	}
+
+	page := wt.PostJSON("/web/passkey/revoke", []byte(`{"id":""}`))
+	if page.Status() != 400 {
+		t.Errorf("status = %d, want 400, body = %s", page.Status(), page.RawBody())
+	}
+	assertPasskeyStillStored(t, user.Id, pk.ID)
+}
+
+func TestPasskeyRevokeInvalidID(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	pk := auth.Passkey{ID: []byte("cred-keep-2"), PublicKey: []byte{1}}
+	if err := datastore.AddPasskey(context.TODO(), user.Id, pk); err != nil {
+		t.Fatal(err)
+	}
+
+	page := wt.PostJSON("/web/passkey/revoke", []byte(`{"id":"%%%"}`))
+	if page.Status() != 400 {
+		t.Errorf("status = %d, want 400, body = %s", page.Status(), page.RawBody())
+	}
+	assertPasskeyStillStored(t, user.Id, pk.ID)
+}
+
+func TestPasskeyRevokeUnknownID(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	pk := auth.Passkey{ID: []byte("cred-keep-3"), PublicKey: []byte{1}}
+	if err := datastore.AddPasskey(context.TODO(), user.Id, pk); err != nil {
+		t.Fatal(err)
+	}
+
+	id := base64.RawURLEncoding.EncodeToString([]byte("missing-cred"))
+	page := wt.PostJSON("/web/passkey/revoke", []byte(`{"id":"`+id+`"}`))
+	if page.Status() != 404 {
+		t.Errorf("status = %d, want 404, body = %s", page.Status(), page.RawBody())
+	}
+	assertPasskeyStillStored(t, user.Id, pk.ID)
+}
+
 func TestPasskeyLoginFinishRejectsGarbageBody(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()
@@ -217,6 +316,31 @@ func assertPasskeyLoginFailure(t *testing.T, page *webtest.WebPage) {
 	if body["error"] != passkeyLoginFailMessage {
 		t.Errorf("error = %q, want %q", body["error"], passkeyLoginFailMessage)
 	}
+}
+
+func assertAuthCookieUnchanged(t *testing.T, page *webtest.WebPage) {
+	t.Helper()
+	setCookie := page.Header("Set-Cookie")
+	if setCookie == "" {
+		return
+	}
+	if strings.Contains(setCookie, "auth=") {
+		t.Errorf("auth cookie should not be set or cleared, Set-Cookie = %q", setCookie)
+	}
+}
+
+func assertPasskeyStillStored(t *testing.T, userID string, credentialID []byte) {
+	t.Helper()
+	stored, err := datastore.ActiveDataStore.FetchUser(context.TODO(), userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, pk := range stored.Passkeys {
+		if string(pk.ID) == string(credentialID) {
+			return
+		}
+	}
+	t.Errorf("expected passkey %q to remain stored", credentialID)
 }
 
 func assertNoAuthCookie(t *testing.T, wt *webtest.WebTest) {
