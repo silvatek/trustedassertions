@@ -1,7 +1,9 @@
 package web
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	stderrors "errors"
 	"net/http"
 	"time"
 
@@ -20,6 +22,7 @@ func addPasskeyHandlers(r *mux.Router) {
 	r.HandleFunc("/web/passkey/register/finish", PasskeyRegisterFinishHandler)
 	r.HandleFunc("/web/passkey/login/begin", PasskeyLoginBeginHandler)
 	r.HandleFunc("/web/passkey/login/finish", PasskeyLoginFinishHandler)
+	r.HandleFunc("/web/passkey/revoke", PasskeyRevokeHandler)
 }
 
 func PasskeyRegisterBeginHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,6 +146,21 @@ func PasskeyLoginFinishHandler(w http.ResponseWriter, r *http.Request) {
 	writePasskeyLoginFinishResponse(w, r, user, cred)
 }
 
+func PasskeyRevokeHandler(w http.ResponseWriter, r *http.Request) {
+	user, credentialID, ok := getPasskeyRevokeRequest(w, r)
+	if !ok {
+		return
+	}
+
+	if err := datastore.RemovePasskey(appcontext.NewWebContext(r), user.Id, credentialID); err != nil {
+		log.Errorf("RemovePasskey: %v", err)
+		writePasskeyRevokeFailure(w, err)
+		return
+	}
+
+	writePasskeyRevokeResponse(w)
+}
+
 func getPasskeyLoginUser(w http.ResponseWriter, r *http.Request) (auth.User, bool) {
 	if !requirePasskeyPOST(w, r) {
 		return auth.User{}, false
@@ -205,9 +223,54 @@ func writePasskeyLoginFinishResponse(w http.ResponseWriter, r *http.Request, use
 	writeJSON(w, http.StatusOK, map[string]string{"redirect": HomePath})
 }
 
-func requirePasskeyPOST(w http.ResponseWriter, r *http.Request) bool {
+func getPasskeyRevokeRequest(w http.ResponseWriter, r *http.Request) (auth.User, []byte, bool) {
+	if !requirePOST(w, r) {
+		return auth.User{}, nil, false
+	}
+
+	user, ok := loggedInUser(w, r)
+	if !ok {
+		return auth.User{}, nil, false
+	}
+
+	var body struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid passkey id")
+		return auth.User{}, nil, false
+	}
+
+	credentialID, err := base64.RawURLEncoding.DecodeString(body.ID)
+	if err != nil || len(credentialID) == 0 {
+		writeJSONError(w, http.StatusBadRequest, "invalid passkey id")
+		return auth.User{}, nil, false
+	}
+	return user, credentialID, true
+}
+
+func writePasskeyRevokeFailure(w http.ResponseWriter, err error) {
+	if stderrors.Is(err, auth.ErrPasskeyNotFound) {
+		writeJSONError(w, http.StatusNotFound, "passkey not found")
+		return
+	}
+	writeJSONError(w, http.StatusInternalServerError, "could not revoke passkey")
+}
+
+func writePasskeyRevokeResponse(w http.ResponseWriter) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func requirePOST(w http.ResponseWriter, r *http.Request) bool {
 	if r.Method != http.MethodPost {
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return false
+	}
+	return true
+}
+
+func requirePasskeyPOST(w http.ResponseWriter, r *http.Request) bool {
+	if !requirePOST(w, r) {
 		return false
 	}
 	if webAuthn == nil {
