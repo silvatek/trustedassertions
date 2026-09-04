@@ -33,6 +33,10 @@
                     <th>Code</th>
                     <th>Roles</th>
                     <th>Status</th>
+                    <th>Created</th>
+                    <th>Created by</th>
+                    <th>Completed</th>
+                    <th>Expires</th>
                 </tr>
             </thead>
             <tbody>
@@ -45,10 +49,14 @@
                         <td class="invite-roles">No roles</td>
                     {{end}}
                     <td class="invite-status">{{.Status}}</td>
+                    <td class="invite-created">{{.CreatedAt}}</td>
+                    <td class="invite-created-by">{{.CreatedBy}}</td>
+                    <td class="invite-completed">{{.CompletedAt}}</td>
+                    <td class="invite-expires">{{.ExpiresAt}}</td>
                 </tr>
             {{else}}
                 <tr>
-                    <td id="no-registrations" colspan="3">No registrations.</td>
+                    <td id="no-registrations" colspan="7">No registrations.</td>
                 </tr>
             {{end}}
             </tbody>

@@ -11,7 +11,33 @@ import (
 
 type adminPageData struct {
 	CreatedCode   string
-	Registrations []auth.Registration
+	Registrations []registrationRow
+}
+
+type registrationRow struct {
+	Code        string
+	Roles       []string
+	Status      string
+	CreatedAt   string
+	CreatedBy   string
+	CompletedAt string
+	ExpiresAt   string
+}
+
+func registrationRows(regs []auth.Registration) []registrationRow {
+	rows := make([]registrationRow, 0, len(regs))
+	for _, reg := range regs {
+		rows = append(rows, registrationRow{
+			Code:        reg.Code,
+			Roles:       reg.Roles,
+			Status:      reg.Status,
+			CreatedAt:   formatPasskeyTime(reg.CreatedAt),
+			CreatedBy:   reg.CreatedBy,
+			CompletedAt: formatPasskeyTime(reg.CompletedAt),
+			ExpiresAt:   formatPasskeyTime(reg.ExpiresAt),
+		})
+	}
+	return rows
 }
 
 func requireAdministrator(w http.ResponseWriter, r *http.Request) bool {
@@ -55,7 +81,7 @@ func AdminWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	RenderWebPage(ctx, "admin", adminPageData{
 		CreatedCode:   r.URL.Query().Get("created"),
-		Registrations: regs,
+		Registrations: registrationRows(regs),
 	}, nil, w, r)
 }
 
@@ -73,11 +99,7 @@ func AdminInvitesWebHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	code := auth.GenerateInviteCode()
 
-	reg := auth.Registration{
-		Code:   code,
-		Status: "Pending",
-		Roles:  rolesFromInviteForm(r),
-	}
+	reg := auth.NewPendingRegistration(code, authUsername(r), rolesFromInviteForm(r))
 	if err := datastore.ActiveDataStore.StoreRegistration(ctx, reg); err != nil {
 		HandleError(ctx, ErrorCreateInvite.instance("Error storing invitation"), w, r)
 		return

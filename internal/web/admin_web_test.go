@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
@@ -108,6 +109,11 @@ func TestAdminCreatesAndListsInvite(t *testing.T) {
 	page.AssertHtmlQuery(".registration .invite-code", code)
 	page.AssertHtmlQuery(".registration .invite-roles", auth.RoleAuthor)
 	page.AssertHtmlQuery(".registration .invite-status", "Pending")
+	page.AssertHtmlQuery(".registration .invite-created-by", user.Id)
+	today := time.Now().UTC().Format("2006-01-02")
+	page.AssertHtmlQuery(".registration .invite-created", today)
+	page.AssertHtmlQuery(".registration .invite-expires", time.Now().UTC().Add(auth.InviteValidity).Format("2006-01-02"))
+	page.AssertHtmlQuery(".registration .invite-completed", "Never")
 
 	complete := auth.Registration{
 		Code:   "used tree blue sky",
@@ -129,6 +135,15 @@ func TestAdminCreatesAndListsInvite(t *testing.T) {
 	}
 	if len(reg.Roles) != 1 || reg.Roles[0] != auth.RoleAuthor {
 		t.Errorf("expected Author role on invite, got %v", reg.Roles)
+	}
+	if reg.CreatedBy != user.Id {
+		t.Errorf("CreatedBy = %q, want %s", reg.CreatedBy, user.Id)
+	}
+	if reg.CreatedAt.IsZero() {
+		t.Error("CreatedAt should be set when the invite is created")
+	}
+	if !reg.ExpiresAt.Equal(reg.CreatedAt.Add(auth.InviteValidity)) {
+		t.Errorf("ExpiresAt = %v, want CreatedAt + %s", reg.ExpiresAt, auth.InviteValidity)
 	}
 }
 

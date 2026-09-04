@@ -5,13 +5,44 @@ import (
 	"math/rand/v2"
 	"regexp"
 	"strings"
+	"time"
 )
 
+const InviteValidity = 7 * 24 * time.Hour
+
 type Registration struct {
-	Code     string   `json:"code" firestore:"Code"`
-	Status   string   `json:"status" firestore:"Status"`
-	UserName string   `json:"username" firestore:"UserName"`
-	Roles    []string `json:"roles" firestore:"Roles"`
+	Code        string    `json:"code" firestore:"Code"`
+	Status      string    `json:"status" firestore:"Status"`
+	UserName    string    `json:"username" firestore:"UserName"`
+	Roles       []string  `json:"roles" firestore:"Roles"`
+	CreatedAt   time.Time `json:"createdAt" firestore:"CreatedAt"`
+	CreatedBy   string    `json:"createdBy" firestore:"CreatedBy"`
+	CompletedAt time.Time `json:"completedAt" firestore:"CompletedAt"`
+	ExpiresAt   time.Time `json:"expiresAt" firestore:"ExpiresAt"`
+}
+
+// NewPendingRegistration is a new invite: pending, created now (UTC),
+// expiring after InviteValidity. Zero ExpiresAt on older stored docs means
+// the code does not expire.
+func NewPendingRegistration(code, createdBy string, roles []string) Registration {
+	now := time.Now().UTC()
+	return Registration{
+		Code:      code,
+		Status:    "Pending",
+		Roles:     roles,
+		CreatedAt: now,
+		CreatedBy: createdBy,
+		ExpiresAt: now.Add(InviteValidity),
+	}
+}
+
+// IsExpired reports whether ExpiresAt is set and at-or-before the given time.
+// A zero ExpiresAt is never expired (legacy records).
+func (r Registration) IsExpired(at time.Time) bool {
+	if r.ExpiresAt.IsZero() {
+		return false
+	}
+	return !at.UTC().Before(r.ExpiresAt.UTC())
 }
 
 const InviteCodeWordCount = 4

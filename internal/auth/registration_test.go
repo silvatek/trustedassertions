@@ -3,6 +3,7 @@ package auth
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestNormalizeInviteCode(t *testing.T) {
@@ -61,5 +62,53 @@ func TestGenerateInviteCode(t *testing.T) {
 			t.Errorf("duplicate word %q in %q", w, code)
 		}
 		seen[w] = struct{}{}
+	}
+}
+
+func TestNewPendingRegistration(t *testing.T) {
+	before := time.Now().UTC().Add(-time.Second)
+	reg := NewPendingRegistration("oak tree blue sky", "admin", []string{RoleAuthor})
+	after := time.Now().UTC().Add(time.Second)
+
+	if reg.Status != "Pending" {
+		t.Errorf("status = %q, want Pending", reg.Status)
+	}
+	if reg.CreatedBy != "admin" {
+		t.Errorf("created by = %q, want admin", reg.CreatedBy)
+	}
+	if len(reg.Roles) != 1 || reg.Roles[0] != RoleAuthor {
+		t.Errorf("roles = %v, want [Author]", reg.Roles)
+	}
+	if reg.CreatedAt.Before(before) || reg.CreatedAt.After(after) {
+		t.Errorf("CreatedAt = %v, want between %v and %v", reg.CreatedAt, before, after)
+	}
+	if !reg.ExpiresAt.Equal(reg.CreatedAt.Add(InviteValidity)) {
+		t.Errorf("ExpiresAt = %v, want CreatedAt + %s", reg.ExpiresAt, InviteValidity)
+	}
+	if !reg.CompletedAt.IsZero() {
+		t.Errorf("CompletedAt should be zero, got %v", reg.CompletedAt)
+	}
+}
+
+func TestRegistrationIsExpired(t *testing.T) {
+	now := time.Date(2026, 9, 4, 12, 0, 0, 0, time.UTC)
+
+	if (Registration{}).IsExpired(now) {
+		t.Error("zero ExpiresAt should not be expired")
+	}
+
+	reg := Registration{ExpiresAt: now.Add(-time.Second)}
+	if !reg.IsExpired(now) {
+		t.Error("ExpiresAt in the past should be expired")
+	}
+
+	reg.ExpiresAt = now
+	if !reg.IsExpired(now) {
+		t.Error("ExpiresAt equal to now should be expired")
+	}
+
+	reg.ExpiresAt = now.Add(time.Second)
+	if reg.IsExpired(now) {
+		t.Error("ExpiresAt in the future should not be expired")
 	}
 }

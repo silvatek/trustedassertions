@@ -191,6 +191,10 @@ func registerUser(ctx context.Context, registration RegistrationForm, store Regi
 		log.DebugfX(ctx, "Attempt to reuse registration code %s (%s)", code, reg.Status)
 		return rejectInvalidRegCode()
 	}
+	if reg.IsExpired(time.Now()) {
+		log.DebugfX(ctx, "Attempt to use expired registration code %s", code)
+		return rejectInvalidRegCode()
+	}
 
 	log.DebugfX(ctx, "Registering with valid registration code %s", code)
 
@@ -228,6 +232,7 @@ func registerUser(ctx context.Context, registration RegistrationForm, store Regi
 	reg.Code = code
 	reg.UserName = user.Id
 	reg.Status = "Complete"
+	reg.CompletedAt = time.Now().UTC()
 	err = store.StoreRegistration(ctx, reg)
 	if err != nil {
 		log.ErrorfX(ctx, "Error updating registration status: %v", err)
