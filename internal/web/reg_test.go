@@ -42,6 +42,47 @@ func TestSuccessfulRegistration(t *testing.T) {
 	if reg.Status != "Complete" {
 		t.Errorf("Registration not marked as complete: %s", reg.Status)
 	}
+	if reg.CompletedAt.IsZero() {
+		t.Error("CompletedAt should be set when registration completes")
+	}
+}
+
+func TestExpiredRegistrationCodeRejected(t *testing.T) {
+	savedDelay := invalidRegCodeDelay
+	invalidRegCodeDelay = 0
+	t.Cleanup(func() { invalidRegCodeDelay = savedDelay })
+
+	ctx := context.Background()
+	store := datastore.NewInMemoryDataStore()
+	store.StoreRegistration(ctx, auth.Registration{
+		Code:      "old tree blue sky",
+		Status:    "Pending",
+		ExpiresAt: time.Now().UTC().Add(-time.Hour),
+	})
+
+	err := registerUser(ctx, RegistrationForm{
+		regCode:   "old tree blue sky",
+		userId:    "tester2",
+		password1: "klsds877ds,wbdsfujehnsdcvbd£cioe",
+		password2: "klsds877ds,wbdsfujehnsdcvbd£cioe",
+	}, store)
+	if err == nil || err.ErrorCode != ErrorRegCode.ErrorCode {
+		t.Fatalf("expected ErrorRegCode for expired invite, got %v", err)
+	}
+
+	reg, fetchErr := store.FetchRegistration(ctx, "old tree blue sky")
+	if fetchErr != nil {
+		t.Fatalf("FetchRegistration: %v", fetchErr)
+	}
+	if reg.Status != "Pending" {
+		t.Errorf("expired code should stay Pending, got %s", reg.Status)
+	}
+	if !reg.CompletedAt.IsZero() {
+		t.Errorf("expired code should not be completed, CompletedAt=%v", reg.CompletedAt)
+	}
+	if _, userErr := store.FetchUser(ctx, "tester2"); userErr == nil {
+		t.Error("should not create a user for an expired invite")
+	}
 }
 
 func TestRegistrationCopiesInviteRoles(t *testing.T) {

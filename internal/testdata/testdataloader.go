@@ -37,10 +37,7 @@ func SetupTestData(ctx context.Context, testDataDir string, defaultEntityUri str
 	datastore.ActiveDataStore.StoreUser(ctx, initialUser)
 
 	code := auth.GenerateInviteCode()
-	datastore.ActiveDataStore.StoreRegistration(ctx, auth.Registration{
-		Code:   code,
-		Status: "Pending",
-	})
+	datastore.ActiveDataStore.StoreRegistration(ctx, auth.NewPendingRegistration(code, initialUser.Id, nil))
 	log.InfofX(ctx, "Pending registration code: %s", code)
 
 	log.InfofX(ctx, "Test data load complete.")
