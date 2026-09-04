@@ -52,4 +52,15 @@ func TestPageMenuItemVisibleTo(t *testing.T) {
 	if !gated.VisibleTo(admin) {
 		t.Errorf("role-gated item should be visible when the user has the required role")
 	}
+
+	menu := PageMenu{}
+	menu.AddItem(&open)
+	menu.AddItem(&gated)
+	visible := menu.VisibleItems(author)
+	if len(visible.Items) != 1 || visible.Items[0].Text != "Home" {
+		t.Errorf("VisibleItems should omit gated items the user cannot see, got %+v", visible.Items)
+	}
+	if visible.Items[0].Separator != "" {
+		t.Errorf("first visible item should not keep a leftover separator")
+	}
 }

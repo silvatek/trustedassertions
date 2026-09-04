@@ -72,6 +72,21 @@ func (m *PageMenu) AddRightLink(text string, target string) {
 	m.AddItem(&item)
 }
 
+// VisibleItems returns a copy of the menu containing only items the user may see.
+// Separators are rebuilt so a hidden item does not leave a leading pipe.
+func (m PageMenu) VisibleItems(user *auth.User) PageMenu {
+	out := PageMenu{}
+	for _, item := range m.Items {
+		if !item.VisibleTo(user) {
+			continue
+		}
+		copy := item
+		copy.Separator = ""
+		out.AddItem(&copy)
+	}
+	return out
+}
+
 func (m *PageMenu) AddRightText(text string) {
 	item := PageMenuItem{
 		Menu:  m,

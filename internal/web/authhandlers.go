@@ -22,7 +22,9 @@ const AuthError = 3000
 
 var ErrorNoAuth = AppError{ErrorCode: AuthError + 1, UserMessage: "Not logged in"}
 var ErrorUserNotFound = AppError{ErrorCode: AuthError + 2, UserMessage: "User not found"}
+var ErrorForbidden = AppError{ErrorCode: AuthError + 3, UserMessage: "Not authorized", HttpCode: 403}
 var ErrorAuthFail = AppError{ErrorCode: AuthError + 5, UserMessage: "Not logged in"}
+var ErrorCreateInvite = AppError{ErrorCode: AuthError + 6, UserMessage: "Error creating invitation"}
 
 const RegistrationError = 3100
 
@@ -45,6 +47,8 @@ func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/logout", LogoutWebHandler)
 	r.HandleFunc("/web/register", RegisterWebHandler)
 	r.HandleFunc("/web/profile", ProfileWebHandler)
+	r.HandleFunc("/web/admin", AdminWebHandler)
+	r.HandleFunc("/web/admin/invites", AdminInvitesWebHandler)
 	addPasskeyHandlers(r)
 
 	userJwtKey = auth.MakeJwtKey()

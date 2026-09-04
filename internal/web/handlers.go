@@ -5,11 +5,11 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
 	"sync"
-	"html/template"
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
@@ -119,6 +119,13 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		SetAuthCookie(username, w, r) // Refresh the auth cookie
 	}
 
+	var viewer *auth.User
+	if username != "" {
+		if u, err := datastore.ActiveDataStore.FetchUser(ctx, username); err == nil {
+			viewer = &u
+		}
+	}
+
 	leftMenu := PageMenu{}
 	if pageName != "index" {
 		leftMenu.AddLink("Home", HomePath)
@@ -127,7 +134,7 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		leftMenu.AddItem(&item)
 	}
 
-	pageData.LeftMenu = leftMenu
+	pageData.LeftMenu = leftMenu.VisibleItems(viewer)
 
 	rightMenu := PageMenu{}
 
@@ -138,9 +145,15 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 		rightMenu.AddRightLink("Register", "/web/register")
 	} else {
 		rightMenu.AddRightLink(nameOnly(username), "/web/profile")
+		rightMenu.AddItem(&PageMenuItem{
+			Text:         "Admin",
+			Target:       "/web/admin",
+			Style:        "rightlink",
+			RequiresRole: auth.RoleAdministrator,
+		})
 		rightMenu.AddRightLink("Logout", "/web/logout")
 	}
-	pageData.RightMenu = rightMenu
+	pageData.RightMenu = rightMenu.VisibleItems(viewer)
 
 	if status != 0 {
 		w.WriteHeader(status)

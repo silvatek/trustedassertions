@@ -190,10 +190,13 @@ func (page *WebPage) AssertErrorResponse() {
 }
 
 func (page *WebPage) AssertHtmlQuery(query string, expected string) {
-	if !page.ok() {
+	if page.html == nil {
+		if !page.ok() {
+			page.wt.t.Error(page.errorSummary())
+		}
 		return
 	}
-	results := page.Find(query)
+	results := page.html.Find(query).Text()
 	if !strings.Contains(results, expected) {
 		page.wt.t.Errorf("Did not find `%s` in [%s]", expected, query)
 	}

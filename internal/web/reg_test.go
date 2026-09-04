@@ -48,9 +48,8 @@ func TestRegistrationCopiesInviteRoles(t *testing.T) {
 	ctx := context.Background()
 
 	store := datastore.NewInMemoryDataStore()
-	code := auth.NormalizeInviteCode("oak tree blue sky")
 	store.StoreRegistration(ctx, auth.Registration{
-		Code:   code,
+		Code:   "oak tree blue sky",
 		Status: "Pending",
 		Roles:  []string{auth.RoleAuthor},
 	})
