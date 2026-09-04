@@ -333,6 +333,7 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 }
 
 type passkeyView struct {
+	ID         string
 	Name       string
 	CreatedAt  string
 	LastUsedAt string

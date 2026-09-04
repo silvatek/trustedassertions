@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -248,6 +249,7 @@ func ProfileWebHandler(w http.ResponseWriter, r *http.Request) {
 			name = "Passkey"
 		}
 		passkeys[i] = passkeyView{
+			ID:         base64.RawURLEncoding.EncodeToString(pk.ID),
 			Name:       name,
 			CreatedAt:  formatPasskeyTime(pk.CreatedAt),
 			LastUsedAt: formatPasskeyTime(pk.LastUsedAt),

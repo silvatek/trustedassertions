@@ -27,6 +27,7 @@
                     <th>Name</th>
                     <th>Added</th>
                     <th>Last used</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,10 +36,13 @@
                     <td class="passkey-name">{{$pk.Name}}</td>
                     <td class="passkey-created">{{$pk.CreatedAt}}</td>
                     <td class="passkey-last-used">{{$pk.LastUsedAt}}</td>
+                    <td>
+                        <a href="#" class="revoke-passkey" hx-boost="false" data-id="{{$pk.ID}}" onclick="window.taPasskeys && taPasskeys.revoke(this.dataset.id); return false">Revoke</a>
+                    </td>
                 </tr>
             {{else}}
                 <tr>
-                    <td id="no-passkeys" colspan="3">No passkeys registered.</td>
+                    <td id="no-passkeys" colspan="4">No passkeys registered.</td>
                 </tr>
             {{end}}
             </tbody>

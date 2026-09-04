@@ -60,7 +60,6 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ## Things to Do
 
-* Passkey revoke
 * Change password
 * Mobile web views
 * Secure management of private keys
@@ -95,6 +94,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * ~~Web tests for documents~~
 * ~~Document search~~
 * ~~Passkey support~~
+* ~~Passkey revoke~~
 
 
 ## Implementation Details

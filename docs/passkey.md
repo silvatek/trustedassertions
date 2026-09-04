@@ -33,7 +33,7 @@ Non-goals for a first version: passwordless-only accounts, usernameless / Condit
 - `auth.User.Passkeys []Passkey`, cap `auth.MaxPasskeys` (5).
 - `Passkey` holds credential ID, public key, attestation/flags, sign count, transports, AAGUID, attachment, `Name`, `CreatedAt`, `LastUsedAt`.
 - `PasskeyFromCredential` / `Credential()` round-trip to `webauthn.Credential`. `CreatedAt` is set in `PasskeyFromCredential`.
-- Datastore helpers on the controller: `AddPasskey`, `RemovePasskey` (`RemovePasskey` has no UI yet), `RecordPasskeyUse` (sign count, flags, `CloneWarning`, `LastUsedAt`; leaves `Name` and `CreatedAt` alone).
+- Datastore helpers on the controller: `AddPasskey`, `RemovePasskey`, `RecordPasskeyUse` (sign count, flags, `CloneWarning`, `LastUsedAt`; leaves `Name` and `CreatedAt` alone).
 - In-memory `FetchUser` copies the passkeys slice; nested `[]byte` still aliases (known stopgap).
 
 ### Register while logged in (PR #8)
@@ -47,11 +47,11 @@ JSON under `/web/passkey/…`, CSRF via `X-CSRF-Token`. User verification requir
 | Login begin | POST `/web/passkey/login/begin` | anonymous | Done. Identifier-first `{ "user_id": "..." }`, `BeginLogin`, `UserVerification: required`. Unknown user, empty ID, or no passkeys: 401 `"Unable to verify identity"`. Unconfigured WebAuthn: 503. |
 | Login finish | POST `/web/passkey/login/finish` | anonymous | Done. `FinishLogin`, then `datastore.RecordPasskeyUse`. `CloneWarning` rejects without an `auth` cookie (warning already persisted). Otherwise `SetAuthCookie` and `{ "redirect": "/web/home" }`. |
 | List | GET `/web/profile` | logged in | Done (table on the profile page). |
-| Revoke | POST | logged in | **Not done.** Endpoint was implemented then removed; bring back later. |
+| Revoke | POST `/web/passkey/revoke` | logged in | Done. JSON `{ "id": "<base64url>" }`, `datastore.RemovePasskey`, `{ "status": "ok" }`. Does not clear or rotate the `auth` cookie; the JWT is self-contained so other sessions stay valid until expiry. |
 
 Display names are derived at registration (`derivedPasskeyName`): known AAGUID map, else USB/NFC/BLE → “Security key”, hybrid → “Phone”, platform + backup flags → “Synced passkey”, platform → “This device”, else “Passkey”. `Name` is still persisted so user-editable nicknames can return later.
 
-Profile (`web/viewprofile.html`): table of name / added / last used, “Add passkey” (hidden if `PublicKeyCredential` is missing). No name field.
+Profile (`web/viewprofile.html`): table of name / added / last used / actions. “Add passkey” (hidden if `PublicKeyCredential` is missing). “Revoke” is a text link (`taPasskeys.revoke`); it is not a WebAuthn ceremony and stays visible without `PublicKeyCredential`. No name field.
 
 ### Login (PR #9 + login UI)
 
@@ -66,11 +66,14 @@ admin@trustedassertions.silvatek.uk and a Google Password Manager passkey. Attem
 for the same user and browser results in the expected error message 
 "The user attempted to register an authenticator that contains one of the credentials already registered with the relying party."
 
+Passkey login has been tested on the same host and user after PR #10 was deployed. The profile table showed that passkey as added 2026-09-03 and last used 2026-09-04.
+
+Passkey revoke has been tested locally: register, revoke, register the same authenticator again, revoke again. After revoke the credential can be re-registered because it is no longer in `excludeCredentials`.
+
 ## Remaining
 
 ### Later
 
-- Revoke on the profile page (`RemovePasskey`). Revoking must not log other sessions out; the JWT is self-contained.
 - User-editable passkey names.
 - Discoverable (usernameless) credentials and Conditional UI.
 - Extra tests around verify/store with fixtures. Skip real authenticator UI in `httptest`.
