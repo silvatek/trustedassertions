@@ -1,21 +1,37 @@
 package web
 
-import "strings"
+import (
+	"strings"
+
+	"silvatek.uk/trustedassertions/internal/auth"
+)
 
 type PageMenu struct {
 	Items []PageMenuItem
 }
 
 type PageMenuItem struct {
-	Menu      *PageMenu
-	Text      string
-	Target    string
-	Separator string
-	Style     string
+	Menu         *PageMenu
+	Text         string
+	Target       string
+	Separator    string
+	Style        string
+	RequiresRole string
 }
 
 func (i PageMenuItem) IsLink() bool {
 	return i.Target != ""
+}
+
+// VisibleTo is true when RequiresRole is empty, or when the user has that role.
+func (i PageMenuItem) VisibleTo(user *auth.User) bool {
+	if i.RequiresRole == "" {
+		return true
+	}
+	if user == nil {
+		return false
+	}
+	return user.HasRole(i.RequiresRole)
 }
 
 // UseHtmx is false for API/raw links so the browser loads them as full documents.

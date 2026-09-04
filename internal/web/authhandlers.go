@@ -164,21 +164,22 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func registerUser(ctx context.Context, registration RegistrationForm, store RegistrationStore) *AppError {
-	if registration.regCode == "" {
+	code := auth.NormalizeInviteCode(registration.regCode)
+	if code == "" {
 		return &ErrorRegCode
 	}
 
-	reg, err := store.FetchRegistration(ctx, registration.regCode)
+	reg, err := store.FetchRegistration(ctx, code)
 	if err != nil {
-		log.DebugfX(ctx, "Could not load registration code %s, %v", registration.regCode, err)
+		log.DebugfX(ctx, "Could not load registration code %s, %v", code, err)
 		return &ErrorRegCode
 	}
 	if reg.Status != "Pending" {
-		log.DebugfX(ctx, "Attempt to reuse registration code %s (%s)", registration.regCode, reg.Status)
+		log.DebugfX(ctx, "Attempt to reuse registration code %s (%s)", code, reg.Status)
 		return &ErrorRegCode
 	}
 
-	log.DebugfX(ctx, "Registering with valid registration code %s", registration.regCode)
+	log.DebugfX(ctx, "Registering with valid registration code %s", code)
 
 	user := auth.User{}
 	user.Id = registration.userId
@@ -207,7 +208,11 @@ func registerUser(ctx context.Context, registration RegistrationForm, store Regi
 
 	user.HashPassword(registration.password1)
 
-	reg.Code = registration.regCode
+	for _, role := range reg.Roles {
+		user.AddRole(role)
+	}
+
+	reg.Code = code
 	reg.UserName = user.Id
 	reg.Status = "Complete"
 	err = store.StoreRegistration(ctx, reg)

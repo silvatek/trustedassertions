@@ -77,7 +77,7 @@ func TestRegistration(t *testing.T) {
 
 	ctx := context.Background()
 
-	datastore.ActiveDataStore.StoreRegistration(ctx, auth.Registration{Code: "ABC", Status: "Pending"})
+	datastore.ActiveDataStore.StoreRegistration(ctx, auth.Registration{Code: "abc", Status: "Pending"})
 
 	page := wt.GetPage("/web/register")
 	page.AssertHtmlQuery("h2", "User Registration")

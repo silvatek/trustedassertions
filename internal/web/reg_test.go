@@ -12,7 +12,7 @@ func TestSuccessfulRegistration(t *testing.T) {
 	ctx := context.Background()
 
 	store := datastore.NewInMemoryDataStore()
-	store.StoreRegistration(ctx, auth.Registration{Code: "ABC", Status: "Pending"})
+	store.StoreRegistration(ctx, auth.Registration{Code: "abc", Status: "Pending"})
 
 	regForm := RegistrationForm{
 		regCode:   "ABC",
@@ -26,17 +26,54 @@ func TestSuccessfulRegistration(t *testing.T) {
 		t.Errorf("Registration error: %v", regErr)
 	}
 
-	_, err := store.FetchUser(ctx, "tester1")
+	user, err := store.FetchUser(ctx, "tester1")
 	if err != nil {
 		t.Errorf("Error fetching new user: %v", regErr)
 	}
+	if len(user.Roles) != 0 {
+		t.Errorf("expected no roles for invite without Roles, got %v", user.Roles)
+	}
 
-	reg, err := store.FetchRegistration(ctx, "ABC")
+	reg, err := store.FetchRegistration(ctx, "abc")
 	if err != nil {
-		t.Errorf("Error fetching new user: %v", regErr)
+		t.Errorf("Error fetching registration: %v", err)
 	}
 	if reg.Status != "Complete" {
 		t.Errorf("Registration not marked as complete: %s", reg.Status)
+	}
+}
+
+func TestRegistrationCopiesInviteRoles(t *testing.T) {
+	ctx := context.Background()
+
+	store := datastore.NewInMemoryDataStore()
+	code := auth.NormalizeInviteCode("oak tree blue sky")
+	store.StoreRegistration(ctx, auth.Registration{
+		Code:   code,
+		Status: "Pending",
+		Roles:  []string{auth.RoleAuthor},
+	})
+
+	regForm := RegistrationForm{
+		regCode:   "Oak Tree Blue Sky",
+		userId:    "author1",
+		password1: "klsds877ds,wbdsfujehnsdcvbd£cioe",
+		password2: "klsds877ds,wbdsfujehnsdcvbd£cioe",
+	}
+
+	if err := registerUser(ctx, regForm, store); err != nil {
+		t.Fatalf("Registration error: %v", err)
+	}
+
+	user, err := store.FetchUser(ctx, "author1")
+	if err != nil {
+		t.Fatalf("Error fetching new user: %v", err)
+	}
+	if !user.HasRole(auth.RoleAuthor) {
+		t.Errorf("expected Author role copied from invite, got %v", user.Roles)
+	}
+	if user.HasRole(auth.RoleAdministrator) {
+		t.Errorf("did not expect Administrator role, got %v", user.Roles)
 	}
 }
 
@@ -44,8 +81,8 @@ func TestFailedRegistration(t *testing.T) {
 	ctx := context.Background()
 
 	store := datastore.NewInMemoryDataStore()
-	store.StoreRegistration(ctx, auth.Registration{Code: "ABC", Status: "Pending"})
-	store.StoreRegistration(ctx, auth.Registration{Code: "IJK", Status: "Complete"})
+	store.StoreRegistration(ctx, auth.Registration{Code: "abc", Status: "Pending"})
+	store.StoreRegistration(ctx, auth.Registration{Code: "ijk", Status: "Complete"})
 	store.StoreUser(ctx, auth.User{Id: "Existing"})
 
 	testCases := []struct {

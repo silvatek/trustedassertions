@@ -209,5 +209,16 @@ func (ds *InMemoryDataStore) FetchRegistration(ctx context.Context, code string)
 	if !ok {
 		return auth.Registration{}, errors.New("Registration not found with code " + code)
 	}
+	reg.Roles = copyRoles(reg.Roles)
 	return reg, nil
+}
+
+func (ds *InMemoryDataStore) ListRegistrations(ctx context.Context) ([]auth.Registration, error) {
+	out := make([]auth.Registration, 0, len(ds.regs))
+	for _, reg := range ds.regs {
+		copied := reg
+		copied.Roles = copyRoles(reg.Roles)
+		out = append(out, copied)
+	}
+	return out, nil
 }
