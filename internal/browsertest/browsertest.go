@@ -121,20 +121,42 @@ func (b *Browser) Click(sel string) {
 	b.run(chromedp.Click(sel, chromedp.ByQuery))
 }
 
+// ClickLinkNextTo clicks the first link in the table cell after a cell whose
+// text is exactly text (the URI link beside a search-result summary).
+func (b *Browser) ClickLinkNextTo(text string) {
+	b.t.Helper()
+	xpath := `//td[normalize-space()=` + xpathLiteral(text) + `]/following-sibling::td//a`
+	b.run(chromedp.Click(xpath, chromedp.BySearch))
+}
+
+func xpathLiteral(s string) string {
+	if !strings.Contains(s, "'") {
+		return "'" + s + "'"
+	}
+	return `"` + s + `"`
+}
+
 func (b *Browser) SendKeys(sel, keys string) {
 	b.t.Helper()
 	b.run(chromedp.SendKeys(sel, keys, chromedp.ByQuery))
 }
 
+func queryBy(sel string) chromedp.QueryOption {
+	if strings.HasPrefix(sel, "//") {
+		return chromedp.BySearch
+	}
+	return chromedp.ByQuery
+}
+
 func (b *Browser) WaitVisible(sel string) {
 	b.t.Helper()
-	b.run(chromedp.WaitVisible(sel, chromedp.ByQuery))
+	b.run(chromedp.WaitVisible(sel, queryBy(sel)))
 }
 
 func (b *Browser) Text(sel string) string {
 	b.t.Helper()
 	var text string
-	b.run(chromedp.Text(sel, &text, chromedp.ByQuery))
+	b.run(chromedp.Text(sel, &text, queryBy(sel)))
 	return text
 }
 
