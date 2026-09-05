@@ -74,6 +74,14 @@ func InfofX(ctx context.Context, text string, args ...interface{}) {
 	WriteLog(ctx, "INFO ", text, args...)
 }
 
+func Warnf(text string, args ...interface{}) {
+	WarnfX(context.Background(), text, args...)
+}
+
+func WarnfX(ctx context.Context, text string, args ...interface{}) {
+	WriteLog(ctx, "WARN ", text, args...)
+}
+
 func Errorf(text string, args ...interface{}) {
 	ErrorfX(context.Background(), text, args...)
 }

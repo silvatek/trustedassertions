@@ -115,9 +115,11 @@ func RenderWebPageWithStatus(ctx context.Context, pageName string, data interfac
 	}
 
 	if pageName == "loggedout" {
-		SetAuthCookie("", w, r)
-	} else {
-		SetAuthCookie(username, w, r) // Refresh the auth cookie
+		if err := SetAuthCookie("", w, r); err != nil {
+			log.ErrorfX(ctx, "Error clearing auth cookie: %v", err)
+		}
+	} else if err := SetAuthCookie(username, w, r); err != nil {
+		log.ErrorfX(ctx, "Error refreshing auth cookie: %v", err)
 	}
 
 	var viewer *auth.User

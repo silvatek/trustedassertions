@@ -2,7 +2,7 @@
 
 Passkeys (WebAuthn / FIDO2) sit alongside bcrypt passwords. They authenticate the *user account*. They do not replace entity certificates or JWT assertions.
 
-Identity today is a bcrypt hash on `auth.User` (`PassHash`) and a JWT in the `auth` cookie (`SetAuthCookie`, 2 hour lifetime, `HttpOnly`, `SameSite=Strict`, `Secure` on HTTPS). Registration is invite-code plus password.
+Identity today is a bcrypt hash on `auth.User` (`PassHash`) and a JWT in the `auth` cookie (`SetAuthCookie`, `USER_JWT_TTL` default 1 hour, `HttpOnly`, `SameSite=Strict`, `Secure` on HTTPS). Registration is invite-code plus password.
 
 Server library: `github.com/go-webauthn/webauthn`. Browser: native `navigator.credentials` in `web/static/passkey.js`. Do not serve the ceremony through HTMX HTML swaps.
 

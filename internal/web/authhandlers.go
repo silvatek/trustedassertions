@@ -25,6 +25,7 @@ var ErrorUserNotFound = AppError{ErrorCode: AuthError + 2, UserMessage: "User no
 var ErrorForbidden = AppError{ErrorCode: AuthError + 3, UserMessage: "Not authorized", HttpCode: 403}
 var ErrorAuthFail = AppError{ErrorCode: AuthError + 5, UserMessage: "Not logged in"}
 var ErrorCreateInvite = AppError{ErrorCode: AuthError + 6, UserMessage: "Error creating invitation"}
+var ErrorCreateSession = AppError{ErrorCode: AuthError + 7, UserMessage: "Unable to create session"}
 
 const RegistrationError = 3100
 
@@ -40,8 +41,6 @@ var RegistrationErrors = []AppError{ErrorRegCode, ErrorPasswordMismatch, ErrorBa
 // invalidRegCodeDelay slows responses for unknown or already-used codes so guessing is less practical.
 var invalidRegCodeDelay = 300 * time.Millisecond
 
-var userJwtKey []byte
-
 func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/login", LoginWebHandler)
 	r.HandleFunc("/web/logout", LogoutWebHandler)
@@ -51,8 +50,6 @@ func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/admin/invites", AdminInvitesWebHandler)
 	r.HandleFunc("/web/admin/users", AdminUsersWebHandler)
 	addPasskeyHandlers(r)
-
-	userJwtKey = auth.MakeJwtKey()
 }
 
 func nameOnly(username string) string {
@@ -73,7 +70,7 @@ func authUsername(r *http.Request) string {
 	if cookie.Value == "" {
 		return ""
 	}
-	userName, err := auth.ParseUserJwt(cookie.Value, userJwtKey)
+	userName, err := auth.ParseUserJwt(cookie.Value)
 	if err != nil {
 		log.Errorf("Error parsing user JWT: %v", err)
 		return ""
@@ -114,7 +111,10 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		SetAuthCookie(userId, w, r)
+		if err := SetAuthCookie(userId, w, r); err != nil {
+			HandleError(ctx, ErrorCreateSession.instance(err.Error()), w, r)
+			return
+		}
 
 		http.Redirect(w, r, HomePath, http.StatusSeeOther)
 	}
@@ -123,7 +123,9 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 func LogoutWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
-	SetAuthCookie("", w, r)
+	if err := SetAuthCookie("", w, r); err != nil {
+		log.ErrorfX(ctx, "Error clearing auth cookie: %v", err)
+	}
 
 	log.DebugfX(ctx, "Cleared auth cookie")
 

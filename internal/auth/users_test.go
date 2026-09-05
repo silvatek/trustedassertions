@@ -184,7 +184,7 @@ func TestRolesFromJSON(t *testing.T) {
 }
 
 func TestParseBadJwt(t *testing.T) {
-	jwt, err := ParseUserJwt("broken", []byte("badkey"))
+	jwt, err := parseUserJwt("broken", []byte("badkey"))
 
 	if err == nil {
 		t.Error("Parsing broken JWT did not return an error")
