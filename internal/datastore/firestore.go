@@ -350,6 +350,29 @@ func (fs *FireStore) FetchUser(ctx context.Context, id string) (auth.User, error
 	return user, nil
 }
 
+func (fs *FireStore) ListUsers(ctx context.Context) ([]auth.User, error) {
+	client := fs.client(ctx)
+	users := make([]auth.User, 0)
+
+	docs := client.Collection(UserCollection).Documents(ctx)
+	defer docs.Stop()
+	for {
+		doc, err := docs.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		var user auth.User
+		if err := doc.DataTo(&user); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
 // Thin wrapper around firestore.DocumentIterator that allows for mocking.
 type DocFetcher struct {
 	testData  []DbRecord

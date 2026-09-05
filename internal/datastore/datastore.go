@@ -33,6 +33,7 @@ type DataStore interface {
 
 	FetchKey(entityUri refs.HashUri) (string, error)
 	FetchUser(ctx context.Context, id string) (auth.User, error)
+	ListUsers(ctx context.Context) ([]auth.User, error)
 	FetchRegistration(ctx context.Context, code string) (auth.Registration, error)
 	ListRegistrations(ctx context.Context) ([]auth.Registration, error)
 
