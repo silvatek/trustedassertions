@@ -121,6 +121,12 @@ func (b *Browser) Click(sel string) {
 	b.run(chromedp.Click(sel, chromedp.ByQuery))
 }
 
+func (b *Browser) ClickMenu(text string) {
+	b.t.Helper()
+	xpath := `//div[@id='pagemenu']//a[normalize-space()=` + xpathLiteral(text) + `]`
+	b.run(chromedp.Click(xpath, chromedp.BySearch))
+}
+
 // ClickLinkNextTo clicks the first link in the table cell after a cell whose
 // text is exactly text (the URI link beside a search-result summary).
 func (b *Browser) ClickLinkNextTo(text string) {
@@ -148,9 +154,11 @@ func queryBy(sel string) chromedp.QueryOption {
 	return chromedp.ByQuery
 }
 
-func (b *Browser) WaitVisible(sel string) {
+func (b *Browser) WaitVisible(sels ...string) {
 	b.t.Helper()
-	b.run(chromedp.WaitVisible(sel, queryBy(sel)))
+	for _, sel := range sels {
+		b.run(chromedp.WaitVisible(sel, queryBy(sel)))
+	}
 }
 
 func (b *Browser) Text(sel string) string {
@@ -163,9 +171,29 @@ func (b *Browser) Text(sel string) string {
 func (b *Browser) AssertContains(sel, want string) {
 	b.t.Helper()
 	got := b.Text(sel)
+	if want == "" {
+		if got != "" {
+			b.t.Errorf("selector %s: want empty, got %q", sel, got)
+		}
+		return
+	}
 	if !strings.Contains(got, want) {
 		b.t.Errorf("selector %s: want substring %q, got %q", sel, want, got)
 	}
+}
+
+func (b *Browser) WaitContains(sel, want string) {
+	b.t.Helper()
+	var got string
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		err := chromedp.Run(b.ctx, chromedp.Text(sel, &got, queryBy(sel)))
+		if err == nil && strings.Contains(got, want) {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	b.t.Errorf("selector %s: want substring %q, got %q", sel, want, got)
 }
 
 func (b *Browser) Back() {
