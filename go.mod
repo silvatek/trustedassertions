@@ -5,6 +5,7 @@ go 1.23.1
 require (
 	cloud.google.com/go/firestore v1.17.0
 	github.com/PuerkitoBio/goquery v1.10.0
+	github.com/chromedp/chromedp v0.13.7
 	github.com/go-webauthn/webauthn v0.13.4
 	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/gorilla/csrf v1.7.2
@@ -24,11 +25,17 @@ require (
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
 	cloud.google.com/go/longrunning v0.6.0 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/chromedp/cdproto v0.0.0-20250403032234-65de8f5d025b // indirect
+	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
+	github.com/go-json-experiment/json v0.0.0-20250211171154-1ae217ad3535 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-webauthn/x v0.1.23 // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
+	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-tpm v0.9.5 // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
