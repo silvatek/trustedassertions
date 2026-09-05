@@ -1,0 +1,11 @@
+---
+description: When to run browser tests around pull requests
+alwaysApply: true
+---
+
+# Browser tests around PRs
+
+- Before opening a PR, start a local server if nothing is listening on `http://127.0.0.1:8080` (`go run ./cmd/server/main.go`), then run `go test -tags=browser ./internal/web/ -run TestBrowserHome`.
+- Do not start a second server if one is already up.
+- After the user says a PR is merged **and** deployed, run `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk go test -tags=browser ./internal/web/ -run TestBrowserHome`.
+- If they say nothing needs deploying, skip the live run.
