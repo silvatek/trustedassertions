@@ -124,6 +124,47 @@ func TestRoles(t *testing.T) {
 	}
 }
 
+func TestUserStatus(t *testing.T) {
+	user := User{Id: "x"}
+	if user.IsLocked() {
+		t.Error("Expected user to be unlocked when status is empty")
+	}
+
+	user.SetStatus(UserStatusLocked)
+	if !user.IsLocked() {
+		t.Error("Expected user to be locked after SetStatus(Locked)")
+	}
+	if user.Status != UserStatusLocked {
+		t.Errorf("Status = %q, want %q", user.Status, UserStatusLocked)
+	}
+
+	user.SetStatus(UserStatusActive)
+	if user.IsLocked() {
+		t.Error("Expected user to be unlocked after SetStatus(Active)")
+	}
+	if user.Status != UserStatusActive {
+		t.Errorf("Status = %q, want %q", user.Status, UserStatusActive)
+	}
+}
+
+func TestStatusFromJSON(t *testing.T) {
+	var locked User
+	if err := json.Unmarshal([]byte(`{"id":"alice","status":"Locked"}`), &locked); err != nil {
+		t.Fatalf("unmarshal locked user: %v", err)
+	}
+	if !locked.IsLocked() {
+		t.Errorf("expected Locked from JSON, got %q", locked.Status)
+	}
+
+	var unlocked User
+	if err := json.Unmarshal([]byte(`{"id":"bob","passhash":"x"}`), &unlocked); err != nil {
+		t.Fatalf("unmarshal user without status field: %v", err)
+	}
+	if unlocked.IsLocked() {
+		t.Errorf("expected unlocked when status field is absent, got %q", unlocked.Status)
+	}
+}
+
 func TestRolesFromJSON(t *testing.T) {
 	var withRoles User
 	if err := json.Unmarshal([]byte(`{"id":"alice","roles":["Author","Administrator"]}`), &withRoles); err != nil {

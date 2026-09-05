@@ -286,7 +286,7 @@ func fetchPasskeyLoginUser(w http.ResponseWriter, r *http.Request, userID string
 		return auth.User{}, false
 	}
 	user, err := datastore.ActiveDataStore.FetchUser(appcontext.NewWebContext(r), userID)
-	if err != nil || len(user.Passkeys) == 0 {
+	if err != nil || user.IsLocked() || len(user.Passkeys) == 0 {
 		writePasskeyLoginFailure(w)
 		return auth.User{}, false
 	}

@@ -151,6 +151,27 @@ func TestPasskeyLoginBeginEmptyUserID(t *testing.T) {
 	assertNoAuthCookie(t, wt)
 }
 
+func TestPasskeyLoginBeginLockedUser(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+	wt.AuthCookie = nil
+
+	pk := auth.Passkey{ID: []byte("cred-locked-1"), PublicKey: []byte{1, 2, 3}}
+	if err := datastore.AddPasskey(context.TODO(), user.Id, pk); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := datastore.ActiveDataStore.FetchUser(context.TODO(), user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored.SetStatus(auth.UserStatusLocked)
+	datastore.ActiveDataStore.StoreUser(context.TODO(), stored)
+
+	page := wt.PostJSON("/web/passkey/login/begin", []byte(`{"user_id":"`+user.Id+`"}`))
+	assertPasskeyLoginFailure(t, page)
+	assertNoAuthCookie(t, wt)
+}
+
 func TestPasskeyLoginBeginUserWithoutPasskeys(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()

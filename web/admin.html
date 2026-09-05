@@ -8,11 +8,12 @@
                     <th>User ID</th>
                     <th>Roles</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
             {{range .Detail.Users}}
-                <tr class="user">
+                <tr class="user" data-user-id="{{.Id}}">
                     <td class="user-id">{{.Id}}</td>
                     {{if .Roles}}
                         <td class="user-roles">{{range $i, $role := .Roles}}{{if $i}}, {{end}}{{$role}}{{end}}</td>
@@ -20,10 +21,25 @@
                         <td class="user-roles">No roles</td>
                     {{end}}
                     <td class="user-status">{{.Status}}</td>
+                    <td class="user-actions">
+                        {{if ne .Id $.AuthUser}}
+                        <form method="POST" action="/web/admin/users">
+                                {{$.CsrfField}}
+                                <input type="hidden" name="user_id" value="{{.Id}}">
+                                {{if eq .Status "Locked"}}
+                                <input type="hidden" name="action" value="unlock">
+                                <a href="#" class="unlock-user" hx-boost="false" onclick="this.closest('form').submit(); return false">Unlock</a>
+                                {{else}}
+                                <input type="hidden" name="action" value="lock">
+                                <a href="#" class="lock-user" hx-boost="false" onclick="this.closest('form').submit(); return false">Lock</a>
+                                {{end}}
+                        </form>
+                        {{end}}
+                    </td>
                 </tr>
             {{else}}
                 <tr>
-                    <td id="no-users" colspan="3">No users.</td>
+                    <td id="no-users" colspan="4">No users.</td>
                 </tr>
             {{end}}
             </tbody>

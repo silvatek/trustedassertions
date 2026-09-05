@@ -49,6 +49,7 @@ func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/profile", ProfileWebHandler)
 	r.HandleFunc("/web/admin", AdminWebHandler)
 	r.HandleFunc("/web/admin/invites", AdminInvitesWebHandler)
+	r.HandleFunc("/web/admin/users", AdminUsersWebHandler)
 	addPasskeyHandlers(r)
 
 	userJwtKey = auth.MakeJwtKey()
@@ -99,6 +100,11 @@ func LoginWebHandler(w http.ResponseWriter, r *http.Request) {
 		user, err := datastore.ActiveDataStore.FetchUser(ctx, userId)
 		if err != nil {
 			log.Errorf("User not found in login attempt: `%s`", userId)
+			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail.ErrorCode), http.StatusSeeOther)
+			return
+		}
+		if user.IsLocked() {
+			log.Errorf("Locked user login attempt: `%s`", userId)
 			http.Redirect(w, r, fmt.Sprintf("/web/login?err=%d", ErrorAuthFail.ErrorCode), http.StatusSeeOther)
 			return
 		}

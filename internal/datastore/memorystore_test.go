@@ -98,6 +98,31 @@ func TestStoreFetchUser(t *testing.T) {
 	}
 }
 
+func TestStoreFetchUserLocked(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+
+	user1 := auth.User{Id: "Tester"}
+	user1.SetStatus(auth.UserStatusLocked)
+	ActiveDataStore.StoreUser(ctx, user1)
+
+	user2, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("FetchUser: %v", err)
+	}
+	if user2.Status != auth.UserStatusLocked {
+		t.Errorf("fetched status = %q, want %q", user2.Status, auth.UserStatusLocked)
+	}
+
+	listed, err := ActiveDataStore.ListUsers(ctx)
+	if err != nil {
+		t.Fatalf("ListUsers: %v", err)
+	}
+	if auth.UsersByID(listed)["Tester"].Status != auth.UserStatusLocked {
+		t.Error("listed user should be locked")
+	}
+}
+
 func TestFetchUserCopiesRoles(t *testing.T) {
 	InitInMemoryDataStore()
 	ctx := context.TODO()
