@@ -4,6 +4,8 @@ package browsertest
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,6 +37,7 @@ type Browser struct {
 	cancels []context.CancelFunc
 	base    string
 	closed  bool
+	docMark string
 }
 
 // Start preflights Target, launches Chrome, and applies a per-test timeout.
@@ -200,6 +203,28 @@ func (b *Browser) Back() {
 	b.t.Helper()
 	var unused any
 	b.run(chromedp.Evaluate(`window.history.back()`, &unused))
+}
+
+func (b *Browser) MarkDocument() {
+	b.t.Helper()
+	b.docMark = fmt.Sprintf("%d", rand.Int())
+	var unused any
+	b.run(chromedp.Evaluate(
+		fmt.Sprintf(`document.documentElement.setAttribute('data-ta-doc', %q)`, b.docMark),
+		&unused,
+	))
+}
+
+func (b *Browser) AssertSameMarkedDocument() {
+	b.t.Helper()
+	if b.docMark == "" {
+		b.t.Fatal("AssertSameMarkedDocument called before MarkDocument")
+	}
+	var got string
+	b.run(chromedp.Evaluate(`document.documentElement.getAttribute('data-ta-doc')`, &got))
+	if got != b.docMark {
+		b.t.Errorf("expected an HTMX fragment swap on the existing page, but the document was replaced")
+	}
 }
 
 func (b *Browser) Close() {
