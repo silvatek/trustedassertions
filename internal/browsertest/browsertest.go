@@ -4,6 +4,7 @@ package browsertest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 
 const defaultBaseURL = "http://127.0.0.1:8080"
 const testTimeout = 45 * time.Second
+const waitTimeout = 10 * time.Second
 const preflightTimeout = 3 * time.Second
 
 // Target is the server the browser tests drive. BROWSER_BASE_URL overrides
@@ -104,14 +106,30 @@ func (b *Browser) resolve(path string) string {
 	return u.JoinPath(path).String()
 }
 
+func (b *Browser) waitCtx() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(b.ctx, waitTimeout)
+}
+
 func (b *Browser) run(actions ...chromedp.Action) {
 	b.t.Helper()
-	if err := chromedp.Run(b.ctx, actions...); err != nil {
+	ctx, cancel := b.waitCtx()
+	defer cancel()
+	if err := chromedp.Run(ctx, actions...); err != nil {
 		if chromeMissing(err) {
 			b.t.Fatalf("Chrome/Chromium not found; install Chrome or Chromium and ensure it is on PATH")
 		}
-		b.t.Fatalf("%v", err)
+		b.t.Fatal(b.waitErr(err))
 	}
+}
+
+func (b *Browser) waitErr(err error) string {
+	if b.ctx.Err() != nil {
+		return fmt.Sprintf("browser session timed out after %s: %v", testTimeout, b.ctx.Err())
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Sprintf("timed out after %s: %v", waitTimeout, err)
+	}
+	return err.Error()
 }
 
 func (b *Browser) Navigate(path string) {
@@ -187,16 +205,23 @@ func (b *Browser) AssertContains(sel, want string) {
 
 func (b *Browser) WaitContains(sel, want string) {
 	b.t.Helper()
+	ctx, cancel := b.waitCtx()
+	defer cancel()
 	var got string
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) {
-		err := chromedp.Run(b.ctx, chromedp.Text(sel, &got, queryBy(sel)))
+	for {
+		err := chromedp.Run(ctx, chromedp.Text(sel, &got, queryBy(sel)))
 		if err == nil && strings.Contains(got, want) {
 			return
 		}
-		time.Sleep(50 * time.Millisecond)
+		if ctx.Err() != nil {
+			b.t.Fatalf("selector %s: want substring %q, got %q: %s", sel, want, got, b.waitErr(ctx.Err()))
+		}
+		select {
+		case <-ctx.Done():
+			b.t.Fatalf("selector %s: want substring %q, got %q: %s", sel, want, got, b.waitErr(ctx.Err()))
+		case <-time.After(50 * time.Millisecond):
+		}
 	}
-	b.t.Errorf("selector %s: want substring %q, got %q", sel, want, got)
 }
 
 func (b *Browser) Back() {

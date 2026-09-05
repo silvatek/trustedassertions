@@ -57,8 +57,8 @@ Any number of trust models can be created from the same set of assertions, and i
 * `go run ./cmd/server/main.go`
 * `go test -coverprofile coverage.out ./internal/...`
 * `go tool cover -html coverage.out`
-* `go test -tags=browser -timeout 2m ./internal/web/ -run TestBrowserHome`
-* `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk go test -tags=browser -timeout 2m ./internal/web/ -run TestBrowserHome`
+* `go test -tags=browser ./internal/web/ -run TestBrowserHome`
+* `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk go test -tags=browser ./internal/web/ -run TestBrowserHome`
 
 ## Things to Do
 
