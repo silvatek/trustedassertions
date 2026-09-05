@@ -132,6 +132,7 @@ There are multiple levels at which we can produce a new "thing".
 * Do not rewrite README "Done" history.
 * Do not commit or open a PR unless asked.
 * Tests belong with the change they cover. Do not plan or track unit tests or web tests as separate tasks.
+* Do not use button-style controls for repeating elements on a page (lists and tables). Use action links instead, as on the passkeys list on the profile page. There should generally not be more than one button per page.
 
 ### Build time analysis
 

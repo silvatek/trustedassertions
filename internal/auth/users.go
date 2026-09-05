@@ -17,6 +17,11 @@ const (
 	RoleAdministrator = "Administrator"
 )
 
+const (
+	UserStatusActive = "Active"
+	UserStatusLocked = "Locked"
+)
+
 var (
 	ErrEmptyPasskeyID  = errors.New("passkey credential id is required")
 	ErrTooManyPasskeys = errors.New("user already has the maximum number of passkeys")
@@ -30,6 +35,7 @@ type User struct {
 	KeyRefs  []KeyRef
 	Passkeys []Passkey `json:"passkeys"`
 	Roles    []string  `json:"roles"`
+	Status   string    `json:"status"`
 }
 
 type KeyRef struct {
@@ -97,6 +103,14 @@ func (u *User) AddRole(role string) {
 		return
 	}
 	u.Roles = append(u.Roles, role)
+}
+
+func (u *User) IsLocked() bool {
+	return u.Status == UserStatusLocked
+}
+
+func (u *User) SetStatus(status string) {
+	u.Status = status
 }
 
 func UsersByID(users []User) map[string]User {

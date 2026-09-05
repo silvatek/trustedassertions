@@ -36,6 +36,12 @@ func SetupTestData(ctx context.Context, testDataDir string, defaultEntityUri str
 	initialUser.AddRole(auth.RoleAdministrator)
 	datastore.ActiveDataStore.StoreUser(ctx, initialUser)
 
+	lockedUser := auth.User{Id: "locked"}
+	lockedUser.HashPassword(os.Getenv("INITIAL_PW"))
+	lockedUser.AddRole(auth.RoleAuthor)
+	lockedUser.SetStatus(auth.UserStatusLocked)
+	datastore.ActiveDataStore.StoreUser(ctx, lockedUser)
+
 	code := auth.GenerateInviteCode()
 	datastore.ActiveDataStore.StoreRegistration(ctx, auth.NewPendingRegistration(code, initialUser.Id, nil))
 	log.InfofX(ctx, "Pending registration code: %s", code)

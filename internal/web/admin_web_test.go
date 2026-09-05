@@ -39,6 +39,9 @@ func TestAdminPageRequiresAdministrator(t *testing.T) {
 
 	page = wt.PostFormData("/web/admin/invites", url.Values{"role": {auth.RoleAuthor}})
 	page.AssertErrorResponse()
+
+	page = wt.PostFormData("/web/admin/users", url.Values{"user_id": {user.Id}, "action": {"lock"}})
+	page.AssertErrorResponse()
 }
 
 func TestAdminMenuLinkForAdministrator(t *testing.T) {
@@ -94,6 +97,7 @@ func TestAdminListsUsers(t *testing.T) {
 	page.AssertHtmlQuery("#users thead", "User ID")
 	page.AssertHtmlQuery("#users thead", "Roles")
 	page.AssertHtmlQuery("#users thead", "Status")
+	page.AssertHtmlQuery("#users thead", "Actions")
 	page.AssertHtmlQuery("#users .user-id", user.Id)
 	page.AssertHtmlQuery("#users .user-id", "alice")
 	page.AssertHtmlQuery("#users .user-id", "nobody")
@@ -101,6 +105,17 @@ func TestAdminListsUsers(t *testing.T) {
 	page.AssertHtmlQuery("#users .user-roles", auth.RoleAdministrator)
 	page.AssertHtmlQuery("#users .user-roles", "No roles")
 	page.AssertHtmlQuery("#users .user-status", "Active")
+	page.AssertHtmlQuery(`tr.user[data-user-id="alice"] .lock-user`, "Lock")
+	page.AssertHtmlQuery(`tr.user[data-user-id="nobody"] .lock-user`, "Lock")
+	if page.Attr(`tr.user[data-user-id="alice"] a.lock-user`, "href") != "#" {
+		t.Error("lock control should be an action link")
+	}
+	if page.Attr(`tr.user[data-user-id="alice"] .lock-user`, "hx-boost") != "false" {
+		t.Errorf("lock hx-boost = %q", page.Attr(`tr.user[data-user-id="alice"] .lock-user`, "hx-boost"))
+	}
+	if page.Find(`tr.user[data-user-id="`+user.Id+`"] .lock-user`) != "" {
+		t.Error("administrator should not see a lock control for themselves")
+	}
 }
 
 func TestAdminCreatesAndListsInvite(t *testing.T) {
@@ -199,4 +214,70 @@ func TestAdminJwtContainsOnlyUserId(t *testing.T) {
 	if claims["sub"] != user.Id {
 		t.Errorf("JWT sub = %v, want %s", claims["sub"], user.Id)
 	}
+}
+
+func TestAdminLocksAndUnlocksUser(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	alice := auth.User{Id: "alice"}
+	alice.HashPassword("testing")
+	alice.AddRole(auth.RoleAuthor)
+	datastore.ActiveDataStore.StoreUser(context.TODO(), alice)
+
+	page := wt.PostFormData("/web/admin/users", url.Values{"user_id": {"alice"}, "action": {"lock"}})
+	page.AssertSuccessResponse()
+	page.AssertHtmlQuery(`tr.user[data-user-id="alice"] .user-status`, "Locked")
+	page.AssertHtmlQuery(`tr.user[data-user-id="alice"] .unlock-user`, "Unlock")
+	if page.Find(`tr.user[data-user-id="alice"] .lock-user`) != "" {
+		t.Error("locked user should not show a lock control")
+	}
+
+	stored, err := datastore.ActiveDataStore.FetchUser(context.TODO(), "alice")
+	if err != nil {
+		t.Fatalf("FetchUser: %v", err)
+	}
+	if stored.Status != auth.UserStatusLocked {
+		t.Errorf("status = %q, want %q", stored.Status, auth.UserStatusLocked)
+	}
+	if !stored.HasRole(auth.RoleAuthor) {
+		t.Error("lock should not remove roles")
+	}
+
+	page = wt.PostFormData("/web/admin/users", url.Values{"user_id": {"alice"}, "action": {"unlock"}})
+	page.AssertSuccessResponse()
+	page.AssertHtmlQuery(`tr.user[data-user-id="alice"] .user-status`, "Active")
+	page.AssertHtmlQuery(`tr.user[data-user-id="alice"] .lock-user`, "Lock")
+
+	stored, err = datastore.ActiveDataStore.FetchUser(context.TODO(), "alice")
+	if err != nil {
+		t.Fatalf("FetchUser: %v", err)
+	}
+	if stored.Status != auth.UserStatusActive {
+		t.Errorf("status = %q, want %q", stored.Status, auth.UserStatusActive)
+	}
+}
+
+func TestAdminCannotLockSelf(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.PostFormData("/web/admin/users", url.Values{"user_id": {user.Id}, "action": {"lock"}})
+	page.AssertErrorResponse()
+
+	stored, err := datastore.ActiveDataStore.FetchUser(context.TODO(), user.Id)
+	if err != nil {
+		t.Fatalf("FetchUser: %v", err)
+	}
+	if stored.IsLocked() {
+		t.Error("administrator must not be able to lock themselves")
+	}
+}
+
+func TestAdminLockUnknownUser(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.PostFormData("/web/admin/users", url.Values{"user_id": {"missing"}, "action": {"lock"}})
+	page.AssertErrorResponse()
 }

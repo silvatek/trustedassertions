@@ -40,6 +40,28 @@ func TestBadLogin(t *testing.T) {
 	page.AssertHtmlQuery(".error", "Unable to verify identity")
 }
 
+func TestLockedUserCannotLogin(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	locked := auth.User{Id: "lockeduser"}
+	locked.HashPassword(wt.Passwd)
+	locked.SetStatus(auth.UserStatusLocked)
+	datastore.ActiveDataStore.StoreUser(context.TODO(), locked)
+
+	wt.AuthCookie = nil
+	page := wt.PostFormData("/web/login", url.Values{"user_id": {locked.Id}, "password": {wt.Passwd}})
+	page.AssertHtmlQuery(".error", "Unable to verify identity")
+	page.AssertNoCookie("auth")
+
+	locked.SetStatus(auth.UserStatusActive)
+	datastore.ActiveDataStore.StoreUser(context.TODO(), locked)
+
+	page = wt.PostFormData("/web/login", url.Values{"user_id": {locked.Id}, "password": {wt.Passwd}})
+	page.AssertSuccessResponse()
+	page.AssertHasCookie("auth")
+}
+
 func TestProfileShowsRoles(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()

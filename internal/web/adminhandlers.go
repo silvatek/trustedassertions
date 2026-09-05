@@ -35,10 +35,14 @@ type registrationRow struct {
 func userRows(users []auth.User) []userRow {
 	rows := make([]userRow, 0, len(users))
 	for _, user := range users {
+		status := user.Status
+		if status == "" {
+			status = auth.UserStatusActive
+		}
 		rows = append(rows, userRow{
 			Id:     user.Id,
 			Roles:  user.Roles,
-			Status: "Active",
+			Status: status,
 		})
 	}
 	sort.Slice(rows, func(i, j int) bool {
@@ -136,6 +140,46 @@ func AdminInvitesWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/web/admin?created="+url.QueryEscape(code), http.StatusSeeOther)
+}
+
+func AdminUsersWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+	if !requireAdministrator(w, r) {
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/web/admin", http.StatusSeeOther)
+		return
+	}
+
+	r.ParseForm()
+	userID := r.Form.Get("user_id")
+	action := r.Form.Get("action")
+	if action != "lock" && action != "unlock" {
+		http.Redirect(w, r, "/web/admin", http.StatusSeeOther)
+		return
+	}
+
+	if action == "lock" && userID == authUsername(r) {
+		HandleError(ctx, ErrorForbidden.instance("Administrators cannot lock themselves"), w, r)
+		return
+	}
+
+	user, err := datastore.ActiveDataStore.FetchUser(ctx, userID)
+	if err != nil {
+		HandleError(ctx, ErrorUserNotFound.instance("User not found: "+userID), w, r)
+		return
+	}
+
+	if action == "lock" {
+		user.SetStatus(auth.UserStatusLocked)
+	} else {
+		user.SetStatus(auth.UserStatusActive)
+	}
+	datastore.ActiveDataStore.StoreUser(ctx, user)
+
+	http.Redirect(w, r, "/web/admin", http.StatusSeeOther)
 }
 
 func rolesFromInviteForm(r *http.Request) []string {
