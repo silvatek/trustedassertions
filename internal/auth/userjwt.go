@@ -14,6 +14,8 @@ const ISSUER = "trustedassertions"
 
 const DefaultUserJwtTTL = time.Hour
 
+const defaultUserJwtKey = "default_user_jwt_key_do_not_use_in_prod"
+
 var ErrUserJwtKeyNotSet = fmt.Errorf("USER_JWT_KEY is not set")
 
 var userJwtKey []byte
@@ -34,10 +36,14 @@ func InitUserJwtFromEnv() error {
 
 	key := strings.TrimSpace(os.Getenv("USER_JWT_KEY"))
 	if key == "" {
-		log.Warnf("USER_JWT_KEY is not set; user sessions cannot be created")
-		userJwtKey = nil
-		userJwtTTL = ttl
-		return nil
+		if os.Getenv("GCLOUD_PROJECT") != "" {
+			log.Warnf("USER_JWT_KEY is not set; user sessions cannot be created")
+			userJwtKey = nil
+			userJwtTTL = ttl
+			return nil
+		}
+		key = defaultUserJwtKey
+		log.Infof("Using default USER_JWT_KEY")
 	}
 
 	return InitUserJwt(key, ttl)

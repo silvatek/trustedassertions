@@ -59,7 +59,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * `go tool cover -html coverage.out`
 * `go test -tags=browser ./internal/web/ -run TestBrowserHome`
 * `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk go test -tags=browser ./internal/web/ -run TestBrowserHome`
-* `USER_JWT_KEY` — HMAC key for the `auth` cookie JWT. If unset, the server still starts but logs a warning and login cannot create a session. Separate from `PRV_KEY` so rotating the entity key does not log everyone out.
+* `USER_JWT_KEY` — HMAC key for the `auth` cookie JWT. Local `go run` / tests use a fixed default if unset. On Cloud Run (`GCLOUD_PROJECT` set) a missing key logs a warning and login cannot create a session. Separate from `PRV_KEY` so rotating the entity key does not log everyone out.
 * `USER_JWT_TTL` — session lifetime as a Go duration (default `1h`). JWT `exp` and the `auth` cookie both use this.
 
 ## Things to Do
@@ -108,7 +108,7 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ### User sessions
 
-Login and passkey finish issue an HS256 JWT in the `auth` cookie. Every instance must share `USER_JWT_KEY`; a per-process random key logs users out (and clears the cookie) when the next request hits a different container. If `USER_JWT_KEY` is unset the process still starts, logs a warning, and refuses to mint a session token. Do not reuse `PRV_KEY` for this. `USER_JWT_TTL` (default `1h`) sets both JWT expiry and cookie lifetime.
+Login and passkey finish issue an HS256 JWT in the `auth` cookie. Every instance must share `USER_JWT_KEY`; a per-process random key logs users out (and clears the cookie) when the next request hits a different container. Locally, an unset key uses a fixed default. On Cloud Run (`GCLOUD_PROJECT` set) a missing key still starts the process, logs a warning, and refuses to mint a session token. Do not reuse `PRV_KEY` for this. `USER_JWT_TTL` (default `1h`) sets both JWT expiry and cookie lifetime.
 
 ### Persistence
 

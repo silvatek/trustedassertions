@@ -130,7 +130,7 @@ func TestSetAuthCookieFailsWithoutKey(t *testing.T) {
 	})
 	t.Setenv("USER_JWT_KEY", "")
 	t.Setenv("USER_JWT_TTL", "")
-	t.Setenv("GCLOUD_PROJECT", "")
+	t.Setenv("GCLOUD_PROJECT", "trustedassertions")
 	if err := auth.InitUserJwtFromEnv(); err != nil {
 		t.Fatalf("InitUserJwtFromEnv: %v", err)
 	}

@@ -73,7 +73,33 @@ func TestJwtExpiresAfterTTL(t *testing.T) {
 	}
 }
 
-func TestInitUserJwtFromEnvAllowsMissingKey(t *testing.T) {
+func TestInitUserJwtFromEnvUsesDefaultLocally(t *testing.T) {
+	restoreUserJwt(t)
+	t.Setenv("USER_JWT_KEY", "")
+	t.Setenv("USER_JWT_TTL", "")
+	t.Setenv("GCLOUD_PROJECT", "")
+
+	if err := InitUserJwtFromEnv(); err != nil {
+		t.Fatalf("InitUserJwtFromEnv: %v", err)
+	}
+	if string(userJwtKey) != defaultUserJwtKey {
+		t.Errorf("userJwtKey = %q, want default", userJwtKey)
+	}
+
+	token, err := MakeUserJwt("Tester")
+	if err != nil {
+		t.Fatalf("MakeUserJwt with local default: %v", err)
+	}
+	username, err := ParseUserJwt(token)
+	if err != nil {
+		t.Fatalf("ParseUserJwt: %v", err)
+	}
+	if username != "Tester" {
+		t.Errorf("username = %q, want Tester", username)
+	}
+}
+
+func TestInitUserJwtFromEnvAllowsMissingKeyOnGcloud(t *testing.T) {
 	restoreUserJwt(t)
 	t.Setenv("USER_JWT_KEY", "")
 	t.Setenv("USER_JWT_TTL", "")
