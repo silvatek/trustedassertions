@@ -8,24 +8,36 @@ import (
 	"silvatek.uk/trustedassertions/internal/auth"
 )
 
-func SetAuthCookie(userId string, w http.ResponseWriter, r *http.Request) {
+func SetAuthCookie(userId string, w http.ResponseWriter, r *http.Request) error {
 	secure := requestIsHTTPS(r)
 	var cookie *http.Cookie
 	if userId == "" {
 		cookie = clearAuthCookie(secure)
 	} else {
-		cookie = makeAuthCookie(userId, secure)
+		var err error
+		cookie, err = makeAuthCookie(userId, secure)
+		if err != nil {
+			return err
+		}
 	}
 
 	http.SetCookie(w, cookie)
+	return nil
 }
 
 func MakeAuthCookie(userId string) *http.Cookie {
-	return makeAuthCookie(userId, false)
+	cookie, err := makeAuthCookie(userId, false)
+	if err != nil {
+		return nil
+	}
+	return cookie
 }
 
-func makeAuthCookie(userId string, secure bool) *http.Cookie {
-	jwt, _ := auth.MakeUserJwt(userId)
+func makeAuthCookie(userId string, secure bool) (*http.Cookie, error) {
+	jwt, err := auth.MakeUserJwt(userId)
+	if err != nil {
+		return nil, err
+	}
 	ttl := auth.UserJwtTTL()
 	expiration := time.Now().Add(ttl)
 	return &http.Cookie{
@@ -37,7 +49,7 @@ func makeAuthCookie(userId string, secure bool) *http.Cookie {
 		SameSite: http.SameSiteStrictMode,
 		HttpOnly: true,
 		Secure:   secure,
-	}
+	}, nil
 }
 
 func clearAuthCookie(secure bool) *http.Cookie {

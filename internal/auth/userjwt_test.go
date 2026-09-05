@@ -73,33 +73,31 @@ func TestJwtExpiresAfterTTL(t *testing.T) {
 	}
 }
 
-func TestInitUserJwtFromEnvUsesDefaultLocally(t *testing.T) {
+func TestInitUserJwtFromEnvAllowsMissingKey(t *testing.T) {
 	restoreUserJwt(t)
 	t.Setenv("USER_JWT_KEY", "")
 	t.Setenv("USER_JWT_TTL", "")
-	t.Setenv("GCLOUD_PROJECT", "")
+	t.Setenv("GCLOUD_PROJECT", "trustedassertions")
 
 	if err := InitUserJwtFromEnv(); err != nil {
 		t.Fatalf("InitUserJwtFromEnv: %v", err)
 	}
-	if string(userJwtKey) != defaultUserJwtKey {
-		t.Errorf("userJwtKey = %q, want default", userJwtKey)
+	if len(userJwtKey) != 0 {
+		t.Errorf("userJwtKey should be empty when USER_JWT_KEY is unset")
 	}
 	if UserJwtTTL() != DefaultUserJwtTTL {
 		t.Errorf("TTL = %v, want %v", UserJwtTTL(), DefaultUserJwtTTL)
 	}
-}
 
-func TestInitUserJwtFromEnvRequiresKeyWhenGcloudProjectSet(t *testing.T) {
-	t.Setenv("USER_JWT_KEY", "")
-	t.Setenv("GCLOUD_PROJECT", "trustedassertions")
-
-	err := InitUserJwtFromEnv()
+	token, err := MakeUserJwt("Tester")
 	if err == nil {
-		t.Fatal("expected error when USER_JWT_KEY is unset and GCLOUD_PROJECT is set")
+		t.Fatal("expected MakeUserJwt to fail when USER_JWT_KEY is unset")
 	}
-	if !strings.Contains(err.Error(), "USER_JWT_KEY") {
-		t.Errorf("error %q should mention USER_JWT_KEY", err)
+	if token != "" {
+		t.Errorf("expected empty token, got %q", token)
+	}
+	if !strings.Contains(err.Error(), "USER_JWT_KEY is not set") {
+		t.Errorf("error %q should mention USER_JWT_KEY is not set", err)
 	}
 }
 
@@ -133,5 +131,21 @@ func TestInitUserJwtFromEnvRejectsInvalidTTL(t *testing.T) {
 func TestInitUserJwtRejectsEmptyKey(t *testing.T) {
 	if err := InitUserJwt("", time.Hour); err == nil {
 		t.Fatal("expected error for empty key")
+	}
+}
+
+func TestMakeUserJwtRequiresConfiguredKey(t *testing.T) {
+	restoreUserJwt(t)
+	userJwtKey = nil
+
+	token, err := MakeUserJwt("Tester")
+	if err == nil {
+		t.Fatal("expected error when user JWT key is not configured")
+	}
+	if token != "" {
+		t.Errorf("expected empty token, got %q", token)
+	}
+	if err != ErrUserJwtKeyNotSet {
+		t.Errorf("error = %v, want ErrUserJwtKeyNotSet", err)
 	}
 }

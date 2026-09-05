@@ -219,7 +219,11 @@ func writePasskeyLoginFinishResponse(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 
-	SetAuthCookie(user.Id, w, r)
+	if err := SetAuthCookie(user.Id, w, r); err != nil {
+		log.Errorf("SetAuthCookie after passkey login: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "Unable to create session")
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]string{"redirect": HomePath})
 }
 

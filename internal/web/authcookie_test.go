@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -38,7 +39,9 @@ func TestSetAuthCookieSecureOnHTTPS(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "https://example.com/web/home", nil)
 	req.TLS = &tls.ConnectionState{}
-	SetAuthCookie("tester", rec, req)
+	if err := SetAuthCookie("tester", rec, req); err != nil {
+		t.Fatalf("SetAuthCookie: %v", err)
+	}
 
 	cookies := rec.Result().Cookies()
 	if len(cookies) != 1 {
@@ -58,7 +61,9 @@ func TestSetAuthCookieSecureOnForwardedProto(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "http://example.com/web/home", nil)
 	req.Header.Set("X-Forwarded-Proto", "https")
-	SetAuthCookie("tester", rec, req)
+	if err := SetAuthCookie("tester", rec, req); err != nil {
+		t.Fatalf("SetAuthCookie: %v", err)
+	}
 
 	cookie := rec.Result().Cookies()[0]
 	if !cookie.Secure {
@@ -74,7 +79,9 @@ func TestSetAuthCookieNotSecureOnHTTP(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "http://127.0.0.1:8080/web/home", nil)
-	SetAuthCookie("tester", rec, req)
+	if err := SetAuthCookie("tester", rec, req); err != nil {
+		t.Fatalf("SetAuthCookie: %v", err)
+	}
 
 	cookie := rec.Result().Cookies()[0]
 	if cookie.Secure {
@@ -114,11 +121,41 @@ func TestAuthCookieUsesConfiguredTTL(t *testing.T) {
 	}
 }
 
+func TestSetAuthCookieFailsWithoutKey(t *testing.T) {
+	restoreTTL := auth.UserJwtTTL()
+	t.Cleanup(func() {
+		if err := auth.InitUserJwt("test-user-jwt-key-32-bytes-long!!", restoreTTL); err != nil {
+			t.Errorf("restore InitUserJwt: %v", err)
+		}
+	})
+	t.Setenv("USER_JWT_KEY", "")
+	t.Setenv("USER_JWT_TTL", "")
+	t.Setenv("GCLOUD_PROJECT", "")
+	if err := auth.InitUserJwtFromEnv(); err != nil {
+		t.Fatalf("InitUserJwtFromEnv: %v", err)
+	}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "http://127.0.0.1:8080/web/login", nil)
+	err := SetAuthCookie("tester", rec, req)
+	if err == nil {
+		t.Fatal("expected SetAuthCookie to fail when USER_JWT_KEY is unset")
+	}
+	if !strings.Contains(err.Error(), "USER_JWT_KEY is not set") {
+		t.Errorf("error %q should mention USER_JWT_KEY is not set", err)
+	}
+	if len(rec.Result().Cookies()) != 0 {
+		t.Error("should not write an auth cookie when JWT creation fails")
+	}
+}
+
 func TestClearAuthCookieFlags(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "https://example.com/web/logout", nil)
 	req.Header.Set("X-Forwarded-Proto", "https")
-	SetAuthCookie("", rec, req)
+	if err := SetAuthCookie("", rec, req); err != nil {
+		t.Fatalf("SetAuthCookie: %v", err)
+	}
 
 	cookie := rec.Result().Cookies()[0]
 	if cookie.Value != "" {

@@ -14,21 +14,12 @@ const ISSUER = "trustedassertions"
 
 const DefaultUserJwtTTL = time.Hour
 
-const defaultUserJwtKey = "default_user_jwt_key_do_not_use_in_prod"
+var ErrUserJwtKeyNotSet = fmt.Errorf("USER_JWT_KEY is not set")
 
 var userJwtKey []byte
 var userJwtTTL = DefaultUserJwtTTL
 
 func InitUserJwtFromEnv() error {
-	key := strings.TrimSpace(os.Getenv("USER_JWT_KEY"))
-	if key == "" {
-		if os.Getenv("GCLOUD_PROJECT") != "" {
-			return fmt.Errorf("USER_JWT_KEY is required when GCLOUD_PROJECT is set")
-		}
-		key = defaultUserJwtKey
-		log.Infof("Using default USER_JWT_KEY")
-	}
-
 	ttl := DefaultUserJwtTTL
 	if raw := strings.TrimSpace(os.Getenv("USER_JWT_TTL")); raw != "" {
 		parsed, err := time.ParseDuration(raw)
@@ -39,6 +30,14 @@ func InitUserJwtFromEnv() error {
 			return fmt.Errorf("USER_JWT_TTL must be positive, got %q", raw)
 		}
 		ttl = parsed
+	}
+
+	key := strings.TrimSpace(os.Getenv("USER_JWT_KEY"))
+	if key == "" {
+		log.Warnf("USER_JWT_KEY is not set; user sessions cannot be created")
+		userJwtKey = nil
+		userJwtTTL = ttl
+		return nil
 	}
 
 	return InitUserJwt(key, ttl)
@@ -61,6 +60,9 @@ func UserJwtTTL() time.Duration {
 }
 
 func MakeUserJwt(userId string) (string, error) {
+	if len(userJwtKey) == 0 {
+		return "", ErrUserJwtKeyNotSet
+	}
 	return makeUserJwt(userId, userJwtKey)
 }
 
