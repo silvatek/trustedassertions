@@ -168,6 +168,12 @@ func (b *Browser) AssertContains(sel, want string) {
 	}
 }
 
+func (b *Browser) Back() {
+	b.t.Helper()
+	var unused any
+	b.run(chromedp.Evaluate(`window.history.back()`, &unused))
+}
+
 func (b *Browser) Close() {
 	if b.closed {
 		return
