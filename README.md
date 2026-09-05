@@ -65,6 +65,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * Secure management of private keys
 * Access control
 * User management
+* Add and remove user roles from Admin
 * Add new document
 * Auto-create statements and assertions from documents
 * Document schema
