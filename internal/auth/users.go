@@ -99,6 +99,14 @@ func (u *User) AddRole(role string) {
 	u.Roles = append(u.Roles, role)
 }
 
+func UsersByID(users []User) map[string]User {
+	byID := make(map[string]User, len(users))
+	for _, user := range users {
+		byID[user.Id] = user
+	}
+	return byID
+}
+
 func (u *User) AddPasskey(pk Passkey) error {
 	if len(pk.ID) == 0 {
 		return ErrEmptyPasskeyID

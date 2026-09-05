@@ -1,6 +1,34 @@
 {{define "content"}}
         <h2>Admin</h2>
 
+        <h3>Users</h3>
+        <table id="users" class="searchresults">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{range .Detail.Users}}
+                <tr class="user">
+                    <td class="user-id">{{.Id}}</td>
+                    {{if .Roles}}
+                        <td class="user-roles">{{range $i, $role := .Roles}}{{if $i}}, {{end}}{{$role}}{{end}}</td>
+                    {{else}}
+                        <td class="user-roles">No roles</td>
+                    {{end}}
+                    <td class="user-status">{{.Status}}</td>
+                </tr>
+            {{else}}
+                <tr>
+                    <td id="no-users" colspan="3">No users.</td>
+                </tr>
+            {{end}}
+            </tbody>
+        </table>
+
         <h3>Create registration code</h3>
         <p>Generate a registration code and share with the new user; they will need this when registering to use the site.</p>
         <form method="POST" action="/web/admin/invites">

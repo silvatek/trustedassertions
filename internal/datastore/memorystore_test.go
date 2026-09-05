@@ -155,6 +155,40 @@ func TestStoreFetchRegistrationCopiesRoles(t *testing.T) {
 	}
 }
 
+func TestListUsers(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+
+	ActiveDataStore.StoreUser(ctx, auth.User{Id: "alice", Roles: []string{auth.RoleAuthor}})
+	ActiveDataStore.StoreUser(ctx, auth.User{Id: "bob"})
+
+	users, err := ActiveDataStore.ListUsers(ctx)
+	if err != nil {
+		t.Fatalf("ListUsers: %v", err)
+	}
+	if len(users) != 2 {
+		t.Fatalf("expected 2 users, got %d", len(users))
+	}
+
+	byID := auth.UsersByID(users)
+	alice := byID["alice"]
+	if !containsRole(alice.Roles, auth.RoleAuthor) {
+		t.Errorf("alice missing Author: %v", alice.Roles)
+	}
+	if _, ok := byID["bob"]; !ok {
+		t.Error("expected bob in user list")
+	}
+
+	alice.AddRole(auth.RoleAdministrator)
+	stored, err := ActiveDataStore.FetchUser(ctx, "alice")
+	if err != nil {
+		t.Fatalf("FetchUser: %v", err)
+	}
+	if containsRole(stored.Roles, auth.RoleAdministrator) {
+		t.Errorf("mutating listed user roles mutated store: %v", stored.Roles)
+	}
+}
+
 func TestListRegistrations(t *testing.T) {
 	InitInMemoryDataStore()
 	ctx := context.TODO()

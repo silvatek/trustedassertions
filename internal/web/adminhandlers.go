@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 	"net/url"
+	"sort"
 
 	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/auth"
@@ -11,7 +12,14 @@ import (
 
 type adminPageData struct {
 	CreatedCode   string
+	Users         []userRow
 	Registrations []registrationRow
+}
+
+type userRow struct {
+	Id     string
+	Roles  []string
+	Status string
 }
 
 type registrationRow struct {
@@ -22,6 +30,21 @@ type registrationRow struct {
 	CreatedBy   string
 	CompletedAt string
 	ExpiresAt   string
+}
+
+func userRows(users []auth.User) []userRow {
+	rows := make([]userRow, 0, len(users))
+	for _, user := range users {
+		rows = append(rows, userRow{
+			Id:     user.Id,
+			Roles:  user.Roles,
+			Status: "Active",
+		})
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].Id < rows[j].Id
+	})
+	return rows
 }
 
 func registrationRows(regs []auth.Registration) []registrationRow {
@@ -73,6 +96,12 @@ func AdminWebHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	users, err := datastore.ActiveDataStore.ListUsers(ctx)
+	if err != nil {
+		HandleError(ctx, ErrorCreateInvite.instance("Error listing users"), w, r)
+		return
+	}
+
 	regs, err := datastore.ActiveDataStore.ListRegistrations(ctx)
 	if err != nil {
 		HandleError(ctx, ErrorCreateInvite.instance("Error listing registrations"), w, r)
@@ -81,6 +110,7 @@ func AdminWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	RenderWebPage(ctx, "admin", adminPageData{
 		CreatedCode:   r.URL.Query().Get("created"),
+		Users:         userRows(users),
 		Registrations: registrationRows(regs),
 	}, nil, w, r)
 }

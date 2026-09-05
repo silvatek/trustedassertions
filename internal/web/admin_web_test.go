@@ -79,6 +79,30 @@ func TestAdminMenuLinkHiddenWhenLoggedOut(t *testing.T) {
 	}
 }
 
+func TestAdminListsUsers(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	alice := auth.User{Id: "alice"}
+	alice.AddRole(auth.RoleAuthor)
+	datastore.ActiveDataStore.StoreUser(context.TODO(), alice)
+	datastore.ActiveDataStore.StoreUser(context.TODO(), auth.User{Id: "nobody"})
+
+	page := wt.GetPage("/web/admin")
+	page.AssertSuccessResponse()
+	page.AssertHtmlQuery("h3", "Users")
+	page.AssertHtmlQuery("#users thead", "User ID")
+	page.AssertHtmlQuery("#users thead", "Roles")
+	page.AssertHtmlQuery("#users thead", "Status")
+	page.AssertHtmlQuery("#users .user-id", user.Id)
+	page.AssertHtmlQuery("#users .user-id", "alice")
+	page.AssertHtmlQuery("#users .user-id", "nobody")
+	page.AssertHtmlQuery("#users .user-roles", auth.RoleAuthor)
+	page.AssertHtmlQuery("#users .user-roles", auth.RoleAdministrator)
+	page.AssertHtmlQuery("#users .user-roles", "No roles")
+	page.AssertHtmlQuery("#users .user-status", "Active")
+}
+
 func TestAdminCreatesAndListsInvite(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()
