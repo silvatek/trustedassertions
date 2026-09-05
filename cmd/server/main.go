@@ -9,6 +9,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/api"
 	"silvatek.uk/trustedassertions/internal/appcontext"
 	"silvatek.uk/trustedassertions/internal/assertions"
+	"silvatek.uk/trustedassertions/internal/auth"
 	"silvatek.uk/trustedassertions/internal/datastore"
 	"silvatek.uk/trustedassertions/internal/logging"
 	. "silvatek.uk/trustedassertions/internal/references"
@@ -35,6 +36,9 @@ func main() {
 	initDataStore(ctx)
 
 	web.TemplateDir = "./web"
+	if err := auth.InitUserJwtFromEnv(); err != nil {
+		logging.Fatal(err)
+	}
 	csrfKey := getEnvWithDefault("CSRF_KEY", "default_csrf_key")
 	if err := web.InitWebAuthn(
 		getEnvWithDefault("WEBAUTHN_RP_ORIGIN", "http://127.0.0.1:8080"),

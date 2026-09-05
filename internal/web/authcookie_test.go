@@ -5,12 +5,20 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"silvatek.uk/trustedassertions/internal/auth"
 )
 
+func initTestUserJwt(t *testing.T) {
+	t.Helper()
+	if err := auth.InitUserJwt("test-user-jwt-key-32-bytes-long!!", time.Hour); err != nil {
+		t.Fatalf("InitUserJwt: %v", err)
+	}
+}
+
 func TestAuthCookieIsHttpOnly(t *testing.T) {
-	userJwtKey = auth.MakeJwtKey()
+	initTestUserJwt(t)
 
 	cookie := MakeAuthCookie("tester")
 	if !cookie.HttpOnly {
@@ -25,7 +33,7 @@ func TestAuthCookieIsHttpOnly(t *testing.T) {
 }
 
 func TestSetAuthCookieSecureOnHTTPS(t *testing.T) {
-	userJwtKey = auth.MakeJwtKey()
+	initTestUserJwt(t)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "https://example.com/web/home", nil)
@@ -45,7 +53,7 @@ func TestSetAuthCookieSecureOnHTTPS(t *testing.T) {
 }
 
 func TestSetAuthCookieSecureOnForwardedProto(t *testing.T) {
-	userJwtKey = auth.MakeJwtKey()
+	initTestUserJwt(t)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "http://example.com/web/home", nil)
@@ -62,7 +70,7 @@ func TestSetAuthCookieSecureOnForwardedProto(t *testing.T) {
 }
 
 func TestSetAuthCookieNotSecureOnHTTP(t *testing.T) {
-	userJwtKey = auth.MakeJwtKey()
+	initTestUserJwt(t)
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "http://127.0.0.1:8080/web/home", nil)
@@ -74,6 +82,35 @@ func TestSetAuthCookieNotSecureOnHTTP(t *testing.T) {
 	}
 	if !cookie.HttpOnly {
 		t.Error("Auth cookie should still be HttpOnly on HTTP")
+	}
+}
+
+func TestAuthCookieUsesConfiguredTTL(t *testing.T) {
+	prevTTL := auth.UserJwtTTL()
+	t.Cleanup(func() {
+		if err := auth.InitUserJwt("test-user-jwt-key-32-bytes-long!!", prevTTL); err != nil {
+			t.Errorf("restore InitUserJwt: %v", err)
+		}
+	})
+	if err := auth.InitUserJwt("test-user-jwt-key-32-bytes-long!!", 2*time.Second); err != nil {
+		t.Fatalf("InitUserJwt: %v", err)
+	}
+
+	cookie := MakeAuthCookie("tester")
+	if cookie.MaxAge != 2 {
+		t.Errorf("MaxAge = %d, want 2", cookie.MaxAge)
+	}
+	remaining := time.Until(cookie.Expires)
+	if remaining < time.Second || remaining > 3*time.Second {
+		t.Errorf("Expires remaining %v, want about 2s", remaining)
+	}
+
+	username, err := auth.ParseUserJwt(cookie.Value)
+	if err != nil {
+		t.Fatalf("cookie JWT should parse with the configured key: %v", err)
+	}
+	if username != "tester" {
+		t.Errorf("username = %q, want tester", username)
 	}
 }
 

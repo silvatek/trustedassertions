@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 	"silvatek.uk/trustedassertions/internal/assertions"
@@ -36,6 +37,10 @@ func NewWebTest(t *testing.T) *webtest.WebTest {
 	DefaultEntityUri = signer.Uri()
 
 	testdata.SetupTestData(context.Background(), "../../testdata", signer.Uri().String(), entities.PrivateKeyToString(privateKey))
+
+	if err := auth.InitUserJwt("test-user-jwt-key-32-bytes-long!!", time.Hour); err != nil {
+		t.Fatalf("InitUserJwt: %v", err)
+	}
 
 	wt := webtest.MakeWebTest(t)
 

@@ -40,8 +40,6 @@ var RegistrationErrors = []AppError{ErrorRegCode, ErrorPasswordMismatch, ErrorBa
 // invalidRegCodeDelay slows responses for unknown or already-used codes so guessing is less practical.
 var invalidRegCodeDelay = 300 * time.Millisecond
 
-var userJwtKey []byte
-
 func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/login", LoginWebHandler)
 	r.HandleFunc("/web/logout", LogoutWebHandler)
@@ -51,8 +49,6 @@ func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/admin/invites", AdminInvitesWebHandler)
 	r.HandleFunc("/web/admin/users", AdminUsersWebHandler)
 	addPasskeyHandlers(r)
-
-	userJwtKey = auth.MakeJwtKey()
 }
 
 func nameOnly(username string) string {
@@ -73,7 +69,7 @@ func authUsername(r *http.Request) string {
 	if cookie.Value == "" {
 		return ""
 	}
-	userName, err := auth.ParseUserJwt(cookie.Value, userJwtKey)
+	userName, err := auth.ParseUserJwt(cookie.Value)
 	if err != nil {
 		log.Errorf("Error parsing user JWT: %v", err)
 		return ""

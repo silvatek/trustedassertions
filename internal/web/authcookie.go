@@ -25,13 +25,15 @@ func MakeAuthCookie(userId string) *http.Cookie {
 }
 
 func makeAuthCookie(userId string, secure bool) *http.Cookie {
-	jwt, _ := auth.MakeUserJwt(userId, userJwtKey)
-	expiration := time.Now().Add(2 * time.Hour)
+	jwt, _ := auth.MakeUserJwt(userId)
+	ttl := auth.UserJwtTTL()
+	expiration := time.Now().Add(ttl)
 	return &http.Cookie{
 		Name:     "auth",
 		Path:     "/",
 		Value:    jwt,
 		Expires:  expiration,
+		MaxAge:   int(ttl.Seconds()),
 		SameSite: http.SameSiteStrictMode,
 		HttpOnly: true,
 		Secure:   secure,
