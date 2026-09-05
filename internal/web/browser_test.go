@@ -41,4 +41,14 @@ func TestBrowserHome(t *testing.T) {
 	b.Click(`#pagemenu a[href^="/web/share"]`)
 	b.WaitVisible("#page img")
 	b.AssertContains("h2", "Share Item")
+
+	b.Back()
+	b.WaitVisible("#category")
+	b.AssertContains("h2", "View Assertion")
+	b.AssertContains("#subjecttext", "The universe exists")
+
+	b.Click("#issuer")
+	b.WaitVisible("#common_name")
+	b.AssertContains("h2", "View Entity")
+	b.WaitVisible("#references li")
 }
