@@ -12,7 +12,7 @@
         </div>
             
         <h3>References</h3>
-        <ul>
+        <ul id="references">
             {{range $ref := .Detail.References}}
             <li><a href="{{$ref.Source.WebPath}}">{{$ref.Summary}}</a></li>
             {{end}}
