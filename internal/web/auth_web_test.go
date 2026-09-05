@@ -103,6 +103,9 @@ func TestRegistration(t *testing.T) {
 
 	page := wt.GetPage("/web/register")
 	page.AssertHtmlQuery("h2", "User Registration")
+	if got := page.Find(".error"); got != "" {
+		t.Errorf("registration form should start with an empty error, got %q", got)
+	}
 
 	page = wt.PostFormData("/web/register", url.Values{"reg_code": {"ABC"}, "user_id": {"Tester 99"}, "password1": {"jsdj87sda;swg59jmd;;874j"}, "password2": {"jsdj87sda;swg59jmd;;874j"}})
 	page.AssertHtmlQuery("h2", "Login")

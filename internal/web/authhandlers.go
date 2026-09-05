@@ -149,7 +149,7 @@ func RegisterWebHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		errorCode := r.URL.Query().Get("err")
 
-		data := "Error during registration"
+		data := ""
 		for _, error := range RegistrationErrors {
 			if errorCode == strconv.Itoa(error.ErrorCode) {
 				data = error.UserMessage
