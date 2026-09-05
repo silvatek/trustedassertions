@@ -15,12 +15,14 @@ func TestBrowserHome(t *testing.T) {
 	b.Navigate("/web/home")
 	b.WaitVisible("h1", "#searchform", "#query", "#submitsearch")
 	b.AssertContains("h1", "Trusted Assertions")
+	b.MarkDocument()
 
 	b.SendKeys("#query", "universe")
 	b.Click("#submitsearch")
 
 	b.WaitVisible(".searchresults")
 	b.AssertContains(".searchresults", "The universe exists")
+	b.AssertSameMarkedDocument()
 
 	b.ClickLinkNextTo("The universe exists")
 	b.WaitVisible("#content")
