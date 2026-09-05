@@ -59,6 +59,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * `go tool cover -html coverage.out`
 * `go test -tags=browser ./internal/web/ -run TestBrowserHome`
 * `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk go test -tags=browser ./internal/web/ -run TestBrowserHome`
+* `BROWSER_EXPECT_REVISION=<sha>` — optional; when set, browser tests fail unless `GET /web/health` reports that revision
 
 ## Things to Do
 
@@ -103,6 +104,10 @@ Any number of trust models can be created from the same set of assertions, and i
 
 
 ## Implementation Details
+
+### Revision
+
+`GET /web/health` returns `{"status":"ok","revision":"..."}` with `Cache-Control: no-store` and `X-Robots-Tag: noindex`. Revision is the `COMMIT_SHA` environment variable (Cloud Build sets this on Cloud Run at deploy) or `dev` when unset. A green home search does not prove which revision is serving.
 
 ### Persistence
 

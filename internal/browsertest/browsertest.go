@@ -4,6 +4,7 @@ package browsertest
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -86,6 +87,32 @@ func preflight(t *testing.T, base string) {
 		t.Fatalf("start the server or set BROWSER_BASE_URL: nothing listening at %s (%v)", base, err)
 	}
 	resp.Body.Close()
+	checkHealth(t, client, base)
+}
+
+func checkHealth(t *testing.T, client *http.Client, base string) {
+	t.Helper()
+	resp, err := client.Get(base + "/web/health")
+	if err != nil {
+		t.Fatalf("/web/health: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("/web/health: status %d", resp.StatusCode)
+	}
+	var health struct {
+		Status   string `json:"status"`
+		Revision string `json:"revision"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&health); err != nil {
+		t.Fatalf("/web/health: decode: %v", err)
+	}
+	if health.Status != "ok" {
+		t.Fatalf("/web/health: status %q, want ok", health.Status)
+	}
+	if want := strings.TrimSpace(os.Getenv("BROWSER_EXPECT_REVISION")); want != "" && health.Revision != want {
+		t.Fatalf("/web/health: revision %q, want %q", health.Revision, want)
+	}
 }
 
 func chromeMissing(err error) bool {
@@ -135,6 +162,21 @@ func (b *Browser) waitErr(err error) string {
 func (b *Browser) Navigate(path string) {
 	b.t.Helper()
 	b.run(chromedp.Navigate(b.resolve(path)))
+}
+
+// NavigateHome opens /web/home with a unique query so Chrome does not reuse a
+// cached document (home is Cache-Control max-age=600). Use only for the initial
+// load; later ClickMenu("Home") should still follow the normal HTMX path.
+func (b *Browser) NavigateHome() {
+	b.t.Helper()
+	u, err := url.Parse(b.resolve("/web/home"))
+	if err != nil {
+		b.t.Fatalf("NavigateHome: %v", err)
+	}
+	q := u.Query()
+	q.Set("_", fmt.Sprintf("%d", time.Now().UnixNano()))
+	u.RawQuery = q.Encode()
+	b.Navigate(u.String())
 }
 
 func (b *Browser) Click(sel string) {

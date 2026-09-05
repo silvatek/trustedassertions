@@ -35,6 +35,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/", HomeRedirectWebHandler)
 	r.HandleFunc("/web", HomeRedirectWebHandler)
 	r.HandleFunc("/web/home", HomeWebHandler)
+	r.HandleFunc("/web/health", HealthWebHandler)
 	r.HandleFunc("/web/statements/{hash}", ViewStatementWebHandler)
 	r.HandleFunc("/web/entities/{hash}", ViewEntityWebHandler)
 	r.HandleFunc("/web/assertions/{hash}", ViewAssertionWebHandler)

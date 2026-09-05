@@ -12,7 +12,7 @@ func TestBrowserHome(t *testing.T) {
 	b := browsertest.Start(t)
 	defer b.Close()
 
-	b.Navigate("/web/home")
+	b.NavigateHome()
 	b.WaitVisible("h1", "#searchform", "#query", "#submitsearch")
 	b.AssertContains("h1", "Trusted Assertions")
 	b.MarkDocument()
