@@ -111,7 +111,7 @@ Any number of trust models can be created from the same set of assertions, and i
 
 ### Revision
 
-`GET /web/health` returns `{"status":"ok","revision":"..."}` with `Cache-Control: no-store` and `X-Robots-Tag: noindex`. Revision is the `COMMIT_SHA` environment variable (Cloud Build sets this on Cloud Run at deploy) or `dev` when unset. A green home search does not prove which revision is serving.
+`GET /web/health` returns `{"status":"ok","revision":"...","built":"..."}` with `Cache-Control: no-store` and `X-Robots-Tag: noindex`. Revision is the `COMMIT_SHA` environment variable (Cloud Build sets this on Cloud Run at deploy) or `dev` when unset. `built` is the UTC image build time (`BUILD_TIME`, baked into the image by Cloud Build) or empty for a local `go run`. A green home search does not prove which revision is serving.
 
 ### User sessions
 

@@ -9,6 +9,7 @@ import (
 
 func TestHealth(t *testing.T) {
 	t.Setenv("COMMIT_SHA", "")
+	t.Setenv("BUILD_TIME", "")
 
 	wt := NewWebTest(t)
 	defer wt.Close()
@@ -38,6 +39,9 @@ func TestHealth(t *testing.T) {
 	if health.Revision != defaultRevision {
 		t.Errorf("revision %q, want %q", health.Revision, defaultRevision)
 	}
+	if health.Built != "" {
+		t.Errorf("built %q, want empty", health.Built)
+	}
 }
 
 func TestHealthRevisionFromEnv(t *testing.T) {
@@ -58,5 +62,23 @@ func TestHealthRevisionFromEnv(t *testing.T) {
 	}
 	if health.Revision != "abc123def" {
 		t.Errorf("revision %q, want abc123def", health.Revision)
+	}
+}
+
+func TestHealthBuiltFromEnv(t *testing.T) {
+	t.Setenv("BUILD_TIME", "2026-09-06T12:30:00Z")
+
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.GetPage("/web/health")
+	page.AssertSuccessResponse()
+
+	var health healthResponse
+	if err := json.Unmarshal(page.RawBody(), &health); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if health.Built != "2026-09-06T12:30:00Z" {
+		t.Errorf("built %q, want 2026-09-06T12:30:00Z", health.Built)
 	}
 }

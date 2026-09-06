@@ -11,6 +11,7 @@ const defaultRevision = "dev"
 type healthResponse struct {
 	Status   string `json:"status"`
 	Revision string `json:"revision"`
+	Built    string `json:"built"`
 }
 
 func HealthWebHandler(w http.ResponseWriter, r *http.Request) {
@@ -19,6 +20,7 @@ func HealthWebHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, healthResponse{
 		Status:   "ok",
 		Revision: commitRevision(),
+		Built:    imageBuiltAt(),
 	})
 }
 
@@ -27,4 +29,8 @@ func commitRevision() string {
 		return sha
 	}
 	return defaultRevision
+}
+
+func imageBuiltAt() string {
+	return strings.TrimSpace(os.Getenv("BUILD_TIME"))
 }
