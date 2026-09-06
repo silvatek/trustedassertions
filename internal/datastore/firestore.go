@@ -238,11 +238,18 @@ func (fs *FireStore) FetchAssertion(ctx context.Context, uri ref.HashUri) (asser
 }
 
 func (fs *FireStore) FetchDocument(ctx context.Context, uri ref.HashUri) (docs.Document, error) {
-	record, _ := fs.fetch(ctx, uri)
+	record, err := fs.fetch(ctx, uri)
 
 	log.DebugfX(ctx, "Fetched document %s", uri)
 
-	doc, _ := docs.MakeDocument(record.Content)
+	if err != nil {
+		return docs.Document{}, err
+	}
+
+	doc, err := docs.MakeDocument(record.Content)
+	if err != nil {
+		return docs.Document{}, err
+	}
 
 	return *doc, nil
 }

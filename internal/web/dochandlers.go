@@ -15,7 +15,11 @@ import (
 func ViewDocumentWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	key := mux.Vars(r)["hash"]
-	document, _ := datastore.ActiveDataStore.FetchDocument(ctx, ref.MakeUri(key, "document"))
+	document, err := datastore.ActiveDataStore.FetchDocument(ctx, ref.MakeUri(key, "document"))
+	if err != nil {
+		NotFoundWebHandler(w, r)
+		return
+	}
 
 	data := struct {
 		Doc       docs.Document

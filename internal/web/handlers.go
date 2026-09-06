@@ -211,7 +211,11 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 
 	key := mux.Vars(r)["hash"]
-	statement, _ := datastore.ActiveDataStore.FetchStatement(ctx, ref.MakeUri(key, "statement"))
+	statement, err := datastore.ActiveDataStore.FetchStatement(ctx, ref.MakeUri(key, "statement"))
+	if err != nil {
+		NotFoundWebHandler(w, r)
+		return
+	}
 
 	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, statement.Uri())
 	enrichReferencesTo(ctx, &statement, refs)
@@ -265,7 +269,11 @@ func ViewAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 
 	key := mux.Vars(r)["hash"]
 	uri := ref.MakeUri(key, "assertion")
-	assertion, _ := datastore.ActiveDataStore.FetchAssertion(ctx, uri)
+	assertion, err := datastore.ActiveDataStore.FetchAssertion(ctx, uri)
+	if err != nil {
+		NotFoundWebHandler(w, r)
+		return
+	}
 
 	issuerUri := ref.UriFromString(assertion.Issuer)
 	if !issuerUri.HasType() {
@@ -322,7 +330,7 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	uri := ref.MakeUri(key, "entity")
 	entity, err := datastore.ActiveDataStore.FetchEntity(ctx, uri)
 	if err != nil {
-		HandleError(ctx, ErrorEntityFetch.instance("Error fetching entity "+uri.String()), w, r)
+		NotFoundWebHandler(w, r)
 		return
 	}
 
@@ -475,9 +483,8 @@ func AddStatementAssertionWebHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		statement, err := datastore.ActiveDataStore.FetchStatement(ctx, ref.MakeUri(statementHash, "statement"))
 		if err != nil {
-			log.Errorf("Error fetching statement: %v", err)
-		} else {
-			log.Debugf("Statement content = %s", statement.Content())
+			NotFoundWebHandler(w, r)
+			return
 		}
 
 		data := struct {
