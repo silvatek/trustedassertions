@@ -59,7 +59,7 @@ Any number of trust models can be created from the same set of assertions, and i
 * `go tool cover -html coverage.out`
 * `go test -tags=browser ./internal/web/ -run TestBrowserHome`
 * `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk go test -tags=browser ./internal/web/ -run TestBrowserHome`
-* `BROWSER_REG_CODE="oak tree blue sky" go test -tags=browser -timeout 2m ./internal/web/ -run TestBrowserRegister`
+* `BROWSER_REG_CODE="oak tree blue sky" go test -tags=browser -timeout 2m ./internal/web/ -run TestBrowserRegister` — local in-memory invite includes Author and Administrator
 * `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk BROWSER_REG_CODE="oak tree blue sky" go test -tags=browser -timeout 2m ./internal/web/ -run TestBrowserRegister` — consumes the invite; leaves a user, entity, and statement. Use an Author invite on live.
 * `BROWSER_EXPECT_REVISION=<sha>` — optional; when set, browser tests fail unless `GET /web/health` reports that revision
 * `USER_JWT_KEY` — HMAC key for the `auth` cookie JWT. Local `go run` / tests use a fixed default if unset. On Cloud Run (`GCLOUD_PROJECT` set) a missing key logs a warning and login cannot create a session. Separate from `PRV_KEY` so rotating the entity key does not log everyone out.
