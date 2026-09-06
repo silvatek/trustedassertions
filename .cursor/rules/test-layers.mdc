@@ -1,0 +1,12 @@
+---
+description: Keep browser tests thin; put maintainable coverage in unit and web tests
+globs: internal/**/*_test.go,internal/browsertest/**
+alwaysApply: false
+---
+
+# Test layers
+
+- Unit and `internal/webtest` tests are the default. Keep them cheap to maintain: assert what the handler or template must show, not a second copy of a browser journey.
+- Browser tests (`//go:build browser`) prove only what those layers cannot: real Chrome, client-side HTMX, production CSRF, and cookies.
+- In a browser test, wait for arrival and assert the unique result of the click or POST. Do not re-check headings, page copy, form validation, or menu composition already covered by web tests.
+- If a check can be expressed with `httptest` + goquery, put it there instead of in a browser test.

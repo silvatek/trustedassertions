@@ -13,71 +13,63 @@ func TestBrowserHome(t *testing.T) {
 	defer b.Close()
 
 	b.NavigateHome()
-	b.WaitVisible("h1", "#searchform", "#query", "#submitsearch")
-	b.AssertContains("h1", "Trusted Assertions")
-	b.MarkDocument()
+	b.WaitVisible("#searchform", "#query", "#submitsearch")
 
 	b.SendKeys("#query", "universe")
-	b.Click("#submitsearch")
-
-	b.WaitVisible(".searchresults")
-	b.AssertContains(".searchresults", "The universe exists")
-	b.AssertSameMarkedDocument()
+	b.ClickHtmx("#submitsearch", ".searchresults")
 
 	b.ClickLinkNextTo("The universe exists")
 	b.WaitVisible("#content")
-	b.AssertContains("h2", "View Statement")
-	b.AssertContains("#content", "The universe exists")
-
-	b.WaitVisible("#references li")
-	b.AssertContains("h3", "References")
 	b.Click("#references a")
 	b.WaitVisible("#category")
-	b.AssertContains("h2", "View Assertion")
-	b.AssertContains("#subjecttext", "The universe exists")
 
 	b.ClickMenu("Share")
 	b.WaitVisible("#page img")
-	b.AssertContains("h2", "Share Item")
-
 	b.Back()
 	b.WaitVisible("#category")
-	b.AssertContains("h2", "View Assertion")
-	b.AssertContains("#subjecttext", "The universe exists")
-
-	b.Click("#issuer")
-	b.WaitVisible("#common_name", "#references li")
-	b.AssertContains("h2", "View Entity")
 
 	b.ClickMenu("Home")
 	b.WaitVisible("#searchform")
+}
 
-	b.ClickMenu("Register")
-	b.WaitVisible("#reg_code", "#user_id", "#password1", "#password2", "#register")
-	b.AssertContains(".error", "")
+func TestBrowserRegister(t *testing.T) {
+	code := browsertest.RequireRegCode(t)
+	userID, password := browsertest.NewTestUser()
+	entityName := "Browser test entity " + userID
+	statementText := "Browser test statement " + userID
 
-	b.SendKeys("#reg_code", "not-a-valid-code")
-	b.SendKeys("#user_id", "browser-test-user")
-	b.SendKeys("#password1", "dummy-password-123")
-	b.SendKeys("#password2", "dummy-password-123")
+	b := browsertest.StartRegister(t)
+	defer b.Close()
+
+	b.NavigateHome()
+	b.WaitVisible("#searchform")
+	b.ClickMenuHtmx("Register", "#reg_code", "#user_id", "#password1", "#password2", "#register")
+	b.Fill("#reg_code", code, "#user_id", userID, "#password1", password, "#password2", password)
 	b.Click("#register")
 
-	b.WaitContains(".error", "Registration code not valid")
-	b.WaitVisible("#reg_code")
-
-	b.ClickMenu("Login")
 	b.WaitVisible("#user_id", "#password", "#login")
-	b.AssertContains("h2", "Login")
-	b.AssertContains(".error", "")
-
-	b.SendKeys("#user_id", "browser-test-user")
-	b.SendKeys("#password", "dummy-password-123")
+	b.Fill("#user_id", userID, "#password", password)
 	b.Click("#login")
-
-	b.WaitContains(".error", "Unable to verify identity")
-	b.WaitVisible("#login")
-
-	b.Click("#pagelogo")
 	b.WaitVisible("#searchform")
-	b.AssertContains("h1", "Trusted Assertions")
+
+	b.ClickLinkHtmx("Entity with signing key", "#commonname", "#submit")
+	b.SendKeys("#commonname", entityName)
+	b.ClickHtmx("#submit", "#common_name")
+	b.AssertContains("#common_name", entityName)
+
+	b.ClickMenu("Home")
+	b.WaitVisible("#searchform")
+	b.ClickLinkHtmx("Statement and Assertion", "#statement", "#sign_as", "#submit")
+	b.RequireCount("#sign_as option")
+	b.SendKeys("#statement", statementText)
+	b.ClickHtmx("#submit", "#subjecttext")
+	b.AssertContains("#subjecttext", statementText)
+
+	if !b.HasMenuLink("Admin") {
+		return
+	}
+	b.ClickMenuHtmx("Admin", "#create-invite")
+	b.Click("#create-invite")
+	b.WaitVisible("#created-invite", ".invite-code")
+	b.AssertNonEmpty(".invite-code")
 }

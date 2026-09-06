@@ -20,8 +20,11 @@ import (
 
 const defaultBaseURL = "http://127.0.0.1:8080"
 const testTimeout = 45 * time.Second
+const registerTimeout = 90 * time.Second
 const waitTimeout = 10 * time.Second
 const preflightTimeout = 3 * time.Second
+
+const defaultStrongPassword = "klsds877ds,wbdsfujehnsdcvbd-cioe"
 
 // Target is the server the browser tests drive. BROWSER_BASE_URL overrides
 // the local default so the same tests can run against a live instance.
@@ -41,10 +44,39 @@ type Browser struct {
 	base    string
 	closed  bool
 	docMark string
+	timeout time.Duration
+}
+
+// RequireRegCode returns BROWSER_REG_CODE or skips the test when unset.
+func RequireRegCode(t *testing.T) string {
+	t.Helper()
+	code := strings.TrimSpace(os.Getenv("BROWSER_REG_CODE"))
+	if code == "" {
+		t.Skip("set BROWSER_REG_CODE to run register/login journey")
+	}
+	return code
+}
+
+// NewTestUser returns a unique user id and a zxcvbn-strong password.
+func NewTestUser() (id, password string) {
+	id = fmt.Sprintf("bt-%x", time.Now().UnixNano())
+	password = defaultStrongPassword + "-" + id
+	return id, password
 }
 
 // Start preflights Target, launches Chrome, and applies a per-test timeout.
 func Start(t *testing.T) *Browser {
+	t.Helper()
+	return start(t, testTimeout)
+}
+
+// StartRegister is Start with a longer timeout for the register/login journey.
+func StartRegister(t *testing.T) *Browser {
+	t.Helper()
+	return start(t, registerTimeout)
+}
+
+func start(t *testing.T, timeout time.Duration) *Browser {
 	t.Helper()
 	base := Target()
 	preflight(t, base)
@@ -58,13 +90,14 @@ func Start(t *testing.T) *Browser {
 
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	ctx, ctxCancel := chromedp.NewContext(allocCtx)
-	ctx, timeoutCancel := context.WithTimeout(ctx, testTimeout)
+	ctx, timeoutCancel := context.WithTimeout(ctx, timeout)
 
 	b := &Browser{
 		t:       t,
 		ctx:     ctx,
 		cancels: []context.CancelFunc{timeoutCancel, ctxCancel, allocCancel},
 		base:    base,
+		timeout: timeout,
 	}
 
 	if err := chromedp.Run(ctx, chromedp.Navigate("about:blank")); err != nil {
@@ -151,7 +184,7 @@ func (b *Browser) run(actions ...chromedp.Action) {
 
 func (b *Browser) waitErr(err error) string {
 	if b.ctx.Err() != nil {
-		return fmt.Sprintf("browser session timed out after %s: %v", testTimeout, b.ctx.Err())
+		return fmt.Sprintf("browser session timed out after %s: %v", b.timeout, b.ctx.Err())
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
 		return fmt.Sprintf("timed out after %s: %v", waitTimeout, err)
@@ -186,8 +219,93 @@ func (b *Browser) Click(sel string) {
 
 func (b *Browser) ClickMenu(text string) {
 	b.t.Helper()
-	xpath := `//div[@id='pagemenu']//a[normalize-space()=` + xpathLiteral(text) + `]`
-	b.run(chromedp.Click(xpath, chromedp.BySearch))
+	b.clickXPath(`//div[@id='pagemenu']//a[normalize-space()=` + xpathLiteral(text) + `]`)
+}
+
+func (b *Browser) ClickLink(text string) {
+	b.t.Helper()
+	b.clickXPath(`//a[normalize-space()=` + xpathLiteral(text) + `]`)
+}
+
+// ClickMenuHtmx marks the document, follows a menu link, waits, and asserts
+// the page was swapped in place rather than replaced.
+func (b *Browser) ClickMenuHtmx(text string, wait ...string) {
+	b.t.Helper()
+	b.clickHtmx(func() { b.ClickMenu(text) }, wait...)
+}
+
+// ClickLinkHtmx is ClickMenuHtmx for a visible link anywhere on the page.
+func (b *Browser) ClickLinkHtmx(text string, wait ...string) {
+	b.t.Helper()
+	b.clickHtmx(func() { b.ClickLink(text) }, wait...)
+}
+
+// ClickHtmx is ClickMenuHtmx for a CSS selector.
+func (b *Browser) ClickHtmx(sel string, wait ...string) {
+	b.t.Helper()
+	b.clickHtmx(func() { b.Click(sel) }, wait...)
+}
+
+func (b *Browser) clickHtmx(click func(), wait ...string) {
+	b.t.Helper()
+	b.MarkDocument()
+	click()
+	b.WaitVisible(wait...)
+	b.AssertSameMarkedDocument()
+}
+
+// Fill types into CSS-selector / value pairs.
+func (b *Browser) Fill(pairs ...string) {
+	b.t.Helper()
+	if len(pairs)%2 != 0 {
+		b.t.Fatal("Fill: need selector/value pairs")
+	}
+	for i := 0; i < len(pairs); i += 2 {
+		b.SendKeys(pairs[i], pairs[i+1])
+	}
+}
+
+func (b *Browser) AssertNonEmpty(sel string) {
+	b.t.Helper()
+	if strings.TrimSpace(b.Text(sel)) == "" {
+		b.t.Errorf("expected a non-empty %s", sel)
+	}
+}
+
+func (b *Browser) RequireCount(sel string) {
+	b.t.Helper()
+	if b.Count(sel) == 0 {
+		b.t.Fatalf("expected at least one match for %s", sel)
+	}
+}
+
+func (b *Browser) clickXPath(xpath string) {
+	b.t.Helper()
+	// Programmatic click so HTMX can preventDefault. chromedp.Click on <a href>
+	// can follow the link as a full navigation and skip hx-boost. Re-process
+	// the node first: OOB menu swaps sometimes leave a link unenhanced, and
+	// then click() is a no-op in Chrome (no user gesture, no navigation).
+	script := fmt.Sprintf(`
+		var n = document.evaluate(%q, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+		if (!n) { throw new Error("no link matching " + %q); }
+		if (window.htmx) { htmx.process(n); }
+		n.click();
+	`, xpath, xpath)
+	var unused any
+	b.run(chromedp.Evaluate(script, &unused))
+}
+
+func (b *Browser) HasMenuLink(text string) bool {
+	b.t.Helper()
+	return b.hasXPath(`//div[@id='pagemenu']//a[normalize-space()=` + xpathLiteral(text) + `]`)
+}
+
+func (b *Browser) hasXPath(xpath string) bool {
+	b.t.Helper()
+	var n int
+	script := fmt.Sprintf(`document.evaluate(%q, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null).snapshotLength`, xpath)
+	b.run(chromedp.Evaluate(script, &n))
+	return n > 0
 }
 
 // ClickLinkNextTo clicks the first link in the table cell after a cell whose
@@ -224,6 +342,14 @@ func (b *Browser) WaitVisible(sels ...string) {
 	}
 }
 
+func (b *Browser) Count(sel string) int {
+	b.t.Helper()
+	var n int
+	script := fmt.Sprintf(`document.querySelectorAll(%q).length`, sel)
+	b.run(chromedp.Evaluate(script, &n))
+	return n
+}
+
 func (b *Browser) Text(sel string) string {
 	b.t.Helper()
 	var text string
@@ -242,27 +368,6 @@ func (b *Browser) AssertContains(sel, want string) {
 	}
 	if !strings.Contains(got, want) {
 		b.t.Errorf("selector %s: want substring %q, got %q", sel, want, got)
-	}
-}
-
-func (b *Browser) WaitContains(sel, want string) {
-	b.t.Helper()
-	ctx, cancel := b.waitCtx()
-	defer cancel()
-	var got string
-	for {
-		err := chromedp.Run(ctx, chromedp.Text(sel, &got, queryBy(sel)))
-		if err == nil && strings.Contains(got, want) {
-			return
-		}
-		if ctx.Err() != nil {
-			b.t.Fatalf("selector %s: want substring %q, got %q: %s", sel, want, got, b.waitErr(ctx.Err()))
-		}
-		select {
-		case <-ctx.Done():
-			b.t.Fatalf("selector %s: want substring %q, got %q: %s", sel, want, got, b.waitErr(ctx.Err()))
-		case <-time.After(50 * time.Millisecond):
-		}
 	}
 }
 
