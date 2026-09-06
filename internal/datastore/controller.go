@@ -134,7 +134,10 @@ func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri 
 		return nil, err
 	}
 
-	doc, _ := docs.MakeDocument(content)
+	doc, err := docs.MakeDocument(content)
+	if err != nil {
+		return nil, err
+	}
 
 	author := &doc.Metadata.Author
 	if author.Entity == "" {

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+  <xs:annotation>
+    <xs:documentation>
+      Trusted Assertions Document XML.
+
+      A Document is a narrative that weaves statements and assertions into
+      sections and paragraphs. There is exactly one metadata element. There
+      is no XML namespace; stored and submitted documents are bare
+      &lt;document&gt; trees.
+
+      Two forms of span/@assertion are accepted:
+
+      * A hash URI of an existing assertion (the stored form), e.g.
+        hash://sha256/…?type=assertion
+      * A creation shorthand used when submitting a new document:
+        "&lt;category&gt; &lt;confidence&gt;", e.g. "IsTrue 0.9".
+        On create this is replaced with the new assertion URI.
+
+      span/@statement is a hash URI of a statement. It is rendered as a link
+      but is not rewritten on create.
+
+      metadata/author/@entity is a hash URI of an entity. If omitted on create,
+      the signing entity is filled in.
+
+      section and paragraph may carry extra attributes; they are preserved
+      but have no defined meaning.
+    </xs:documentation>
+  </xs:annotation>
+
+  <xs:simpleType name="hashUri">
+    <xs:annotation>
+      <xs:documentation>
+        Content-addressed URI. The type query is optional. Hex length is
+        not fixed.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="hash://sha256/[0-9a-fA-F]+(\?type=[A-Za-z]+)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="assertionShorthand">
+    <xs:annotation>
+      <xs:documentation>
+        Category and confidence used when the document should create a new
+        statement and assertion from the span body. Implemented categories
+        are IsTrue and IsFalse; confidence is 0.0–1.0.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(IsTrue|IsFalse) (0(\.[0-9]+)?|1(\.0+)?)"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="assertionRef">
+    <xs:union memberTypes="hashUri assertionShorthand"/>
+  </xs:simpleType>
+
+  <xs:complexType name="authorType">
+    <xs:annotation>
+      <xs:documentation>
+        Character content is the author's display name. @entity is the
+        signing entity URI.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="entity" type="hashUri" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="metadataType">
+    <xs:all>
+      <xs:element name="author" type="authorType" minOccurs="0"/>
+      <xs:element name="title" type="xs:string" minOccurs="0"/>
+      <xs:element name="keywords" type="xs:string" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="spanType">
+    <xs:annotation>
+      <xs:documentation>
+        Character content is the visible text. An assertion span becomes a
+        link to that assertion; a statement span links to the statement;
+        otherwise the text is plain.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="assertion" type="assertionRef" use="optional"/>
+        <xs:attribute name="statement" type="hashUri" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="paragraphType">
+    <xs:sequence>
+      <xs:element name="span" type="spanType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:anyAttribute processContents="lax"/>
+  </xs:complexType>
+
+  <xs:complexType name="sectionType">
+    <xs:sequence>
+      <xs:element name="title" type="xs:string" minOccurs="0"/>
+      <xs:element name="paragraph" type="paragraphType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:anyAttribute processContents="lax"/>
+  </xs:complexType>
+
+  <xs:element name="document">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="metadata" type="metadataType"/>
+        <xs:element name="section" type="sectionType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
