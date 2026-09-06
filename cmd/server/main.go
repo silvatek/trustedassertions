@@ -84,7 +84,7 @@ func setupHandlers() *mux.Router {
 
 	web.AddHandlers(r)
 
-	r.HandleFunc("/api/v1/initdb", InitDbApiHandler)
+	// r.HandleFunc("/api/v1/initdb", InitDbApiHandler)
 
 	return r
 }

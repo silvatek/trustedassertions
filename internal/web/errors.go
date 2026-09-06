@@ -22,7 +22,6 @@ type AppError struct {
 
 const FetchError = 1000
 
-var ErrorEntityFetch = AppError{ErrorCode: FetchError + 1, UserMessage: "Error retrieving entity"}
 var ErrorAssertionFetch = AppError{ErrorCode: FetchError + 2, UserMessage: "Error retrieving assertion"}
 
 const UpdateError = 2000

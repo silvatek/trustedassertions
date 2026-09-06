@@ -16,6 +16,8 @@ import (
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
+const missingApiHash = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+
 func TestStatmentApi(t *testing.T) {
 	router := mux.NewRouter()
 	AddHandlers(router)
@@ -88,5 +90,35 @@ func TestAssertionApi(t *testing.T) {
 	response := w.Body.String()
 	if response[0:4] != "eyJh" {
 		t.Errorf("Unexpected response body: %s", response)
+	}
+}
+
+func TestMissingStatementApiIsNotFound(t *testing.T) {
+	assertApiNotFound(t, "/api/v1/statements/"+missingApiHash)
+}
+
+func TestMissingEntityApiIsNotFound(t *testing.T) {
+	assertApiNotFound(t, "/api/v1/entities/"+missingApiHash)
+}
+
+func TestMissingAssertionApiIsNotFound(t *testing.T) {
+	assertApiNotFound(t, "/api/v1/assertions/"+missingApiHash)
+}
+
+func assertApiNotFound(t *testing.T, path string) {
+	t.Helper()
+	router := mux.NewRouter()
+	AddHandlers(router)
+	datastore.InitInMemoryDataStore()
+
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest("GET", path, nil)
+	router.ServeHTTP(w, r)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want 404", w.Code)
+	}
+	if body := w.Body.String(); body != "not found" {
+		t.Errorf("body = %q, want not found", body)
 	}
 }

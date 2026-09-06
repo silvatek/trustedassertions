@@ -25,7 +25,8 @@ func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
 
 	statement, err := datastore.ActiveDataStore.FetchStatement(ctx, references.MakeUri(key, "statement"))
 	if err != nil {
-		log.Errorf("Error fetching statement: %v", err)
+		writeNotFound(w)
+		return
 	}
 
 	setHeaders(w, http.StatusOK, "text/plain")
@@ -35,7 +36,11 @@ func StatementApiHandler(w http.ResponseWriter, r *http.Request) {
 func EntityApiHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	key := mux.Vars(r)["key"]
-	entity, _ := datastore.ActiveDataStore.FetchEntity(ctx, references.MakeUri(key, "entity"))
+	entity, err := datastore.ActiveDataStore.FetchEntity(ctx, references.MakeUri(key, "entity"))
+	if err != nil {
+		writeNotFound(w)
+		return
+	}
 
 	setHeaders(w, http.StatusOK, "text/plain")
 	w.Write([]byte(entity.Certificate))
@@ -45,15 +50,18 @@ func AssertionApiHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := appcontext.NewWebContext(r)
 	key := mux.Vars(r)["key"]
 	assertion, err := datastore.ActiveDataStore.FetchAssertion(ctx, references.MakeUri(key, "assertion"))
-
 	if err != nil {
-		setHeaders(w, http.StatusInternalServerError, "text/plain")
-		w.Write([]byte(err.Error()))
+		writeNotFound(w)
 		return
 	}
 
 	setHeaders(w, http.StatusOK, "text/plain")
 	w.Write([]byte(assertion.Content()))
+}
+
+func writeNotFound(w http.ResponseWriter) {
+	setHeaders(w, http.StatusNotFound, "text/plain")
+	w.Write([]byte("not found"))
 }
 
 func ReindexApiHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +74,7 @@ func ReindexApiHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func setHeaders(w http.ResponseWriter, httpStatus int, contentType string) {
-	w.WriteHeader(httpStatus)
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("X-Robots-Tag", "noindex")
+	w.WriteHeader(httpStatus)
 }
