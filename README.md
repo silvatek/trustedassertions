@@ -59,6 +59,8 @@ Any number of trust models can be created from the same set of assertions, and i
 * `go tool cover -html coverage.out`
 * `go test -tags=browser ./internal/web/ -run TestBrowserHome`
 * `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk go test -tags=browser ./internal/web/ -run TestBrowserHome`
+* `BROWSER_REG_CODE="oak tree blue sky" go test -tags=browser -timeout 2m ./internal/web/ -run TestBrowserRegister` — local in-memory invite includes Author and Administrator
+* `BROWSER_BASE_URL=https://trustedassertions.silvatek.uk BROWSER_REG_CODE="oak tree blue sky" go test -tags=browser -timeout 2m ./internal/web/ -run TestBrowserRegister` — consumes the invite; leaves a user, entity, and statement. Use an Author invite on live.
 * `BROWSER_EXPECT_REVISION=<sha>` — optional; when set, browser tests fail unless `GET /web/health` reports that revision
 * `USER_JWT_KEY` — HMAC key for the `auth` cookie JWT. Local `go run` / tests use a fixed default if unset. On Cloud Run (`GCLOUD_PROJECT` set) a missing key logs a warning and login cannot create a session. Separate from `PRV_KEY` so rotating the entity key does not log everyone out.
 * `USER_JWT_TTL` — session lifetime as a Go duration (default `1h`). JWT `exp` and the `auth` cookie both use this.
@@ -147,6 +149,7 @@ There are multiple levels at which we can produce a new "thing".
 * Do not rewrite README "Done" history.
 * Do not commit or open a PR unless asked.
 * Tests belong with the change they cover. Do not plan or track unit tests or web tests as separate tasks.
+* Browser tests cover only what unit and web tests cannot see (real Chrome, client HTMX, production CSRF, cookies). Do the minimum to prove that path. Page copy, headings, validation, and menu composition stay in unit/web tests so those suites stay cheap to maintain.
 * Do not use button-style controls for repeating elements on a page (lists and tables). Use action links instead, as on the passkeys list on the profile page. There should generally not be more than one button per page.
 
 ### Build time analysis

@@ -43,10 +43,19 @@ func SetupTestData(ctx context.Context, testDataDir string, defaultEntityUri str
 	datastore.ActiveDataStore.StoreUser(ctx, lockedUser)
 
 	code := auth.GenerateInviteCode()
-	datastore.ActiveDataStore.StoreRegistration(ctx, auth.NewPendingRegistration(code, initialUser.Id, nil))
+	datastore.ActiveDataStore.StoreRegistration(ctx, auth.NewPendingRegistration(code, initialUser.Id, initialInviteRoles(datastore.ActiveDataStore)))
 	log.InfofX(ctx, "Pending registration code: %s", code)
 
 	log.InfofX(ctx, "Test data load complete.")
+}
+
+// initialInviteRoles grants Author and Administrator on in-memory stores so
+// local register can exercise admin. Firestore / other stores stay role-less.
+func initialInviteRoles(store datastore.DataStore) []string {
+	if store != nil && store.AutoInit() {
+		return []string{auth.RoleAuthor, auth.RoleAdministrator}
+	}
+	return nil
 }
 
 func loadTestData(ctx context.Context, dirName string, dataType string, extension string, calcHash bool) {
