@@ -137,9 +137,6 @@ func (wt *WebTest) PostFormData(path string, data url.Values) *WebPage {
 
 	page.response = response
 	page.statusCode = response.StatusCode
-	if page.statusCode >= 400 {
-		return &page
-	}
 
 	defer page.response.Body.Close()
 	body, err := io.ReadAll(page.response.Body)

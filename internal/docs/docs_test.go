@@ -2,6 +2,9 @@ package docs
 
 import (
 	"bytes"
+	"encoding/xml"
+	"io"
+	"os"
 	"strings"
 	"testing"
 	"text/template"
@@ -9,6 +12,21 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"silvatek.uk/trustedassertions/internal/search"
 )
+
+func TestDocumentSchemaIsWellFormed(t *testing.T) {
+	data, err := os.ReadFile("../../web/static/document.xsd")
+	if err != nil {
+		t.Fatalf("reading document schema: %v", err)
+	}
+	decoder := xml.NewDecoder(bytes.NewReader(data))
+	for {
+		if _, err := decoder.Token(); err == io.EOF {
+			break
+		} else if err != nil {
+			t.Fatalf("document schema is not well-formed XML: %v", err)
+		}
+	}
+}
 
 func TestTestPoc1(t *testing.T) {
 	doc, err := LoadDocument("../../testdata/documents/testdoc1.xml")

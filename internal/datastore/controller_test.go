@@ -115,6 +115,18 @@ func TestCreateStatement(t *testing.T) {
 	}
 }
 
+func TestCreateDocumentNotWellFormed(t *testing.T) {
+	InitInMemoryDataStore()
+	assertions.PublicKeyResolver = ActiveDataStore
+	ctx := context.Background()
+	entityUri := CreateEntityWithKey(ctx, "Unit Tester")
+
+	_, err := CreateDocumentAndAssertions(ctx, "<document><metadata><title>Broken</title></metadata>", entityUri)
+	if err == nil {
+		t.Error("Creating a document that is not well-formed XML did not fail")
+	}
+}
+
 func TestCreateDocumentWithMissingEntity(t *testing.T) {
 	ActiveDataStore = NewInMemoryDataStore()
 	ctx := context.Background()
