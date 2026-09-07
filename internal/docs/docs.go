@@ -21,6 +21,9 @@ type MetaData struct {
 	Author   Author   `xml:"author,omitempty"`
 	Title    string   `xml:"title,omitempty"`
 	Keywords string   `xml:"keywords,omitempty"`
+	Version  string   `xml:"version,omitempty"`
+	Created  string   `xml:"created,omitempty"`
+	Updated  string   `xml:"updated,omitempty"`
 }
 
 type Author struct {

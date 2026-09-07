@@ -57,7 +57,8 @@
 
 body {
 	font-family: var(--text-font);
-	font-display: fallback;	
+	font-display: fallback;
+	max-width: 100%;
 }	
 
  a {
@@ -114,10 +115,19 @@ body {
 	float: right
 }
 
+#page {
+	max-width: 100%;
+	min-width: 0;
+}
+
  .fieldset {
 	display: grid;
 	gap: var(--std-padding);
-	grid-template-columns: max-content max-content;
+	grid-template-columns: max-content minmax(0, 1fr);
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
  }
 
  .fieldrow {
@@ -132,6 +142,9 @@ body {
 	font-family: var(--field-text-font);
 	font-size: larger;
 	padding-top: 3px;
+	min-width: 0;
+	overflow: hidden;
+	overflow-wrap: break-word;
  }
 
  a {
