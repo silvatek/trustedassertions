@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"fmt"
 	"math/big"
 	"net/url"
 	"reflect"
@@ -99,7 +100,10 @@ type TestResolver struct {
 }
 
 func (r TestResolver) FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error) {
-	return r.entity, nil
+	if r.entity.Uri().Equals(key) {
+		return r.entity, nil
+	}
+	return entities.Entity{}, fmt.Errorf("unknown issuer URI: %s", key.String())
 }
 
 func (r TestResolver) FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error) {
@@ -134,6 +138,86 @@ func TestAssertionClaims(t *testing.T) {
 	}
 	if assertion2.Audience[0] != DEFAULT_AUDIENCE {
 		t.Error("No default audience found")
+	}
+}
+
+func testSignedAssertion(entity entities.Entity, key *rsa.PrivateKey) Assertion {
+	assertion := NewAssertion("IsFalse")
+	assertion.Subject = "hash://sha256/12345678"
+	assertion.SetAssertingEntity(entity)
+	assertion.MakeJwt(key)
+	return assertion
+}
+
+func TestParseAssertionJwtTamperedSignature(t *testing.T) {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	entity := entities.NewEntity("Test entity", *big.NewInt(123456))
+	entity.MakeCertificate(privateKey)
+	PublicKeyResolver = TestResolver{entity: entity}
+
+	assertion := testSignedAssertion(entity, privateKey)
+	token := assertion.Content()
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		t.Fatalf("expected 3 JWT segments, got %d", len(parts))
+	}
+	if parts[2][0] == 'A' {
+		parts[2] = "B" + parts[2][1:]
+	} else {
+		parts[2] = "A" + parts[2][1:]
+	}
+
+	_, err := ParseAssertionJwt(strings.Join(parts, "."))
+	if err == nil {
+		t.Error("expected error parsing JWT with tampered signature")
+	}
+}
+
+func TestParseAssertionJwtWrongKey(t *testing.T) {
+	issuerKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	otherKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+	entity := entities.NewEntity("Test entity", *big.NewInt(123456))
+	entity.MakeCertificate(issuerKey)
+	PublicKeyResolver = TestResolver{entity: entity}
+
+	assertion := testSignedAssertion(entity, otherKey)
+
+	_, err := ParseAssertionJwt(assertion.Content())
+	if err == nil {
+		t.Error("expected error parsing JWT signed with a key that does not match the issuer")
+	}
+}
+
+func TestParseAssertionJwtResolverError(t *testing.T) {
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	entity := entities.NewEntity("Test entity", *big.NewInt(123456))
+	entity.MakeCertificate(privateKey)
+
+	assertion := testSignedAssertion(entity, privateKey)
+	PublicKeyResolver = NullResolver{}
+
+	_, err := ParseAssertionJwt(assertion.Content())
+	if err == nil {
+		t.Error("expected error when public key resolver fails to fetch the issuer")
+	}
+}
+
+func TestParseAssertionJwtUnknownIssuer(t *testing.T) {
+	knownKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	unknownKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+	knownEntity := entities.NewEntity("Known entity", *big.NewInt(1))
+	knownEntity.MakeCertificate(knownKey)
+	unknownEntity := entities.NewEntity("Unknown entity", *big.NewInt(2))
+	unknownEntity.MakeCertificate(unknownKey)
+
+	PublicKeyResolver = TestResolver{entity: knownEntity}
+	assertion := testSignedAssertion(unknownEntity, unknownKey)
+
+	_, err := ParseAssertionJwt(assertion.Content())
+	if err == nil {
+		t.Error("expected error parsing JWT whose issuer URI is not known to the resolver")
 	}
 }
 
