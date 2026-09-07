@@ -35,9 +35,9 @@ func CreateAssertion(ctx context.Context, statementUri references.HashUri, entit
 	return &assertion
 }
 
-func CreateReferences(ctx context.Context, target references.Referenceable) {
-	for _, uri := range target.References() {
-		CreateReferenceWithSummary(ctx, uri, target.Uri())
+func CreateReferences(ctx context.Context, source references.Referenceable) {
+	for _, uri := range source.References() {
+		CreateReferenceWithSummary(ctx, source.Uri(), uri)
 	}
 }
 
@@ -166,14 +166,7 @@ func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri 
 
 	ActiveDataStore.Store(ctx, doc)
 
-	for _, uri := range doc.References() {
-		ref := references.Reference{
-			Source:  doc.Uri(),
-			Target:  uri,
-			Summary: doc.Summary(),
-		}
-		ActiveDataStore.StoreRef(ctx, ref)
-	}
+	CreateReferences(ctx, doc)
 
 	return doc, nil
 }
