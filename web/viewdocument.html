@@ -10,7 +10,16 @@
                 </div>   
 
                 <div class="fieldprompt">Keywords:</div>
-                <div id="keywords" class="fieldvalue" disabled>{{.Detail.Doc.Metadata.Keywords}}</div>   
+                <div id="keywords" class="fieldvalue" disabled>{{.Detail.Doc.Metadata.Keywords}}</div>
+
+                <div class="fieldprompt">Version:</div>
+                <div id="version" class="fieldvalue">{{.Detail.Doc.Metadata.Version}}</div>
+
+                <div class="fieldprompt">Created:</div>
+                <div id="created" class="fieldvalue">{{.Detail.Doc.Metadata.Created}}</div>
+
+                <div class="fieldprompt">Updated:</div>
+                <div id="updated" class="fieldvalue">{{.Detail.Doc.Metadata.Updated}}</div>
         </div>
         
         <div class="docview">

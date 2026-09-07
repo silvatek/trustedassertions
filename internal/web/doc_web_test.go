@@ -86,6 +86,9 @@ func TestPostNewDocument(t *testing.T) {
 <document>
 	<metadata>
 		<title>Web Test Document</title>
+		<version>1</version>
+		<created>2026-09-07T11:35:23Z</created>
+		<updated>2026-09-07T16:17:48Z</updated>
 	</metadata>
 	<section>
 		<title>Section One</title>
@@ -103,6 +106,9 @@ func TestPostNewDocument(t *testing.T) {
 	page.AssertSuccessResponse()
 	page.AssertHtmlQuery("h2", "View Document")
 	page.AssertHtmlQuery("#title", "Web Test Document")
+	page.AssertHtmlQuery("#version", "1")
+	page.AssertHtmlQuery("#created", "2026-09-07T11:35:23Z")
+	page.AssertHtmlQuery("#updated", "2026-09-07T16:17:48Z")
 
 	docs, err := datastore.ActiveDataStore.Search(context.Background(), "Web Test Document")
 	if err != nil {

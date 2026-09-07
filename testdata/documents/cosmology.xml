@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+	<metadata>
+		<author>Trusted Assertions</author>
+		<title>The Universe from First Principles: Cosmology in the Mid-2020s</title>
+		<keywords>cosmology, lambda-cdm, general relativity, CMB, dark matter, dark energy, inflation, Hubble tension, DESI, JWST, UP1Fbwu3</keywords>
+		<version>1</version>
+		<created>2026-09-07T11:35:23Z</created>
+		<updated>2026-09-07T16:17:48Z</updated>
+	</metadata>
+	<section>
+		<title>What cosmology is trying to do</title>
+		<paragraph>
+			<span>Cosmology treats the universe as a physical system: one set of laws, one history, and observations that can constrain a model of the whole. There is one cosmos, seen from one world, at one moment. That is a reason to be careful about first principles, not a reason to be vague.</span>
+		</paragraph>
+		<paragraph>
+			<span>The first principle is that laboratory physics is a good starting point for the sky. </span>
+			<span assertion="IsTrue 0.95">The same physical laws apply throughout the observable universe</span>
+			<span>. Distant spectral lines match laboratory quantum mechanics, lensing follows general relativity, and the microwave background is a thermal spectrum. If the laws changed arbitrarily from place to place, the sky would look like noise.</span>
+		</paragraph>
+		<paragraph>
+			<span>The second principle is that the universe has a reconstructable history. Light arriving now left its sources earlier, and expanding space stretches its wavelength, so redshift is both a distance indicator and a clock. The third is parsimony under empirical pressure: introduce as few ingredients as the data require. </span>
+			<span assertion="IsTrue 0.9">The Lambda-CDM model is the current standard working model of cosmology</span>
+			<span>. It is not a final theory. It is the simplest description that still organises the expansion of space, the leftover heat of a hot dense past, the lightest nuclei, the galaxy web, and the acoustic fingerprint of the microwave sky. In the mid-2020s the model has not been overthrown; it is precise enough for its remaining cracks to matter.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>Gravity, spacetime, and the cosmological principle</title>
+		<paragraph>
+			<span>Any account of the universe as a whole must begin with gravity, the only long-range force that does not cancel. Newtonian gravity already implies that a static, uniform cosmos is unstable. The modern starting point is Einstein's general relativity. </span>
+			<span assertion="IsTrue 0.95">Gravity is the curvature of spacetime sourced by energy and momentum</span>
+			<span>. Those equations have been confirmed in the Solar System, in binary pulsars, and by gravitational waves. Cosmology assumes they continue to hold for the observable universe.</span>
+		</paragraph>
+		<paragraph>
+			<span>A second assumption is needed before those equations become a model of the cosmos rather than of a particular clump of matter. </span>
+			<span assertion="IsTrue 0.9">On sufficiently large scales the universe is homogeneous and isotropic</span>
+			<span>. Galaxies, filaments, and voids are real; the claim is that averages over hundreds of millions of light-years look statistically the same in every direction. The microwave background is isotropic to about one part in 100000 after our motion is removed, and the cosmic web fades into uniformity on the largest mapped scales.</span>
+		</paragraph>
+		<paragraph>
+			<span>Homogeneity and isotropy restrict the geometry to the Friedmann-Lemaitre-Robertson-Walker form: a scale factor that stretches spatial distances, and a curvature parameter for flat, spherical, or hyperbolic spatial slices. Inserted into Einstein's equations, the scale factor's history is determined by what the universe contains.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>Expansion as geometry, not explosion</title>
+		<paragraph>
+			<span>The Friedmann equations say that the expansion rate depends on energy density and spatial curvature. Radiation thins as the fourth power of the scale factor, matter as the cube, and a cosmological constant not at all. That is why the early universe can be radiation dominated, later matter dominated, and recently vacuum dominated, even if all components are present throughout.</span>
+		</paragraph>
+		<paragraph>
+			<span>The observational signature is cosmological redshift. </span>
+			<span assertion="IsTrue 0.99">The universe is expanding</span>
+			<span>. Light leaving a distant galaxy has its wavelength stretched by the growth of space. Nearby, this becomes the Hubble-Lemaitre law: recession velocity proportional to distance. Every comoving observer sees the same pattern; we are not at the centre of an explosion. Bound systems do not swell with the Hubble flow. The observable universe is a sphere set by how far light has travelled since the earliest transparent moment we can see, not an edge of all that exists.</span>
+		</paragraph>
+		<paragraph>
+			<span assertion="IsTrue 0.9">The observable universe is spatially flat to high precision</span>
+			<span>. Flatness is a statement about spatial slices, not a claim that spacetime is Minkowski. It is one of the facts inflation was invented to explain, and one that microwave data have made sharp. The present expansion rate H0, in a matter-plus-vacuum cosmos, implies an age of about 13.8 billion years. That age is an output of the same fit that matches the microwave sky. A universe that expands has a finite past if one winds the Friedmann equations backward through radiation and matter toward a hot, dense beginning.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>The hot dense beginning</title>
+		<paragraph>
+			<span>If the universe is expanding, it was smaller, hotter, and denser in the past. At sufficiently early times it was a nearly uniform plasma, not a collection of galaxies. </span>
+			<span assertion="IsTrue 0.98">The observable universe evolved from a hot, dense early state</span>
+			<span>. This is the hot Big Bang, stripped of popular confusion: not a bomb in a pre-existing void, but the statement that every region we can see was once filled with a hot fluid whose remnants we still measure.</span>
+		</paragraph>
+		<paragraph>
+			<span>Two independent fossils make that claim far stronger than an extrapolation of Hubble's law: the cosmic microwave background and the abundances of the lightest nuclei. A theory that predicts both from the same early hot phase has earned the status of established physics. Winding the clock toward the Planck time, the extrapolation becomes conjecture. Classical general relativity predicts a singularity, a sign that the theory is being used outside its domain. From a few seconds onward, the hot Big Bang plus known particle physics is a successful account. At the first tiny fraction of a second, it is a research programme.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>The cosmic microwave background</title>
+		<paragraph>
+			<span>The microwave sky is the most important dataset in modern cosmology because it is both ancient and simple. </span>
+			<span assertion="IsTrue 0.99">The cosmic microwave background is leftover radiation from the early hot universe</span>
+			<span>. About 380000 years after the beginning, at redshift about 1100, the plasma cooled enough for neutral hydrogen to form. Photons, which had been scattering off free electrons, began to free-stream. Those photons have been travelling ever since, cooling with the expansion, and they now form a nearly perfect blackbody at 2.725 kelvin.</span>
+		</paragraph>
+		<paragraph>
+			<span>A universe that had always been stars and dust would not produce such a thermal background. The temperature is the same in every direction to high precision, evidence that widely separated regions of the sky shared a common origin. The small anisotropies, at tens of microkelvin, are the other half of the treasure. Before last scattering, photons and baryons formed a tightly coupled fluid whose overdensities oscillated like sound waves. Those oscillations froze into acoustic peaks encoding the baryon density, the dark matter density, spatial curvature, the primordial fluctuations, and the optical depth to reionisation. </span>
+			<span assertion="IsTrue 0.95">Planck measurements of the cosmic microwave background tightly constrain the parameters of Lambda-CDM</span>
+			<span>. Ground-based telescopes now extend that story into the damping tail and provide independent measurements of microwave lensing.</span>
+		</paragraph>
+		<paragraph>
+			<span>The microwave background also supplies a standard ruler. The sound horizon at recombination is a length computed from the baryon and radiation densities. The same physical scale is later imprinted on galaxies as baryon acoustic oscillations. Comparing the two is why a mismatch in H0 between early and late methods cannot be dismissed as a local curiosity: the sound horizon is wired into both ends of the comparison.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>Light elements from the first minutes</title>
+		<paragraph>
+			<span>In the first minutes, protons and neutrons assembled into deuterium, helium-3, helium-4, and a trace of lithium-7. The outcome depends on the baryon-to-photon ratio and on the expansion rate, which in turn depends on the number of relativistic species. </span>
+			<span assertion="IsTrue 0.95">Big Bang nucleosynthesis correctly predicts the primordial abundance of helium-4 and deuterium</span>
+			<span>. About a quarter of the baryonic mass ends up in helium-4, with deuterium as a leftover that is a sharp thermometer of the baryon density. That density agrees with the microwave acoustic peaks. Primordial lithium remains a recognised problem: old stars show less lithium-7 than predicted. It is a genuine anomaly, but it has not unseated the rest of the light-element success.</span>
+		</paragraph>
+		<paragraph>
+			<span>Nucleosynthesis also tells us what the dark matter cannot be. The baryon density required by deuterium and the microwave sky is only about five percent of the critical density. The total matter density is about thirty percent. </span>
+			<span assertion="IsFalse 0.95">Dark matter is ordinary baryonic matter</span>
+			<span>. Whatever supplies the rest did not participate in nuclear reactions in the first minutes, and it did not remain tightly coupled to photons until recombination. That is why dark matter is described as non-baryonic even before one names a candidate particle.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>Dark matter as a gravitational fact</title>
+		<paragraph>
+			<span>Dark matter entered astrophysics as a discrepancy in galaxy rotation curves and cluster motions: visible stars and gas do not supply enough gravity. Gravitational lensing confirms that the missing mass is real in the gravitational sense. Colliding clusters show that the bulk of the mass can be separated from the collisional gas, as expected if most of it is weakly interacting. None of these arguments identifies a particle. All of them say that a gravitational budget is missing from the luminous inventory.</span>
+		</paragraph>
+		<paragraph>
+			<span assertion="IsTrue 0.9">Most of the matter in the universe is non-baryonic dark matter</span>
+			<span>. In the microwave fluid, dark matter provides gravitational wells that baryons and photons fall into, shifting the acoustic peaks. After recombination, baryons can finally fall into those wells, and structure grows. Without a component already clustering while baryons were still coupled to radiation, it is difficult to grow the observed galaxy distribution in the time available. The standard assumption is cold dark matter: particles non-relativistic early enough for small halos to form first. Warm or interacting variants remain under study at dwarf-galaxy scales.</span>
+		</paragraph>
+		<paragraph>
+			<span>What dark matter is remains unknown. Weakly interacting massive particles were long the favourite; direct detection has not found them in the most obvious parameter space. Axions, sterile neutrinos, primordial black holes, and a dark sector with its own forces remain live options. The gravitational phenomenon is robust. The microphysical identification is open.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>Dark energy and the accelerating expansion</title>
+		<paragraph>
+			<span>A universe containing only matter would decelerate. Type Ia supernovae used as standardisable candles showed in the late 1990s that the expansion has been speeding up. Baryon acoustic oscillations, the microwave background, and the late-time growth of structure confirmed that a component with negative pressure is required. </span>
+			<span assertion="IsTrue 0.95">The expansion of the universe is accelerating</span>
+			<span>. In the Friedmann equations, acceleration occurs when the total pressure is sufficiently negative compared with the energy density. A cosmological constant, with equation-of-state parameter w exactly equal to minus one, does this in the simplest possible way and today supplies about two thirds of the energy budget.</span>
+		</paragraph>
+		<paragraph>
+			<span assertion="IsTrue 0.7">Dark energy is a cosmological constant with equation of state w equal to minus one</span>
+			<span>. The confidence on that identification is lower than the confidence that acceleration is real, and that is deliberate. A cosmological constant is the default because it has no extra functions of time and matches most datasets. It is also theoretically embarrassing: the vacuum energy of quantum field theory, naively estimated, is vastly larger than the observed value. Why the leftover is small but not zero remains unsolved. That embarrassment does not erase the observational need for some such component.</span>
+		</paragraph>
+		<paragraph>
+			<span>The main empirical question of the mid-2020s is whether dark energy is exactly constant. A slowly rolling field would make w differ from minus one and possibly change with time. That possibility is being tested by microwave data, supernovae, and baryon acoustic oscillation maps from the Dark Energy Spectroscopic Instrument. Acceleration is established; a constant vacuum term is the leading model; dynamical dark energy is the simplest well-motivated extension.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>Inflation and the origin of structure</title>
+		<paragraph>
+			<span>The hot Big Bang is incomplete as a beginning. The microwave sky is too uniform: regions now on opposite sides of the sky were, in a purely decelerating expansion, never in causal contact, yet they share the same temperature. Spatial curvature is too close to zero unless it was set that way to absurd precision. And the initial fluctuations that grew into galaxies need a physical origin.</span>
+		</paragraph>
+		<paragraph>
+			<span>Cosmic inflation is the leading proposed completion. </span>
+			<span assertion="IsTrue 0.8">The very early universe underwent a period of accelerated expansion</span>
+			<span>. A patch dominated by the potential energy of a scalar field can expand exponentially, driving curvature toward zero and stretching a tiny causally connected region across the observable sky. Quantum fluctuations stretched beyond the Hubble scale become classical density perturbations. When inflation ends, the field's energy reheats into the hot plasma of the Big Bang. The predicted perturbations are nearly scale-invariant, adiabatic, and Gaussian, which is what the microwave sky shows. The measured scalar spectral index is a few percent below one, a typical slow-roll prediction.</span>
+		</paragraph>
+		<paragraph>
+			<span>Inflation is less established than the hot Big Bang because its microphysics is not identified and because primordial gravitational waves, which would appear as large-scale B-mode polarisation, have not been seen. Current upper limits already rule out the simplest high-energy, large-field models. Alternatives such as bouncing cosmologies exist; they have not displaced inflation as the working early-universe paradigm. Inflation remains the best available mechanism, a family of models rather than a single theory, awaiting a primordial B-mode detection as the cleanest next clue.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>How structure grew, and the six-parameter machine</title>
+		<paragraph>
+			<span>Once the primordial fluctuations exist, gravity does the rest. Dark matter clusters first. Baryons follow after recombination, cooling inside halos and lighting up the cosmic web. The amplitude of fluctuations today is often summarised by S8, a combination of clustering strength and matter density. Microwave data predict it by evolving the early fluctuations forward. Weak lensing and galaxy clustering measure it in the late universe. Agreement would mean that gravity and Lambda-CDM suffice from recombination to now. Disagreement would mean either systematic bias or a different growth history.</span>
+		</paragraph>
+		<paragraph>
+			<span>Lambda-CDM in its usual precision form has six free parameters: the baryon density, the cold dark matter density, the angular scale of the sound horizon, the amplitude and spectral index of primordial scalar fluctuations, and the optical depth to reionisation. Curvature is consistent with zero. Dark energy is a cosmological constant. </span>
+			<span assertion="IsTrue 0.9">A six-parameter Lambda-CDM model accounts for a wide range of cosmological observations</span>
+			<span>. Ordinary matter is about five percent of the present energy budget, cold dark matter about twenty-five percent, and dark energy about seventy percent. A model that solves one tension by wrecking the microwave peaks has not made progress.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>The Hubble tension</title>
+		<paragraph>
+			<span>The most persistent crack in that single set of numbers is the Hubble constant. Early-universe inferences, dominated by Planck and now reinforced by ground-based microwave experiments, prefer a present expansion rate near 67 kilometres per second per megaparsec. Local distance-ladder measurements calibrated with Cepheids and Type Ia supernovae, especially the SH0ES programme, prefer a value near 73. The discrepancy has been reported at about five standard deviations and has not faded with a decade of reanalysis. </span>
+			<span assertion="IsTrue 0.9">Early-universe and local distance-ladder determinations of the Hubble constant disagree at high statistical significance</span>
+			<span>.</span>
+		</paragraph>
+		<paragraph>
+			<span>Both sides are sophisticated. The early-universe route infers H0 by fitting Lambda-CDM to the sound horizon; extra energy before recombination could move the number. The local route builds a ladder from geometric anchors through luminous stars to supernovae; its vulnerabilities are metallicity, crowding, dust, and the fiducial luminosity of supernovae. Some tip-of-the-red-giant-branch analyses with James Webb Space Telescope data have come closer to the microwave inference; others remain nearer the Cepheid-supernova scale. </span>
+			<span assertion="IsFalse 0.85">The Hubble tension has been resolved</span>
+			<span>. Proposed new physics includes early dark energy, extra relativistic species, and various late-time modifications. Many relieve H0 only by creating trouble elsewhere. No consensus replacement has emerged.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>Growth, DESI, and early galaxies</title>
+		<paragraph>
+			<span>A second tension, milder and more mobile, concerns the growth of structure. For several years, weak-lensing surveys reported an S8 value lower than the microwave prediction. The completed Kilo-Degree Survey, in its Legacy analysis, now finds S8 around 0.815, statistically consistent with Planck. Some Dark Energy Survey combinations have remained somewhat lower. Redshift calibration, intrinsic alignments, and baryonic feedback are the usual suspects. </span>
+			<span assertion="IsTrue 0.7">The S8 tension is no longer a uniform discrepancy across weak-lensing surveys</span>
+			<span>. Growth of structure is still a test, but not presently a clean refutation of Lambda-CDM.</span>
+		</paragraph>
+		<paragraph>
+			<span>Dark energy dynamics have been the other headline. The Dark Energy Spectroscopic Instrument has mapped baryon acoustic oscillations densely enough to make the recent expansion history a precision observable. Combined with Planck and some supernova compilations, a two-parameter equation of state has shown a frequentist preference for evolution away from minus one. Bayesian reanalyses have been more cautious: extra parameters are penalised, and part of the signal appears entangled with supernova calibration. With a corrected sample the evidence can vanish; with an earlier calibration a several-sigma hint can remain. </span>
+			<span assertion="IsTrue 0.75">The observational case for evolving dark energy remains unconfirmed</span>
+			<span>. DESI has made the question empirical. It has not yet answered it. A cosmological constant remains the leading description of dark energy, now watched more closely than it was ten years ago.</span>
+		</paragraph>
+		<paragraph>
+			<span>The James Webb Space Telescope has found luminous galaxies at high redshift, earlier and brighter than many pre-launch forecasts. Joint analyses that vary both cosmology and star-formation efficiency tell a cooler story than a cosmological anomaly. Within flat Lambda-CDM, and even when dark energy or curvature is allowed to vary, the data can be accommodated by a higher star-formation efficiency in massive early halos. Some samples require efficiencies large enough to be astrophysically uncomfortable, but they do not require w different from minus one. </span>
+			<span assertion="IsTrue 0.8">The abundance of luminous early galaxies is more likely an astrophysical puzzle than a failure of Lambda-CDM</span>
+			<span>. JWST is transforming galaxy formation, and only indirectly testing cosmology.</span>
+		</paragraph>
+	</section>
+	<section>
+		<title>What is established, what is open</title>
+		<paragraph>
+			<span>It is useful to separate the stack. At the base are facts that function as physics, not as taste. The universe expands. It was hot and dense. The microwave background is the relic radiation of that phase. Light nuclei were forged in the first minutes. Structure grew from small, nearly Gaussian, nearly scale-invariant fluctuations. Most of the matter is not baryonic. The recent expansion is accelerating. General relativity plus a homogeneous isotropic metric is an adequate language for these facts on large scales.</span>
+		</paragraph>
+		<paragraph>
+			<span>Above that base sits Lambda-CDM, a six-parameter machine that organises the facts and is what one uses to forecast a survey or test a new idea. Above it sit the open identifications. Dark matter has a gravitational identity and no confirmed particle identity. Dark energy has an observational identity as a smooth negative-pressure component, with a cosmological constant still favoured. Inflation has a phenomenological identity as a mechanism for generating the perturbations and flattening space, without a unique potential or a detection of primordial tensors.</span>
+		</paragraph>
+		<paragraph>
+			<span>Above those identifications sit the tensions. The Hubble constant remains the most serious, because it is statistically sharp and pits two mature observational industries against each other. S8 is a softer, survey-dependent question. Evolving dark energy is a hypothesis that DESI has placed on the table and that calibration details have not yet ratified. Early galaxies are, for now, a challenge to star-formation theory. </span>
+			<span assertion="IsTrue 0.85">Lambda-CDM remains the leading cosmological model despite unresolved tensions</span>
+			<span>. A model that already explains the thermal sky, the light elements, the acoustic peaks, and the broad expansion history is not displaced by a single discrepancy.</span>
+		</paragraph>
+		<paragraph>
+			<span>Finally there are questions the present data do not really touch: the matter-antimatter asymmetry; the inflaton's identity; the description of spacetime near the Planck curvature; whether the cosmological constant problem has a dynamical, selection-effect, or quantum-gravity answer. The universe we can see is astonishingly intelligible. The reason it exists in this particular intelligible form is not yet part of the standard model. As of the mid-2020s the working machine has not been replaced. It has become precise enough to tell us where to look next: at the local distance scale, at the time-dependence of dark energy, at the particle nature of the missing mass, and at the unborn physics of the first fraction of a second.</span>
+		</paragraph>
+	</section>
+</document>
