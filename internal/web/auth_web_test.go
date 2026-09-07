@@ -2,6 +2,8 @@ package web
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -132,4 +134,35 @@ func TestRegistration(t *testing.T) {
 	page = wt.PostFormData("/web/register", url.Values{"reg_code": {"ABC"}, "user_id": {"Tester 99"}, "password1": {"jsdj87sda;swg59jmd;;874j"}, "password2": {"jsdj87sda;swg59jmd;;874j"}})
 	page.AssertHtmlQuery("h2", "Login")
 	page.AssertHtmlQuery(".error", "")
+}
+
+func TestInvalidRegistrationCode(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	savedDelay := invalidRegCodeDelay
+	invalidRegCodeDelay = 0
+	t.Cleanup(func() { invalidRegCodeDelay = savedDelay })
+
+	wt.AuthCookie = nil
+
+	var redirectURI string
+	wt.Client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		redirectURI = req.URL.RequestURI()
+		return nil
+	}
+
+	page := wt.PostFormData("/web/register", url.Values{
+		"reg_code":  {"not-a-real-code"},
+		"user_id":   {"Tester 99"},
+		"password1": {"jsdj87sda;swg59jmd;;874j"},
+		"password2": {"jsdj87sda;swg59jmd;;874j"},
+	})
+	page.AssertSuccessResponse()
+
+	want := fmt.Sprintf("/web/register?err=%d", ErrorRegCode.ErrorCode)
+	if redirectURI != want {
+		t.Errorf("expected redirect to %s, got %q", want, redirectURI)
+	}
+	page.AssertHtmlQuery(".error", ErrorRegCode.UserMessage)
 }
