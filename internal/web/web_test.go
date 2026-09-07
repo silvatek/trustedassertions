@@ -182,6 +182,53 @@ func TestAddAssertion(t *testing.T) {
 
 }
 
+func TestPostSignAsKeyNotOwned(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	forgedKey := "hash://sha256/ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+
+	cases := []struct {
+		name string
+		path string
+		data url.Values
+	}{
+		{
+			name: "newstatement",
+			path: "/web/newstatement",
+			data: url.Values{
+				"statement": {"Should not be created with forged key"},
+				"sign_as":   {forgedKey},
+			},
+		},
+		{
+			name: "newdocument",
+			path: "/web/newdocument",
+			data: url.Values{
+				"document": {"<document><metadata><title>Should not be created with forged key</title></metadata></document>"},
+				"sign_as":  {forgedKey},
+			},
+		},
+		{
+			name: "addassertion",
+			path: "/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f/addassertion",
+			data: url.Values{
+				"assertion_type": {"IsTrue"},
+				"confidence":     {"0.75"},
+				"sign_as":        {forgedKey},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			page := wt.PostFormData(tc.path, tc.data)
+			page.AssertErrorResponse()
+			page.AssertHtmlQuery("#message", "Error accessing key")
+		})
+	}
+}
+
 func TestSearch(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()
