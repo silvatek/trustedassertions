@@ -70,8 +70,28 @@ func StaticHandler() http.Handler {
 func CacheControlWrapper(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		SetCacheControl(w, 5*60)
-		h.ServeHTTP(w, r)
+		h.ServeHTTP(staticFileWriter{w}, r)
 	})
+}
+
+// staticFileWriter delegates to the underlying ResponseWriter without
+// exposing io.ReaderFrom. FileServer otherwise uses sendfile, which combined
+// with http.Server WriteTimeout can close the connection after a short write
+// (CSS/SVG bodies of 512 bytes against a larger Content-Length).
+type staticFileWriter struct {
+	w http.ResponseWriter
+}
+
+func (s staticFileWriter) Header() http.Header {
+	return s.w.Header()
+}
+
+func (s staticFileWriter) Write(b []byte) (int, error) {
+	return s.w.Write(b)
+}
+
+func (s staticFileWriter) WriteHeader(status int) {
+	s.w.WriteHeader(status)
 }
 
 type PageData struct {
