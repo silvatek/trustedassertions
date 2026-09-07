@@ -185,7 +185,7 @@ func (doc *Document) TextContent() string {
 
 func (doc *Document) ToXml() string {
 	data, _ := xml.MarshalIndent(doc, "", "  ")
-	return string(data)
+	return xml.Header + string(data)
 }
 
 // Replaces the context text with an updated XML version.

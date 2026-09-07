@@ -193,7 +193,11 @@ func (ds *InMemoryDataStore) Search(ctx context.Context, query string) ([]Search
 	query = strings.ToLower(query)
 	for key, value := range ds.data {
 		if strings.Contains(strings.ToLower(value.Content), query) {
-			uri := UnescapeUri(key, assertions.GuessContentType(value.Content))
+			kind := value.DataType
+			if kind == "" {
+				kind = assertions.GuessContentType(value.Content)
+			}
+			uri := UnescapeUri(key, kind)
 			result := SearchResult{
 				Uri: uri,
 				//Content:   Summarise(uri, value.Content),
