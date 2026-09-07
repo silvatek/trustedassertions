@@ -70,8 +70,7 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 
 	log.DebugfX(ctx, "Statement created")
 
-	// Create and save an assertion by the default entity that the statement is probably true
-	assertion := CreateAssertion(ctx, statement.Uri(), entity.Uri(), "IsTrue", confidence, privateKey)
+	assertion := CreateAssertion(ctx, statement.Uri(), entity.Uri(), kind, confidence, privateKey)
 
 	log.DebugfX(ctx, "Assertion created")
 

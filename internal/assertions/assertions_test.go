@@ -323,6 +323,8 @@ func TestGuessContentType(t *testing.T) {
 		"-----BEGIN CERTIFICATE----" + padding: "Entity",
 		"eyJ" + padding:                        "Assertion",
 		"<?xml version=\"1.0\"?><document>":    "Document",
+		"<document><metadata></metadata></document>": "Document",
+		"  <document>":                         "Document",
 		"Some text" + padding:                  "Statement",
 		padding:                                "Statement",
 		padding[0:511]:                         "Statement",

@@ -45,6 +45,19 @@ func TestViewDoc(t *testing.T) {
 	page.AssertHtmlQuery("a", "The universe exists")
 }
 
+func TestSearchShowsDocumentType(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.GetPage("/web/search?query=GL93J73C")
+	page.AssertSuccessResponse()
+	page.AssertHtmlQuery("h2", "Search results")
+	got := page.Find(".searchresults tr td")
+	if !strings.Contains(got, "Document") && !strings.Contains(got, "document") {
+		t.Errorf("search result type = %q, want Document", got)
+	}
+}
+
 func TestNewDocumentRequiresLogin(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()

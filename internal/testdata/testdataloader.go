@@ -27,7 +27,7 @@ func SetupTestData(ctx context.Context, testDataDir string, defaultEntityUri str
 
 	loadTestData(ctx, testDataDir+"/statements", "Statement", "txt", false)
 	loadTestData(ctx, testDataDir+"/assertions", "Assertion", "txt", false)
-	loadTestData(ctx, testDataDir+"/documents", "Document", "xml", true)
+	loadDocuments(ctx, testDataDir+"/documents", documentSigner(ctx, defaultEntityUri))
 
 	initialUser := auth.User{Id: os.Getenv("INITIAL_USER")}
 	initialUser.HashPassword(os.Getenv("INITIAL_PW"))
@@ -56,6 +56,45 @@ func initialInviteRoles(store datastore.DataStore) []string {
 		return []string{auth.RoleAuthor, auth.RoleAdministrator}
 	}
 	return nil
+}
+
+func documentSigner(ctx context.Context, defaultEntityUri string) ref.HashUri {
+	if defaultEntityUri != "" {
+		uri := ref.UriFromString(defaultEntityUri)
+		if _, err := datastore.ActiveDataStore.FetchKey(uri); err == nil {
+			return uri
+		}
+		log.InfofX(ctx, "No private key for default entity %s; creating a document signer", defaultEntityUri)
+	}
+	return datastore.CreateEntityWithKey(ctx, "Test Data")
+}
+
+func loadDocuments(ctx context.Context, dirName string, signerUri ref.HashUri) {
+	files, err := os.ReadDir(dirName)
+	if err != nil {
+		log.ErrorfX(ctx, "Error reading directory: %v", err)
+		return
+	}
+
+	for _, file := range files {
+		if file.IsDir() || !strings.HasSuffix(strings.ToLower(file.Name()), ".xml") {
+			continue
+		}
+
+		content, err := os.ReadFile(dirName + "/" + file.Name())
+		if err != nil {
+			log.ErrorfX(ctx, "Error reading file %s, %v", file.Name(), err)
+			continue
+		}
+
+		content = statements.NormalizeNewlines(content)
+		doc, err := datastore.CreateDocumentAndAssertions(ctx, string(content), signerUri)
+		if err != nil {
+			log.ErrorfX(ctx, "Error creating document from %s: %v", file.Name(), err)
+			continue
+		}
+		log.InfofX(ctx, "Loaded document %s as %s", file.Name(), doc.Uri())
+	}
 }
 
 func loadTestData(ctx context.Context, dirName string, dataType string, extension string, calcHash bool) {

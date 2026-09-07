@@ -92,9 +92,12 @@ func TestCreateDocumentAndAssertions(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not load assertion 1: %v", err)
 	}
-	_, err = ActiveDataStore.FetchAssertion(ctx, references.UriFromString(doc.Sections[0].Paragraphs[1].Spans[0].Assertion))
+	assertion2, err := ActiveDataStore.FetchAssertion(ctx, references.UriFromString(doc.Sections[0].Paragraphs[1].Spans[0].Assertion))
 	if err != nil {
 		t.Errorf("Could not load assertion 2: %v", err)
+	}
+	if assertion2.Category != string(assertions.IsFalse) {
+		t.Errorf("assertion 2 category = %q, want IsFalse", assertion2.Category)
 	}
 }
 

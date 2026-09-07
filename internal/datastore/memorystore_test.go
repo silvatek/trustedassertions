@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"silvatek.uk/trustedassertions/internal/auth"
+	"silvatek.uk/trustedassertions/internal/docs"
 	"silvatek.uk/trustedassertions/internal/entities"
 	. "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
@@ -79,6 +80,35 @@ func TestSearch(t *testing.T) {
 	}
 	if len(matches) != 2 {
 		t.Errorf("Unexpected number of search matches: %d", len(matches))
+	}
+}
+
+func TestSearchUsesStoredDocumentType(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.Background()
+
+	doc, err := docs.MakeDocument(`<document><metadata><title>CMB Search Doc</title></metadata><section><paragraph><span>cmb</span></paragraph></section></document>`)
+	if err != nil {
+		t.Fatalf("MakeDocument: %v", err)
+	}
+	ActiveDataStore.Store(ctx, doc)
+
+	matches, err := ActiveDataStore.Search(ctx, "cmb")
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	found := false
+	for _, match := range matches {
+		if match.Content != "CMB Search Doc" {
+			continue
+		}
+		found = true
+		if match.Uri.Kind() != "Document" && match.Uri.Kind() != "document" {
+			t.Errorf("search kind = %q, want document", match.Uri.Kind())
+		}
+	}
+	if !found {
+		t.Fatal("stored document was not in search results")
 	}
 }
 
