@@ -62,6 +62,28 @@ func TestLockedUserCannotLogin(t *testing.T) {
 	page.AssertHasCookie("auth")
 }
 
+func TestCreateAndProfilePagesRequireLogin(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	wt.AuthCookie = nil
+
+	paths := []string{
+		"/web/newstatement",
+		"/web/newentity",
+		"/web/newdocument",
+		"/web/statements/e88688ef18e5c82bb8ea474eceeac8c6eb81d20ec8d903750753d3137865d10f/addassertion",
+		"/web/profile",
+	}
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			page := wt.GetPage(path)
+			page.AssertErrorResponse()
+			page.AssertHtmlQuery("#message", "Not logged in")
+		})
+	}
+}
+
 func TestProfileShowsRoles(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()
