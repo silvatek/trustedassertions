@@ -21,6 +21,9 @@ type MetaData struct {
 	Author   Author   `xml:"author,omitempty"`
 	Title    string   `xml:"title,omitempty"`
 	Keywords string   `xml:"keywords,omitempty"`
+	Version  string   `xml:"version,omitempty"`
+	Created  string   `xml:"created,omitempty"`
+	Updated  string   `xml:"updated,omitempty"`
 }
 
 type Author struct {
@@ -185,7 +188,7 @@ func (doc *Document) TextContent() string {
 
 func (doc *Document) ToXml() string {
 	data, _ := xml.MarshalIndent(doc, "", "  ")
-	return string(data)
+	return xml.Header + string(data)
 }
 
 // Replaces the context text with an updated XML version.

@@ -24,6 +24,10 @@
       metadata/author/@entity is a hash URI of an entity. If omitted on create,
       the signing entity is filled in.
 
+      metadata/version, metadata/created, and metadata/updated are
+      author-supplied. They are not filled in on create. created and updated
+      are xs:dateTime (ISO 8601 / RFC3339) values.
+
       section and paragraph may carry extra attributes; they are preserved
       but have no defined meaning.
     </xs:documentation>
@@ -73,10 +77,19 @@
   </xs:complexType>
 
   <xs:complexType name="metadataType">
+    <xs:annotation>
+      <xs:documentation>
+        version, created, and updated are optional and author-supplied.
+        They are not filled in on create.
+      </xs:documentation>
+    </xs:annotation>
     <xs:all>
       <xs:element name="author" type="authorType" minOccurs="0"/>
       <xs:element name="title" type="xs:string" minOccurs="0"/>
       <xs:element name="keywords" type="xs:string" minOccurs="0"/>
+      <xs:element name="version" type="xs:string" minOccurs="0"/>
+      <xs:element name="created" type="xs:dateTime" minOccurs="0"/>
+      <xs:element name="updated" type="xs:dateTime" minOccurs="0"/>
     </xs:all>
   </xs:complexType>
 

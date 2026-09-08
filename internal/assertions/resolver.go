@@ -65,7 +65,8 @@ func NewReferenceable(kind string) Referenceable {
 }
 
 func GuessContentType(content string) string {
-	if strings.HasPrefix(content, "<?xml") && strings.Contains(content, "<document>") {
+	s := strings.TrimSpace(content)
+	if strings.Contains(s, "<document>") && (strings.HasPrefix(s, "<?xml") || strings.HasPrefix(s, "<document")) {
 		return "Document"
 	}
 	if len(content) < 512 {

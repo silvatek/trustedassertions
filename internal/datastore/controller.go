@@ -35,9 +35,9 @@ func CreateAssertion(ctx context.Context, statementUri references.HashUri, entit
 	return &assertion
 }
 
-func CreateReferences(ctx context.Context, target references.Referenceable) {
-	for _, uri := range target.References() {
-		CreateReferenceWithSummary(ctx, uri, target.Uri())
+func CreateReferences(ctx context.Context, source references.Referenceable) {
+	for _, uri := range source.References() {
+		CreateReferenceWithSummary(ctx, source.Uri(), uri)
 	}
 }
 
@@ -70,8 +70,7 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 
 	log.DebugfX(ctx, "Statement created")
 
-	// Create and save an assertion by the default entity that the statement is probably true
-	assertion := CreateAssertion(ctx, statement.Uri(), entity.Uri(), "IsTrue", confidence, privateKey)
+	assertion := CreateAssertion(ctx, statement.Uri(), entity.Uri(), kind, confidence, privateKey)
 
 	log.DebugfX(ctx, "Assertion created")
 
@@ -167,14 +166,7 @@ func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri 
 
 	ActiveDataStore.Store(ctx, doc)
 
-	for _, uri := range doc.References() {
-		ref := references.Reference{
-			Source:  doc.Uri(),
-			Target:  uri,
-			Summary: doc.Summary(),
-		}
-		ActiveDataStore.StoreRef(ctx, ref)
-	}
+	CreateReferences(ctx, doc)
 
 	return doc, nil
 }

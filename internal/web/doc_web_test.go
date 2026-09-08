@@ -45,6 +45,19 @@ func TestViewDoc(t *testing.T) {
 	page.AssertHtmlQuery("a", "The universe exists")
 }
 
+func TestSearchShowsDocumentType(t *testing.T) {
+	wt := NewWebTest(t)
+	defer wt.Close()
+
+	page := wt.GetPage("/web/search?query=GL93J73C")
+	page.AssertSuccessResponse()
+	page.AssertHtmlQuery("h2", "Search results")
+	got := page.Find(".searchresults tr td")
+	if !strings.Contains(got, "Document") && !strings.Contains(got, "document") {
+		t.Errorf("search result type = %q, want Document", got)
+	}
+}
+
 func TestNewDocumentRequiresLogin(t *testing.T) {
 	wt := NewWebTest(t)
 	defer wt.Close()
@@ -73,6 +86,9 @@ func TestPostNewDocument(t *testing.T) {
 <document>
 	<metadata>
 		<title>Web Test Document</title>
+		<version>1</version>
+		<created>2026-09-07T11:35:23Z</created>
+		<updated>2026-09-07T16:17:48Z</updated>
 	</metadata>
 	<section>
 		<title>Section One</title>
@@ -90,6 +106,9 @@ func TestPostNewDocument(t *testing.T) {
 	page.AssertSuccessResponse()
 	page.AssertHtmlQuery("h2", "View Document")
 	page.AssertHtmlQuery("#title", "Web Test Document")
+	page.AssertHtmlQuery("#version", "1")
+	page.AssertHtmlQuery("#created", "2026-09-07T11:35:23Z")
+	page.AssertHtmlQuery("#updated", "2026-09-07T16:17:48Z")
 
 	docs, err := datastore.ActiveDataStore.Search(context.Background(), "Web Test Document")
 	if err != nil {

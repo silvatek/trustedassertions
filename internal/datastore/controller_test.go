@@ -92,10 +92,56 @@ func TestCreateDocumentAndAssertions(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not load assertion 1: %v", err)
 	}
-	_, err = ActiveDataStore.FetchAssertion(ctx, references.UriFromString(doc.Sections[0].Paragraphs[1].Spans[0].Assertion))
+	assertion2, err := ActiveDataStore.FetchAssertion(ctx, references.UriFromString(doc.Sections[0].Paragraphs[1].Spans[0].Assertion))
 	if err != nil {
 		t.Errorf("Could not load assertion 2: %v", err)
 	}
+	if assertion2.Category != string(assertions.IsFalse) {
+		t.Errorf("assertion 2 category = %q, want IsFalse", assertion2.Category)
+	}
+
+	assertion1Uri := references.UriFromString(doc.Sections[0].Paragraphs[0].Spans[0].Assertion)
+	assertion1, err := ActiveDataStore.FetchAssertion(ctx, assertion1Uri)
+	if err != nil {
+		t.Fatalf("Could not load assertion 1 for refs: %v", err)
+	}
+	statementUri := references.UriFromString(assertion1.Subject)
+
+	statementRefs, err := ActiveDataStore.FetchRefs(ctx, statementUri)
+	if err != nil {
+		t.Fatalf("FetchRefs(statement): %v", err)
+	}
+	if !hasRef(statementRefs, assertion1Uri, statementUri) {
+		t.Errorf("statement refs = %v, want assertion → statement", statementRefs)
+	}
+
+	entityRefs, err := ActiveDataStore.FetchRefs(ctx, entityUri)
+	if err != nil {
+		t.Fatalf("FetchRefs(entity): %v", err)
+	}
+	if !hasRef(entityRefs, assertion1Uri, entityUri) {
+		t.Errorf("entity refs = %v, want assertion → entity", entityRefs)
+	}
+	if !hasRef(entityRefs, doc.Uri(), entityUri) {
+		t.Errorf("entity refs = %v, want document → entity", entityRefs)
+	}
+
+	assertionRefs, err := ActiveDataStore.FetchRefs(ctx, assertion1Uri)
+	if err != nil {
+		t.Fatalf("FetchRefs(assertion): %v", err)
+	}
+	if !hasRef(assertionRefs, doc.Uri(), assertion1Uri) {
+		t.Errorf("assertion refs = %v, want document → assertion", assertionRefs)
+	}
+}
+
+func hasRef(refs []references.Reference, source, target references.HashUri) bool {
+	for _, r := range refs {
+		if r.Source.Equals(source) && r.Target.Equals(target) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCreateStatement(t *testing.T) {

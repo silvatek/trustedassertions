@@ -76,3 +76,26 @@ func wordsContains(wordList []string, words ...string) bool {
 	}
 	return matches == len(words)
 }
+
+func TestMetadataVersionCreatedUpdated(t *testing.T) {
+	doc, err := MakeDocument(`<document>
+	<metadata>
+		<title>Dated Doc</title>
+		<version>2</version>
+		<created>2026-09-07T11:35:23Z</created>
+		<updated>2026-09-07T16:17:48Z</updated>
+	</metadata>
+</document>`)
+	if err != nil {
+		t.Fatalf("parsing document: %v", err)
+	}
+	if doc.Metadata.Version != "2" {
+		t.Errorf("version = %q, want 2", doc.Metadata.Version)
+	}
+	if doc.Metadata.Created != "2026-09-07T11:35:23Z" {
+		t.Errorf("created = %q, want 2026-09-07T11:35:23Z", doc.Metadata.Created)
+	}
+	if doc.Metadata.Updated != "2026-09-07T16:17:48Z" {
+		t.Errorf("updated = %q, want 2026-09-07T16:17:48Z", doc.Metadata.Updated)
+	}
+}
