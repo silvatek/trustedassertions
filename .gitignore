@@ -30,3 +30,6 @@ keys.txt
 
 .vscode
 .DS_Store
+
+# Binaries
+server
