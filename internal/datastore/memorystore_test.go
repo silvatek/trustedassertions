@@ -180,6 +180,33 @@ func TestFetchUserCopiesRoles(t *testing.T) {
 	}
 }
 
+func TestFetchUserCopiesTrustRoots(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+
+	user1 := auth.User{Id: "Tester"}
+	user1.AddTrustRoot(UriFromString("hash://sha256/abc123"), 0.50)
+	ActiveDataStore.StoreUser(ctx, user1)
+
+	user2, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("Error fetching user: %v", err)
+	}
+	if !user2.HasTrustRoot(UriFromString("hash://sha256/abc123")) {
+		t.Errorf("Fetched user missing trust root")
+	}
+
+	user2.AddTrustRoot(UriFromString("hash://sha256/def456"), 0.75)
+
+	user3, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("Error refetching user: %v", err)
+	}
+	if user3.HasTrustRoot(UriFromString("hash://sha256/def456")) {
+		t.Errorf("AddTrustRoot on fetched user mutated stored roots: %v", user3.TrustRoots)
+	}
+}
+
 func TestStoreFetchRegistrationCopiesRoles(t *testing.T) {
 	InitInMemoryDataStore()
 	ctx := context.TODO()

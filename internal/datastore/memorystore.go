@@ -156,6 +156,7 @@ func (ds *InMemoryDataStore) FetchUser(ctx context.Context, id string) (auth.Use
 	}
 	user.Passkeys = copyPasskeys(user.Passkeys)
 	user.Roles = copyRoles(user.Roles)
+	user.TrustRoots = copyTrustRoots(user.TrustRoots)
 	return user, nil
 }
 
@@ -165,6 +166,7 @@ func (ds *InMemoryDataStore) ListUsers(ctx context.Context) ([]auth.User, error)
 		copied := user
 		copied.Roles = copyRoles(user.Roles)
 		copied.Passkeys = copyPasskeys(user.Passkeys)
+		copied.TrustRoots = copyTrustRoots(user.TrustRoots)
 		out = append(out, copied)
 	}
 	return out, nil
@@ -185,6 +187,15 @@ func copyPasskeys(passkeys []auth.Passkey) []auth.Passkey {
 	}
 	copied := make([]auth.Passkey, len(passkeys))
 	copy(copied, passkeys)
+	return copied
+}
+
+func copyTrustRoots(roots []auth.TrustRoot) []auth.TrustRoot {
+	if roots == nil {
+		return nil
+	}
+	copied := make([]auth.TrustRoot, len(roots))
+	copy(copied, roots)
 	return copied
 }
 
