@@ -83,6 +83,31 @@ func TestSearch(t *testing.T) {
 	}
 }
 
+func TestSearchFindsEntityByCommonName(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.Background()
+
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	entity := entities.NewEntity("Mr Tester", *big.NewInt(123456))
+	entity.MakeCertificate(privateKey)
+	ActiveDataStore.Store(ctx, &entity)
+
+	matches, err := ActiveDataStore.Search(ctx, "Mr Tester")
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	found := false
+	for _, match := range matches {
+		if match.Content == "Mr Tester" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("entity common name was not in search results: %v", matches)
+	}
+}
+
 func TestSearchUsesStoredDocumentType(t *testing.T) {
 	InitInMemoryDataStore()
 	ctx := context.Background()

@@ -214,6 +214,14 @@ func TestAddTrustRoot(t *testing.T) {
 	if user.TrustRoots[0].TrustLevel != 0.50 {
 		t.Errorf("duplicate add replaced TrustLevel: %v", user.TrustRoots[0].TrustLevel)
 	}
+
+	level, ok := user.TrustLevelFor(entity)
+	if !ok || level != 0.50 {
+		t.Errorf("TrustLevelFor = (%v, %v), want (0.50, true)", level, ok)
+	}
+	if _, ok := user.TrustLevelFor(refs.UriFromString("hash://sha256/other")); ok {
+		t.Error("TrustLevelFor should be false for an unknown entity")
+	}
 }
 
 func TestAddTrustRootClampsLevel(t *testing.T) {

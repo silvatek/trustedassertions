@@ -10,6 +10,29 @@
             <div class="fieldprompt">Name:</div>
             <div class="fieldvalue" id="common_name">{{.Detail.CommonName}}</div>
         </div>
+
+        {{if .LoggedIn}}
+        <div id="trust">
+            {{if .Detail.AlreadyTrusted}}
+                <p id="trust-status">You trust this entity{{if .Detail.TrustLabel}} {{.Detail.TrustLabel}}{{end}}</p>
+            {{else}}
+                <form id="trust-form" method="POST" action="/web/profile/trust">
+                    {{.CsrfField}}
+                    <input type="hidden" name="entity" value="{{.Detail.UnadornedUri}}">
+                    <div class="fieldprompt">I trust this entity…</div>
+                    <div class="trust-levels">
+                        <label><input type="radio" name="level" value="0.20" required> slightly (20%)</label>
+                        <label><input type="radio" name="level" value="0.50" required> somewhat (50%)</label>
+                        <label><input type="radio" name="level" value="0.75" required> a lot (75%)</label>
+                        <label><input type="radio" name="level" value="0.90" required> completely (90%)</label>
+                    </div>
+                    <div>
+                        <input id="trust-submit" type="submit">
+                    </div>
+                </form>
+            {{end}}
+        </div>
+        {{end}}
             
         <h3>References</h3>
         <ul id="references">

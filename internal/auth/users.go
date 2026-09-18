@@ -114,16 +114,22 @@ func (u *User) AddRole(role string) {
 }
 
 func (u *User) HasTrustRoot(entity refs.HashUri) bool {
+	_, ok := u.TrustLevelFor(entity)
+	return ok
+}
+
+// TrustLevelFor returns the stored trust level for entity, if present.
+func (u *User) TrustLevelFor(entity refs.HashUri) (float64, bool) {
 	if entity.IsEmpty() {
-		return false
+		return 0, false
 	}
 	key := entity.Unadorned()
 	for _, r := range u.TrustRoots {
 		if refs.UriFromString(r.EntityUri).Unadorned() == key {
-			return true
+			return r.TrustLevel, true
 		}
 	}
-	return false
+	return 0, false
 }
 
 // AddTrustRoot records trust in entity at level if the entity is not already present.
