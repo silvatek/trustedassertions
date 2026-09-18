@@ -79,6 +79,7 @@ A `TrustModel` is bound once with `Setup(resolver, roots)`, then `Evaluate(state
 * Auto-create statements and assertions from documents
 * Document schema
 * Switch memorystore to store json strings not Go stucts
+* Store users as JSON text in InMemoryDataStore
 * Upgrade to Go 1.26
 
 ### Done

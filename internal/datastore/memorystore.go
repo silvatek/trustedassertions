@@ -11,6 +11,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/entities"
 	. "silvatek.uk/trustedassertions/internal/references"
 	refs "silvatek.uk/trustedassertions/internal/references"
+	"silvatek.uk/trustedassertions/internal/search"
 	"silvatek.uk/trustedassertions/internal/statements"
 )
 
@@ -56,7 +57,13 @@ func (ds *InMemoryDataStore) StoreRaw(uri HashUri, content string) {
 }
 
 func (ds *InMemoryDataStore) Store(ctx context.Context, value Referenceable) {
-	ds.StoreRecord(value.Uri(), DbRecord{Uri: value.Uri().String(), DataType: value.Type(), Content: value.Content(), Summary: value.Summary()})
+	ds.StoreRecord(value.Uri(), DbRecord{
+		Uri:         value.Uri().String(),
+		DataType:    value.Type(),
+		Content:     value.Content(),
+		Summary:     value.Summary(),
+		SearchWords: search.SearchWords(value.TextContent()),
+	})
 }
 
 func (ds *InMemoryDataStore) StoreKey(entityUri HashUri, key string) {
@@ -156,6 +163,7 @@ func (ds *InMemoryDataStore) FetchUser(ctx context.Context, id string) (auth.Use
 	}
 	user.Passkeys = copyPasskeys(user.Passkeys)
 	user.Roles = copyRoles(user.Roles)
+	user.TrustRoots = copyTrustRoots(user.TrustRoots)
 	return user, nil
 }
 
@@ -165,6 +173,7 @@ func (ds *InMemoryDataStore) ListUsers(ctx context.Context) ([]auth.User, error)
 		copied := user
 		copied.Roles = copyRoles(user.Roles)
 		copied.Passkeys = copyPasskeys(user.Passkeys)
+		copied.TrustRoots = copyTrustRoots(user.TrustRoots)
 		out = append(out, copied)
 	}
 	return out, nil
@@ -188,26 +197,54 @@ func copyPasskeys(passkeys []auth.Passkey) []auth.Passkey {
 	return copied
 }
 
+func copyTrustRoots(roots []auth.TrustRoot) []auth.TrustRoot {
+	if roots == nil {
+		return nil
+	}
+	copied := make([]auth.TrustRoot, len(roots))
+	copy(copied, roots)
+	return copied
+}
+
 func (ds *InMemoryDataStore) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	results := make([]SearchResult, 0)
-	query = strings.ToLower(query)
+	queryWords := search.SearchWords(query)
+	if len(queryWords) == 0 {
+		return results, nil
+	}
 	for key, value := range ds.data {
-		if strings.Contains(strings.ToLower(value.Content), query) {
-			kind := value.DataType
-			if kind == "" {
-				kind = assertions.GuessContentType(value.Content)
-			}
-			uri := UnescapeUri(key, kind)
-			result := SearchResult{
-				Uri: uri,
-				//Content:   Summarise(uri, value.Content),
-				Content:   value.Summary,
-				Relevance: 0.8,
-			}
-			results = append(results, result)
+		if !matchAny(value.SearchWords, queryWords) {
+			continue
 		}
+		kind := value.DataType
+		if kind == "" {
+			kind = assertions.GuessContentType(value.Content)
+		}
+		uri := UnescapeUri(key, kind)
+		result := SearchResult{
+			Uri:       uri,
+			Content:   value.Summary,
+			Relevance: 0.8,
+		}
+		results = append(results, result)
 	}
 	return results, nil
+}
+
+func matchAny(stored []string, query []string) bool {
+	if len(stored) == 0 {
+		return false
+	}
+	have := make(map[string]struct{}, len(stored))
+	for _, word := range stored {
+		have[word] = struct{}{}
+	}
+	for _, word := range query {
+		if _, ok := have[word]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 func (ds *InMemoryDataStore) Reindex() {

@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
 const MaxPasskeys = 5
@@ -30,12 +31,19 @@ var (
 )
 
 type User struct {
-	Id       string   `json:"id"`
-	PassHash string   `json:"passhash"`
-	KeyRefs  []KeyRef
-	Passkeys []Passkey `json:"passkeys"`
-	Roles    []string  `json:"roles"`
-	Status   string    `json:"status"`
+	Id         string `json:"id"`
+	PassHash   string `json:"passhash"`
+	KeyRefs    []KeyRef
+	Passkeys   []Passkey   `json:"passkeys"`
+	Roles      []string    `json:"roles"`
+	Status     string      `json:"status"`
+	TrustRoots []TrustRoot `json:"trust_roots,omitempty"`
+}
+
+// TrustRoot is an entity the user trusts, with TrustLevel in [0, 1].
+type TrustRoot struct {
+	EntityUri  string  `json:"entity_uri"` // unadorned hash URI
+	TrustLevel float64 `json:"trust_level"`
 }
 
 type KeyRef struct {
@@ -103,6 +111,47 @@ func (u *User) AddRole(role string) {
 		return
 	}
 	u.Roles = append(u.Roles, role)
+}
+
+func (u *User) HasTrustRoot(entity refs.HashUri) bool {
+	_, ok := u.TrustLevelFor(entity)
+	return ok
+}
+
+// TrustLevelFor returns the stored trust level for entity, if present.
+func (u *User) TrustLevelFor(entity refs.HashUri) (float64, bool) {
+	if entity.IsEmpty() {
+		return 0, false
+	}
+	key := entity.Unadorned()
+	for _, r := range u.TrustRoots {
+		if refs.UriFromString(r.EntityUri).Unadorned() == key {
+			return r.TrustLevel, true
+		}
+	}
+	return 0, false
+}
+
+// AddTrustRoot records trust in entity at level if the entity is not already present.
+// Empty entities are rejected. Levels are clamped to [0, 1]. Existing entries are not replaced.
+func (u *User) AddTrustRoot(entity refs.HashUri, level float64) {
+	if entity.IsEmpty() {
+		return
+	}
+	if u.HasTrustRoot(entity) {
+		return
+	}
+	u.TrustRoots = append(u.TrustRoots, TrustRoot{EntityUri: entity.Unadorned(), TrustLevel: clampTrustLevel(level)})
+}
+
+func clampTrustLevel(level float64) float64 {
+	if level < 0 {
+		return 0
+	}
+	if level > 1 {
+		return 1
+	}
+	return level
 }
 
 func (u *User) IsLocked() bool {

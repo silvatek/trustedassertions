@@ -187,6 +187,10 @@ button, input[type=button], input[type=submit], input[type=reset] {
 	font-style: italic;
 }
 
+.trust-levels label {
+	display: block;
+}
+
 .docview {
 	background-color: var(--content-bg-color);
 	border-style: solid;

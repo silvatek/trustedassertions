@@ -83,6 +83,31 @@ func TestSearch(t *testing.T) {
 	}
 }
 
+func TestSearchFindsEntityByCommonName(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.Background()
+
+	privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	entity := entities.NewEntity("Mr Tester", *big.NewInt(123456))
+	entity.MakeCertificate(privateKey)
+	ActiveDataStore.Store(ctx, &entity)
+
+	matches, err := ActiveDataStore.Search(ctx, "Mr Tester")
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	found := false
+	for _, match := range matches {
+		if match.Content == "Mr Tester" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("entity common name was not in search results: %v", matches)
+	}
+}
+
 func TestSearchUsesStoredDocumentType(t *testing.T) {
 	InitInMemoryDataStore()
 	ctx := context.Background()
@@ -177,6 +202,33 @@ func TestFetchUserCopiesRoles(t *testing.T) {
 	}
 	if user3.HasRole(auth.RoleAdministrator) {
 		t.Errorf("AddRole on fetched user mutated stored roles: %v", user3.Roles)
+	}
+}
+
+func TestFetchUserCopiesTrustRoots(t *testing.T) {
+	InitInMemoryDataStore()
+	ctx := context.TODO()
+
+	user1 := auth.User{Id: "Tester"}
+	user1.AddTrustRoot(UriFromString("hash://sha256/abc123"), 0.50)
+	ActiveDataStore.StoreUser(ctx, user1)
+
+	user2, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("Error fetching user: %v", err)
+	}
+	if !user2.HasTrustRoot(UriFromString("hash://sha256/abc123")) {
+		t.Errorf("Fetched user missing trust root")
+	}
+
+	user2.AddTrustRoot(UriFromString("hash://sha256/def456"), 0.75)
+
+	user3, err := ActiveDataStore.FetchUser(ctx, "Tester")
+	if err != nil {
+		t.Fatalf("Error refetching user: %v", err)
+	}
+	if user3.HasTrustRoot(UriFromString("hash://sha256/def456")) {
+		t.Errorf("AddTrustRoot on fetched user mutated stored roots: %v", user3.TrustRoots)
 	}
 }
 

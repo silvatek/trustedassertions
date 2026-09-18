@@ -46,6 +46,7 @@ func addAuthHandlers(r *mux.Router) {
 	r.HandleFunc("/web/logout", LogoutWebHandler)
 	r.HandleFunc("/web/register", RegisterWebHandler)
 	r.HandleFunc("/web/profile", ProfileWebHandler)
+	r.HandleFunc("/web/profile/trust", AddTrustWebHandler)
 	r.HandleFunc("/web/admin", AdminWebHandler)
 	r.HandleFunc("/web/admin/invites", AdminInvitesWebHandler)
 	r.HandleFunc("/web/admin/users", AdminUsersWebHandler)
@@ -300,4 +301,67 @@ func ProfileWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RenderWebPage(ctx, "viewprofile", data, nil, w, r)
+}
+
+// AddTrustWebHandler records that the logged-in user trusts an entity at one of
+// the discrete UI levels. It never replaces or removes an existing entry.
+func AddTrustWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+	username := authUsername(r)
+	if username == "" {
+		HandleError(ctx, ErrorNoAuth, w, r)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
+	if err != nil {
+		HandleError(ctx, ErrorUserNotFound, w, r)
+		return
+	}
+
+	r.ParseForm()
+	entityUri := references.UriFromString(r.Form.Get("entity"))
+	if !entityUri.HasType() {
+		entityUri = entityUri.WithType("entity")
+	}
+
+	redirect := "/web/profile"
+	if entityUri.Hash() != "" {
+		redirect = entityUri.WebPath()
+	}
+
+	level, ok := parsePostedTrustLevel(r.Form.Get("level"))
+	if ok && !user.HasTrustRoot(entityUri) {
+		if _, err := datastore.ActiveDataStore.FetchEntity(ctx, entityUri); err == nil {
+			user.AddTrustRoot(entityUri, level)
+			datastore.ActiveDataStore.StoreUser(ctx, user)
+		}
+	}
+
+	http.Redirect(w, r, redirect, http.StatusSeeOther)
+}
+
+func parsePostedTrustLevel(value string) (float64, bool) {
+	level, err := strconv.ParseFloat(value, 64)
+	if err != nil || level < 0 || level > 1 {
+		return 0, false
+	}
+	return level, true
+}
+
+func trustLevelLabel(level float64) string {
+	if level >= 0.90 {
+		return "completely (90%)"
+	}
+	if level >= 0.75 {
+		return "a lot (75%)"
+	}
+	if level >= 0.50 {
+		return "somewhat (50%)"
+	}
+	return "slightly (20%)"
 }

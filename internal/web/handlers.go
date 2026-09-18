@@ -357,20 +357,37 @@ func ViewEntityWebHandler(w http.ResponseWriter, r *http.Request) {
 	refs, _ := datastore.ActiveDataStore.FetchRefs(ctx, entity.Uri())
 	enrichReferencesTo(ctx, &entity, refs)
 
+	alreadyTrusted := false
+	trustLabel := ""
+	if username := authUsername(r); username != "" {
+		if user, err := datastore.ActiveDataStore.FetchUser(ctx, username); err == nil {
+			if level, ok := user.TrustLevelFor(uri); ok {
+				alreadyTrusted = true
+				trustLabel = trustLevelLabel(level)
+			}
+		}
+	}
+
 	data := struct {
-		Uri        string
-		ShortUri   string
-		CommonName string
-		ApiLink    string
-		PublicKey  string
-		References []ref.Reference
+		Uri            string
+		ShortUri       string
+		UnadornedUri   string
+		CommonName     string
+		ApiLink        string
+		PublicKey      string
+		References     []ref.Reference
+		AlreadyTrusted bool
+		TrustLabel     string
 	}{
-		Uri:        uri.String(),
-		ShortUri:   uri.Short(),
-		CommonName: entity.CommonName,
-		PublicKey:  fmt.Sprintf("%v", entity.PublicKey),
-		ApiLink:    uri.ApiPath(),
-		References: refs,
+		Uri:            uri.String(),
+		ShortUri:       uri.Short(),
+		UnadornedUri:   uri.Unadorned(),
+		CommonName:     entity.CommonName,
+		PublicKey:      fmt.Sprintf("%v", entity.PublicKey),
+		ApiLink:        uri.ApiPath(),
+		References:     refs,
+		AlreadyTrusted: alreadyTrusted,
+		TrustLabel:     trustLabel,
 	}
 
 	menu := []PageMenuItem{

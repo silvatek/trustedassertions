@@ -30,11 +30,6 @@ type SimpleTrustModel struct {
 
 var _ TrustModel = (*SimpleTrustModel)(nil)
 
-// NewSimpleTrustModel returns an unbound SimpleTrustModel. Call Setup before Evaluate.
-func NewSimpleTrustModel() *SimpleTrustModel {
-	return &SimpleTrustModel{}
-}
-
 func (m *SimpleTrustModel) ID() string {
 	return "simple"
 }

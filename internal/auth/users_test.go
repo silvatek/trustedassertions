@@ -8,6 +8,7 @@ import (
 
 	"silvatek.uk/trustedassertions/internal/logging"
 	log "silvatek.uk/trustedassertions/internal/logging"
+	refs "silvatek.uk/trustedassertions/internal/references"
 )
 
 func TestPasswordHash(t *testing.T) {
@@ -180,6 +181,94 @@ func TestRolesFromJSON(t *testing.T) {
 	}
 	if withoutRoles.HasRole(RoleAuthor) || withoutRoles.HasRole(RoleAdministrator) {
 		t.Errorf("expected no roles from JSON without roles field, got %v", withoutRoles.Roles)
+	}
+}
+
+func TestAddTrustRoot(t *testing.T) {
+	user := User{Id: "x"}
+	entity := refs.UriFromString("hash://sha256/abc123")
+
+	if user.HasTrustRoot(entity) {
+		t.Error("Expected user to have no trust roots initially")
+	}
+
+	user.AddTrustRoot(entity, 0.50)
+
+	if !user.HasTrustRoot(entity) {
+		t.Error("Expected user to trust entity after add")
+	}
+	if len(user.TrustRoots) != 1 {
+		t.Fatalf("TrustRoots len = %d, want 1", len(user.TrustRoots))
+	}
+	if user.TrustRoots[0].EntityUri != entity.Unadorned() {
+		t.Errorf("EntityUri = %q, want %q", user.TrustRoots[0].EntityUri, entity.Unadorned())
+	}
+	if user.TrustRoots[0].TrustLevel != 0.50 {
+		t.Errorf("TrustLevel = %v, want 0.50", user.TrustRoots[0].TrustLevel)
+	}
+
+	user.AddTrustRoot(entity.WithType("entity"), 0.90)
+	if len(user.TrustRoots) != 1 {
+		t.Errorf("expected no replace on duplicate entity, got %v", user.TrustRoots)
+	}
+	if user.TrustRoots[0].TrustLevel != 0.50 {
+		t.Errorf("duplicate add replaced TrustLevel: %v", user.TrustRoots[0].TrustLevel)
+	}
+
+	level, ok := user.TrustLevelFor(entity)
+	if !ok || level != 0.50 {
+		t.Errorf("TrustLevelFor = (%v, %v), want (0.50, true)", level, ok)
+	}
+	if _, ok := user.TrustLevelFor(refs.UriFromString("hash://sha256/other")); ok {
+		t.Error("TrustLevelFor should be false for an unknown entity")
+	}
+}
+
+func TestAddTrustRootClampsLevel(t *testing.T) {
+	user := User{Id: "x"}
+
+	user.AddTrustRoot(refs.UriFromString("hash://sha256/low"), -0.20)
+	if user.TrustRoots[0].TrustLevel != 0 {
+		t.Errorf("negative TrustLevel = %v, want 0", user.TrustRoots[0].TrustLevel)
+	}
+
+	user.AddTrustRoot(refs.UriFromString("hash://sha256/high"), 1.5)
+	if got := user.TrustRoots[1].TrustLevel; got != 1 {
+		t.Errorf("over-one TrustLevel = %v, want 1", got)
+	}
+
+	user.AddTrustRoot(refs.UriFromString("hash://sha256/mid"), 0.21)
+	if got := user.TrustRoots[2].TrustLevel; got != 0.21 {
+		t.Errorf("in-range TrustLevel = %v, want 0.21", got)
+	}
+}
+
+func TestAddTrustRootRejectsEmptyEntity(t *testing.T) {
+	user := User{Id: "x"}
+	user.AddTrustRoot(refs.EMPTY_URI, 0.50)
+	if len(user.TrustRoots) != 0 {
+		t.Errorf("expected empty entity to be rejected, got %v", user.TrustRoots)
+	}
+}
+
+func TestTrustRootsFromJSON(t *testing.T) {
+	var withRoots User
+	if err := json.Unmarshal([]byte(`{"id":"alice","trust_roots":[{"entity_uri":"hash://sha256/abc","trust_level":0.5}]}`), &withRoots); err != nil {
+		t.Fatalf("unmarshal user with trust_roots: %v", err)
+	}
+	if !withRoots.HasTrustRoot(refs.UriFromString("hash://sha256/abc")) {
+		t.Errorf("expected trust root from JSON, got %v", withRoots.TrustRoots)
+	}
+	if withRoots.TrustRoots[0].TrustLevel != 0.50 {
+		t.Errorf("TrustLevel from JSON = %v, want 0.50", withRoots.TrustRoots[0].TrustLevel)
+	}
+
+	var withoutRoots User
+	if err := json.Unmarshal([]byte(`{"id":"bob","passhash":"x"}`), &withoutRoots); err != nil {
+		t.Fatalf("unmarshal user without trust_roots: %v", err)
+	}
+	if len(withoutRoots.TrustRoots) != 0 {
+		t.Errorf("expected no trust roots from JSON without field, got %v", withoutRoots.TrustRoots)
 	}
 }
 
