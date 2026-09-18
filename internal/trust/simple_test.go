@@ -64,15 +64,6 @@ func uri(hash, kind string) refs.HashUri {
 	return refs.MakeUri(hash, kind)
 }
 
-func setupSimple(t *testing.T, resolver assertions.Resolver, roots Roots) *SimpleTrustModel {
-	t.Helper()
-	model := NewSimpleTrustModel()
-	if err := model.Setup(context.Background(), resolver, roots); err != nil {
-		t.Fatalf("Setup: %v", err)
-	}
-	return model
-}
-
 func almostEqual(a, b float64) bool {
 	return math.Abs(a-b) < 1e-6
 }
@@ -103,7 +94,7 @@ func newDebate(t *testing.T) *debate {
 	return d
 }
 
-func (d *debate) setup(parts ...Roots) *SimpleTrustModel {
+func (d *debate) setup(parts ...Roots) TrustModel {
 	d.t.Helper()
 	roots := make(Roots)
 	for _, part := range parts {
@@ -121,7 +112,11 @@ func (d *debate) setup(parts ...Roots) *SimpleTrustModel {
 		}
 		seen[v] = k
 	}
-	return setupSimple(d.t, d.resolver, roots)
+	model, err := GetModel(context.Background(), "simple", roots, d.resolver)
+	if err != nil {
+		d.t.Fatalf("GetModel: %v", err)
+	}
+	return model
 }
 
 func (d *debate) assertTrustScore(model TrustModel, statement refs.HashUri, want float64) {
@@ -320,7 +315,10 @@ func TestProbabilityTrue(t *testing.T) {
 }
 
 func TestSimpleTrustModelMetadata(t *testing.T) {
-	model := NewSimpleTrustModel()
+	model, err := GetModel(context.Background(), "simple", Roots{}, newFakeResolver())
+	if err != nil {
+		t.Fatalf("GetModel: %v", err)
+	}
 	if model.ID() != "simple" {
 		t.Errorf("ID = %q, want simple", model.ID())
 	}
@@ -334,7 +332,7 @@ func TestSimpleTrustModelMetadata(t *testing.T) {
 
 func TestEvaluateBeforeSetup(t *testing.T) {
 	d := newDebate(t)
-	model := NewSimpleTrustModel()
+	model := &SimpleTrustModel{}
 	_, err := model.Evaluate(context.Background(), d.MoonIsRock)
 	if !errors.Is(err, ErrNotSetup) {
 		t.Errorf("Evaluate before Setup error = %v, want ErrNotSetup", err)
@@ -342,7 +340,7 @@ func TestEvaluateBeforeSetup(t *testing.T) {
 }
 
 func TestSetupNilResolver(t *testing.T) {
-	model := NewSimpleTrustModel()
+	model := &SimpleTrustModel{}
 	err := model.Setup(context.Background(), nil, Roots{})
 	if !errors.Is(err, ErrNilResolver) {
 		t.Errorf("Setup(nil) error = %v, want ErrNilResolver", err)

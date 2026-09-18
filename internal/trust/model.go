@@ -21,6 +21,20 @@ type TrustModel interface {
 	Evaluate(ctx context.Context, statementUri refs.HashUri) (float64, error)
 }
 
+// GetModel returns a fresh TrustModel for id, already bound with Setup.
+// Empty or unknown id uses "simple".
+func GetModel(ctx context.Context, id string, roots Roots, resolver assertions.Resolver) (TrustModel, error) {
+	var model TrustModel
+	switch id {
+	default:
+		model = &SimpleTrustModel{}
+	}
+	if err := model.Setup(ctx, resolver, roots); err != nil {
+		return nil, err
+	}
+	return model, nil
+}
+
 func copyRoots(in Roots) Roots {
 	out := make(Roots, len(in))
 	for k, v := range in {
