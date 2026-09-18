@@ -46,11 +46,13 @@ E.g.  `hash://sha256/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b785
 
 ## Trust Models
 
-A trust model is a mechanism for estimating how likely any individual statement is to be true, by following chains of assertions back to entities.
+A trust model is a mechanism for estimating how likely any individual statement is to be true, by following chains of assertions back to entities. Implementations live in [`internal/trust`](internal/trust).
 
 The root of a trust model is a set of entities that the user of the model has some level of trust in. Different users can supply different sets of trusted entities to the same trust model, and will get different outcomes from the model.
 
-Any number of trust models can be created from the same set of assertions, and it is anticipated that the science of trust modelling will evolve significantly over time.
+Any number of trust models can be created from the same set of assertions, and it is anticipated that the science of trust modelling will evolve significantly over time. The user selects a model id (empty means `simple`) and a map of entity URIs to trust levels in `[0, 1]`.
+
+A `TrustModel` is bound once with `Setup(resolver, roots)`, then `Evaluate(statementUri)` returns `P(the statement is true)` in `[0, 1]`. See [`internal/trust/README.md`](internal/trust/README.md) for `SimpleTrustModel` scoring.
 
 ## Development Commands
 
@@ -129,7 +131,7 @@ Packages can only depend on other packages lower than them in the hierarchy.
 
 1. `main`
 2. `api` `web`
-3. `datastore`
+3. `datastore` `trust`
 4. `assertions` `auth`
 5. `entities` `statements`
 6. `references`
