@@ -149,7 +149,7 @@ func TestAddTrustIgnoresInvalidLevel(t *testing.T) {
 
 	page := wt.PostFormData("/web/profile/trust", url.Values{
 		"entity": {testEntityUri().Unadorned()},
-		"level":  {"0.21"},
+		"level":  {"1.5"},
 	})
 	page.AssertSuccessResponse()
 	page.AssertHtmlQuery("#trust-form", "I trust this entity")
@@ -183,6 +183,28 @@ func TestAddTrustIgnoresUnknownEntity(t *testing.T) {
 	}
 	if len(stored.TrustRoots) != 0 {
 		t.Errorf("expected no trust roots for unknown entity, got %v", stored.TrustRoots)
+	}
+}
+
+func TestParsePostedTrustLevel(t *testing.T) {
+	cases := []struct {
+		value string
+		level float64
+		ok    bool
+	}{
+		{"0", 0, true},
+		{"0.21", 0.21, true},
+		{"1", 1, true},
+		{"-0.1", 0, false},
+		{"1.5", 0, false},
+		{"", 0, false},
+		{"nope", 0, false},
+	}
+	for _, tc := range cases {
+		level, ok := parsePostedTrustLevel(tc.value)
+		if ok != tc.ok || level != tc.level {
+			t.Errorf("parsePostedTrustLevel(%q) = (%v, %v), want (%v, %v)", tc.value, level, ok, tc.level, tc.ok)
+		}
 	}
 }
 

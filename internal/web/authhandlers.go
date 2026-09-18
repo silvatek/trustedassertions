@@ -346,18 +346,11 @@ func AddTrustWebHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func parsePostedTrustLevel(value string) (float64, bool) {
-	switch value {
-	case "0.20":
-		return 0.20, true
-	case "0.50":
-		return 0.50, true
-	case "0.75":
-		return 0.75, true
-	case "0.90":
-		return 0.90, true
-	default:
+	level, err := strconv.ParseFloat(value, 64)
+	if err != nil || level < 0 || level > 1 {
 		return 0, false
 	}
+	return level, true
 }
 
 func trustLevelLabel(level float64) string {
