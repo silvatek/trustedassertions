@@ -144,6 +144,74 @@ func hasRef(refs []references.Reference, source, target references.HashUri) bool
 	return false
 }
 
+func TestCreateDocumentAndAssertionsDoesNotRefetch(t *testing.T) {
+	docContent := `
+	<?xml version="1.0" encoding="UTF-8"?>
+	<document>
+		<metadata>
+			<title>Newton Test Doc</title>
+		</metadata>
+		<section>
+			<title>Test 1</title>
+			<paragraph>
+				<span assertion="IsTrue 0.9">Isaac Newton was a scientist</span>
+			</paragraph>
+			<paragraph>
+				<span assertion="IsFalse 0.8">Isaac Newton was French</span>
+				<span>Some text</span>
+			</paragraph>
+		</section>
+	</document>
+`
+
+	ctx := context.Background()
+	InitInMemoryDataStore()
+	assertions.PublicKeyResolver = ActiveDataStore
+
+	entityUri := CreateEntityWithKey(ctx, "Unit Tester")
+	store := ActiveDataStore.(*InMemoryDataStore)
+	store.ResetCounts()
+
+	_, err := CreateDocumentAndAssertions(ctx, docContent, entityUri)
+	if err != nil {
+		t.Fatalf("CreateDocumentAndAssertions: %v", err)
+	}
+
+	assertCounts(t, store, &InMemoryDataStore{
+		FetchEntityCount:    1,
+		FetchKeyCount:       1,
+		FetchStatementCount: 0,
+		FetchAssertionCount: 0,
+		StoreCount:          5,
+		StoreRefCount:       7,
+	})
+}
+
+func assertCounts(t *testing.T, got, want *InMemoryDataStore) {
+	t.Helper()
+	checks := []struct {
+		name      string
+		got, want int
+	}{
+		{"FetchEntity", got.FetchEntityCount, want.FetchEntityCount},
+		{"FetchKey", got.FetchKeyCount, want.FetchKeyCount},
+		{"FetchStatement", got.FetchStatementCount, want.FetchStatementCount},
+		{"FetchAssertion", got.FetchAssertionCount, want.FetchAssertionCount},
+		{"FetchDocument", got.FetchDocumentCount, want.FetchDocumentCount},
+		{"Store", got.StoreCount, want.StoreCount},
+		{"StoreKey", got.StoreKeyCount, want.StoreKeyCount},
+		{"StoreRef", got.StoreRefCount, want.StoreRefCount},
+		{"StoreRaw", got.StoreRawCount, want.StoreRawCount},
+		{"StoreUser", got.StoreUserCount, want.StoreUserCount},
+		{"StoreRegistration", got.StoreRegistrationCount, want.StoreRegistrationCount},
+	}
+	for _, c := range checks {
+		if c.got != c.want {
+			t.Errorf("%s = %d, want %d", c.name, c.got, c.want)
+		}
+	}
+}
+
 func TestCreateStatement(t *testing.T) {
 	ActiveDataStore = NewInMemoryDataStore()
 	ctx := context.Background()
