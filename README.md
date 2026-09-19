@@ -69,18 +69,14 @@ A `TrustModel` is bound once with `Setup(resolver, roots)`, then `Evaluate(state
 
 ## Things to Do
 
-* Change password
-* Mobile web views
-* Secure management of private keys
-* Access control
-* User management
+* Uploading a document should re-use any existing statements & assertions
 * Add and remove user roles from Admin
-* Add new document
-* Auto-create statements and assertions from documents
-* Document schema
 * Switch memorystore to store json strings not Go stucts
 * Store users as JSON text in InMemoryDataStore
 * Upgrade to Go 1.26
+* Change password
+* Mobile web views
+* Secure management of private keys
 
 ### Done
 
@@ -108,6 +104,11 @@ A `TrustModel` is bound once with `Setup(resolver, roots)`, then `Evaluate(state
 * ~~Document search~~
 * ~~Passkey support~~
 * ~~Passkey revoke~~
+* ~~Access control~~
+* ~~Add new document~~
+* ~~Auto-create statements and assertions from documents~~
+* ~~Document schema~~
+* ~~User management~~
 
 
 ## Implementation Details
