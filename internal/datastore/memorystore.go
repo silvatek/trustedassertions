@@ -22,6 +22,19 @@ type InMemoryDataStore struct {
 	users map[string]auth.User
 	krefs map[string]auth.KeyRef
 	regs  map[string]auth.Registration
+
+	FetchEntityCount    int
+	FetchKeyCount       int
+	FetchStatementCount int
+	FetchAssertionCount int
+	FetchDocumentCount  int
+
+	StoreCount             int
+	StoreKeyCount          int
+	StoreRefCount          int
+	StoreRawCount          int
+	StoreUserCount         int
+	StoreRegistrationCount int
 }
 
 func NewInMemoryDataStore() DataStore {
@@ -39,6 +52,20 @@ func InitInMemoryDataStore() {
 	ActiveDataStore = NewInMemoryDataStore()
 }
 
+func (ds *InMemoryDataStore) ResetCounts() {
+	ds.FetchEntityCount = 0
+	ds.FetchKeyCount = 0
+	ds.FetchStatementCount = 0
+	ds.FetchAssertionCount = 0
+	ds.FetchDocumentCount = 0
+	ds.StoreCount = 0
+	ds.StoreKeyCount = 0
+	ds.StoreRefCount = 0
+	ds.StoreRawCount = 0
+	ds.StoreUserCount = 0
+	ds.StoreRegistrationCount = 0
+}
+
 func (ds *InMemoryDataStore) Name() string {
 	return "InMemoryDataStore"
 }
@@ -53,10 +80,12 @@ func (ds *InMemoryDataStore) StoreRecord(uri HashUri, rec DbRecord) {
 }
 
 func (ds *InMemoryDataStore) StoreRaw(uri HashUri, content string) {
+	ds.StoreRawCount++
 	ds.StoreRecord(uri, DbRecord{Uri: uri.String(), Content: content})
 }
 
 func (ds *InMemoryDataStore) Store(ctx context.Context, value Referenceable) {
+	ds.StoreCount++
 	ds.StoreRecord(value.Uri(), DbRecord{
 		Uri:         value.Uri().String(),
 		DataType:    value.Type(),
@@ -67,10 +96,12 @@ func (ds *InMemoryDataStore) Store(ctx context.Context, value Referenceable) {
 }
 
 func (ds *InMemoryDataStore) StoreKey(entityUri HashUri, key string) {
+	ds.StoreKeyCount++
 	ds.keys[entityUri.Escaped()] = key
 }
 
 func (ds *InMemoryDataStore) StoreRef(ctx context.Context, reference refs.Reference) {
+	ds.StoreRefCount++
 	targetKey := reference.Target.Escaped()
 	refs, ok := ds.refs[targetKey]
 	if !ok {
@@ -101,26 +132,31 @@ func (ds *InMemoryDataStore) Fetch(ctx context.Context, key HashUri) (Referencea
 }
 
 func (ds *InMemoryDataStore) FetchStatement(ctx context.Context, key HashUri) (statements.Statement, error) {
+	ds.FetchStatementCount++
 	var statement statements.Statement
 	return statement, ds.FetchInto(key, &statement)
 }
 
 func (ds *InMemoryDataStore) FetchEntity(ctx context.Context, key HashUri) (entities.Entity, error) {
+	ds.FetchEntityCount++
 	var entity entities.Entity
 	return entity, ds.FetchInto(key, &entity)
 }
 
 func (ds *InMemoryDataStore) FetchAssertion(ctx context.Context, key HashUri) (assertions.Assertion, error) {
+	ds.FetchAssertionCount++
 	var assertion assertions.Assertion
 	return assertion, ds.FetchInto(key, &assertion)
 }
 
 func (ds *InMemoryDataStore) FetchDocument(ctx context.Context, key HashUri) (docs.Document, error) {
+	ds.FetchDocumentCount++
 	var doc docs.Document
 	return doc, ds.FetchInto(key, &doc)
 }
 
 func (ds *InMemoryDataStore) FetchKey(entityUri HashUri) (string, error) {
+	ds.FetchKeyCount++
 	key, ok := ds.keys[entityUri.Escaped()]
 	if !ok {
 		return "", errors.New("entity id not found " + entityUri.String())
@@ -142,6 +178,7 @@ func (ds *InMemoryDataStore) FetchRefs(ctx context.Context, key HashUri) ([]Refe
 }
 
 func (ds *InMemoryDataStore) StoreUser(ctx context.Context, user auth.User) {
+	ds.StoreUserCount++
 	ds.users[user.Id] = user
 	if user.KeyRefs != nil {
 		for _, ref := range user.KeyRefs {
@@ -252,6 +289,7 @@ func (ds *InMemoryDataStore) Reindex() {
 }
 
 func (ds *InMemoryDataStore) StoreRegistration(ctx context.Context, reg auth.Registration) error {
+	ds.StoreRegistrationCount++
 	ds.regs[reg.Code] = reg
 	return nil
 }

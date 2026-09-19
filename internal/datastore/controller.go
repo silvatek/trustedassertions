@@ -20,13 +20,23 @@ import (
 var ActiveDataStore DataStore
 
 func CreateAssertion(ctx context.Context, statementUri references.HashUri, entityUri references.HashUri, kind assertions.AssertionType, confidence float64, privateKey *rsa.PrivateKey) *assertions.Assertion {
+	statement, _ := ActiveDataStore.FetchStatement(ctx, statementUri)
+	entity, _ := ActiveDataStore.FetchEntity(ctx, entityUri)
+	return createAssertion(ctx, &statement, &entity, kind, confidence, privateKey)
+}
+
+func createAssertion(ctx context.Context, statement *statements.Statement, entity *entities.Entity, kind assertions.AssertionType, confidence float64, privateKey *rsa.PrivateKey) *assertions.Assertion {
 	assertion := assertions.NewAssertion(kind)
-	assertion.Subject = statementUri.String()
+	assertion.Subject = statement.Uri().String()
 	assertion.IssuedAt = jwt.NewNumericDate(time.Now())
 	assertion.NotBefore = assertion.IssuedAt
 	assertion.Confidence = float32(confidence)
-	assertion.Issuer = entityUri.String()
-	assertion.SetSummary(assertions.SummariseAssertion(ctx, assertion, nil, ActiveDataStore))
+	assertion.Issuer = entity.Uri().String()
+	cache := references.ReferenceMap{
+		entity.Uri():    entity,
+		statement.Uri(): statement,
+	}
+	assertion.SetSummary(assertions.SummariseAssertion(ctx, assertion, cache, ActiveDataStore))
 	assertion.MakeJwt(privateKey)
 	ActiveDataStore.Store(ctx, &assertion)
 
@@ -36,8 +46,14 @@ func CreateAssertion(ctx context.Context, statementUri references.HashUri, entit
 }
 
 func CreateReferences(ctx context.Context, source references.Referenceable) {
+	known := source
 	for _, uri := range source.References() {
-		CreateReferenceWithSummary(ctx, source.Uri(), uri)
+		ref := references.Reference{
+			Source: source.Uri(),
+			Target: uri,
+		}
+		MakeReferenceSummary(ctx, &known, &ref, ActiveDataStore)
+		ActiveDataStore.StoreRef(ctx, ref)
 	}
 }
 
@@ -52,8 +68,6 @@ func CreateReferenceWithSummary(ctx context.Context, source references.HashUri, 
 }
 
 func CreateStatementAndAssertion(ctx context.Context, content string, entityUri references.HashUri, kind assertions.AssertionType, confidence float64) (*assertions.Assertion, error) {
-	log.DebugfX(ctx, "Creating statement and assertion")
-
 	b64key, err := ActiveDataStore.FetchKey(entityUri)
 	if err != nil {
 		return nil, err
@@ -64,21 +78,31 @@ func CreateStatementAndAssertion(ctx context.Context, content string, entityUri 
 		return nil, err
 	}
 
-	// Create and save the statement
+	return createStatementAndAssertion(ctx, content, &entity, privateKey, kind, confidence)
+}
+
+func createStatementAndAssertion(ctx context.Context, content string, entity *entities.Entity, privateKey *rsa.PrivateKey, kind assertions.AssertionType, confidence float64) (*assertions.Assertion, error) {
+	log.DebugfX(ctx, "Creating statement and assertion for %s", entity.Uri())
+
 	statement := statements.NewStatement(content)
 	ActiveDataStore.Store(ctx, statement)
 
-	log.DebugfX(ctx, "Statement created")
+	log.DebugfX(ctx, "Statement created %s", statement.Uri())
 
-	assertion := CreateAssertion(ctx, statement.Uri(), entity.Uri(), kind, confidence, privateKey)
+	assertion := createAssertion(ctx, statement, entity, kind, confidence, privateKey)
 
-	log.DebugfX(ctx, "Assertion created")
+	log.DebugfX(ctx, "Assertion created %s", assertion.Uri())
 
 	return assertion, nil
 }
 
 // Populates the summary field of a Reference based on the source of the reference.
-func MakeReferenceSummary(ctx context.Context, target *references.Referenceable, ref *references.Reference, resolver assertions.Resolver) {
+func MakeReferenceSummary(ctx context.Context, known *references.Referenceable, ref *references.Reference, resolver assertions.Resolver) {
+	if known != nil && (*known).Uri().Equals(ref.Source) {
+		ref.Summary = (*known).Summary()
+		return
+	}
+
 	switch ref.Source.Kind() {
 	case "statement":
 		statement, _ := resolver.FetchStatement(ctx, ref.Source)
@@ -90,15 +114,10 @@ func MakeReferenceSummary(ctx context.Context, target *references.Referenceable,
 		doc, _ := resolver.FetchDocument(ctx, ref.Source)
 		ref.Summary = doc.Summary()
 	case "assertion":
-		var assertion assertions.Assertion
-		if target != nil && (*target).Uri().Equals(ref.Source) {
-			assertion = *((*target).(*assertions.Assertion))
-		} else {
-			assertion, _ = resolver.FetchAssertion(ctx, ref.Source)
-		}
+		assertion, _ := resolver.FetchAssertion(ctx, ref.Source)
 		cache := make(references.ReferenceMap)
-		if target != nil {
-			cache[(*target).Uri()] = *target
+		if known != nil {
+			cache[(*known).Uri()] = *known
 		}
 		summary := assertions.SummariseAssertion(ctx, assertion, cache, resolver)
 		ref.Summary = summary
@@ -132,11 +151,19 @@ func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri 
 	if err != nil {
 		return nil, err
 	}
+	b64key, err := ActiveDataStore.FetchKey(entityUri)
+	if err != nil {
+		return nil, err
+	}
+	privateKey := entities.PrivateKeyFromString(b64key)
 
 	doc, err := docs.MakeDocument(content)
 	if err != nil {
 		return nil, err
 	}
+
+	title := doc.Metadata.Title
+	log.InfofX(ctx, "Creating document %q signed by %s", title, entityUri)
 
 	author := &doc.Metadata.Author
 	if author.Entity == "" {
@@ -154,7 +181,10 @@ func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri 
 					assertionType := assertions.AssertionTypeOf(parts[0])
 					confidence, _ := strconv.ParseFloat(parts[1], 32)
 
-					assertion, _ := CreateStatementAndAssertion(ctx, span.Body, entityUri, assertionType, confidence)
+					assertion, err := createStatementAndAssertion(ctx, span.Body, &entity, privateKey, assertionType, confidence)
+					if err != nil {
+						return nil, err
+					}
 
 					span.Assertion = assertion.Uri().String()
 				}
@@ -166,7 +196,10 @@ func CreateDocumentAndAssertions(ctx context.Context, content string, entityUri 
 
 	ActiveDataStore.Store(ctx, doc)
 
+	log.InfofX(ctx, "Creating references for document %q", title)
 	CreateReferences(ctx, doc)
+
+	log.InfofX(ctx, "Created document %q as %s", title, doc.Uri())
 
 	return doc, nil
 }
