@@ -208,7 +208,8 @@ button, input[type=button], input[type=submit], input[type=reset] {
 }
 
 #page.htmx-request,
-#searchresults.htmx-request {
+#searchresults.htmx-request,
+#statement-trust.htmx-request {
 	opacity: 0.55;
 }
 

@@ -22,6 +22,7 @@ import (
 	"silvatek.uk/trustedassertions/internal/logging"
 	ref "silvatek.uk/trustedassertions/internal/references"
 	"silvatek.uk/trustedassertions/internal/statements"
+	"silvatek.uk/trustedassertions/internal/trust"
 )
 
 var TemplateDir string
@@ -37,6 +38,7 @@ func AddHandlers(r *mux.Router) {
 	r.HandleFunc("/web/home", HomeWebHandler)
 	r.HandleFunc("/web/health", HealthWebHandler)
 	r.HandleFunc("/web/statements/{hash}", ViewStatementWebHandler)
+	r.HandleFunc("/web/statements/{hash}/trust", StatementTrustWebHandler)
 	r.HandleFunc("/web/entities/{hash}", ViewEntityWebHandler)
 	r.HandleFunc("/web/assertions/{hash}", ViewAssertionWebHandler)
 	r.HandleFunc("/web/documents/{hash}", ViewDocumentWebHandler)
@@ -260,6 +262,81 @@ func ViewStatementWebHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RenderWebPage(ctx, "viewstatement", data, menu, w, r)
+}
+
+type statementTrustData struct {
+	NoRoots   bool
+	Undefined bool
+	Failed    bool
+	Score     float64
+}
+
+// StatementTrustWebHandler returns an HTML fragment with the viewer's trust
+// score for a statement. It is loaded after the statement page via HTMX.
+func StatementTrustWebHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := appcontext.NewWebContext(r)
+
+	username := authUsername(r)
+	if username == "" {
+		HandleError(ctx, ErrorNoAuth, w, r)
+		return
+	}
+
+	key := mux.Vars(r)["hash"]
+	statement, err := datastore.ActiveDataStore.FetchStatement(ctx, ref.MakeUri(key, "statement"))
+	if err != nil {
+		NotFoundWebHandler(w, r)
+		return
+	}
+
+	user, err := datastore.ActiveDataStore.FetchUser(ctx, username)
+	if err != nil {
+		HandleError(ctx, ErrorUserNotFound.instance("User not found: "+username), w, r)
+		return
+	}
+
+	data := statementTrustData{}
+	if len(user.TrustRoots) == 0 {
+		data.NoRoots = true
+	} else {
+		model, err := trust.GetModel(ctx, "", userTrustRoots(user), datastore.ActiveDataStore)
+		if err != nil {
+			log.ErrorfX(ctx, "GetModel: %v", err)
+			data.Failed = true
+		} else if score, err := model.Evaluate(ctx, statement.Uri()); err == trust.ErrUndefined {
+			data.Undefined = true
+		} else if err != nil {
+			log.ErrorfX(ctx, "Evaluate: %v", err)
+			data.Failed = true
+		} else {
+			data.Score = score
+		}
+	}
+
+	renderStatementTrust(ctx, w, data)
+}
+
+func userTrustRoots(user auth.User) trust.Roots {
+	roots := make(trust.Roots, len(user.TrustRoots))
+	for _, r := range user.TrustRoots {
+		roots[r.EntityUri] = r.TrustLevel
+	}
+	return roots
+}
+
+func renderStatementTrust(ctx context.Context, w http.ResponseWriter, data statementTrustData) {
+	t, err := template.ParseFiles(TemplateDir + "/statementtrust.html")
+	if err != nil {
+		log.ErrorfX(ctx, "Error parsing statement trust template: %+v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	SetCacheControl(w, 0)
+	if err := t.Execute(w, data); err != nil {
+		log.ErrorfX(ctx, "statementtrust.Execute: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
 }
 
 func enrichReferencesTo(ctx context.Context, target ref.Referenceable, refs []ref.Reference) {

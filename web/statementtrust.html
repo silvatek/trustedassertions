@@ -1,0 +1,9 @@
+{{if .NoRoots}}
+<span id="statement-trust-empty">Unable to verify trustworthiness of this statement</span>
+{{else if .Undefined}}
+<span id="statement-trust-undefined">no matching assertions</span>
+{{else if .Failed}}
+<span id="statement-trust-error">Unable to verify trustworthiness of this statement</span>
+{{else}}
+<span id="statement-trust-score">{{printf "%.2f" .Score}}</span>
+{{end}}

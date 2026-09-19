@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"silvatek.uk/trustedassertions/internal/browsertest"
+	"silvatek.uk/trustedassertions/internal/statements"
 )
 
 func TestBrowserHome(t *testing.T) {
@@ -57,6 +58,9 @@ func TestBrowserRegister(t *testing.T) {
 	b.ClickHtmx("#submit", "#common_name")
 	b.AssertContains("#common_name", entityName)
 
+	b.Click(`input[name=level][value="0.90"]`)
+	b.ClickHtmx("#trust-submit", "#trust-status")
+
 	b.ClickMenu("Home")
 	b.WaitVisible("#searchform")
 	b.ClickLinkHtmx("Statement and Assertion", "#statement", "#sign_as", "#submit")
@@ -64,6 +68,10 @@ func TestBrowserRegister(t *testing.T) {
 	b.SendKeys("#statement", statementText)
 	b.ClickHtmx("#submit", "#subjecttext")
 	b.AssertContains("#subjecttext", statementText)
+
+	b.Navigate(statements.NewStatement(statementText).Uri().WebPath())
+	b.WaitVisible("#statement-trust-score")
+	b.AssertContains("#statement-trust-score", "0.45")
 
 	if !b.HasMenuLink("Admin") {
 		return
