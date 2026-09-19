@@ -27,13 +27,17 @@ func SetupTestData(ctx context.Context, testDataDir string, defaultEntityUri str
 
 	loadTestData(ctx, testDataDir+"/statements", "Statement", "txt", false)
 	loadTestData(ctx, testDataDir+"/assertions", "Assertion", "txt", false)
-	loadDocuments(ctx, testDataDir+"/documents", documentSigner(ctx, defaultEntityUri))
+	signer := documentSigner(ctx, defaultEntityUri)
+	loadDocuments(ctx, testDataDir+"/documents", signer)
 
 	initialUser := auth.User{Id: os.Getenv("INITIAL_USER")}
 	initialUser.HashPassword(os.Getenv("INITIAL_PW"))
 	initialUser.AddKeyRef(defaultEntityUri, "Default")
 	initialUser.AddRole(auth.RoleAuthor)
 	initialUser.AddRole(auth.RoleAdministrator)
+	if !signer.IsEmpty() {
+		initialUser.AddTrustRoot(signer, 0.90)
+	}
 	datastore.ActiveDataStore.StoreUser(ctx, initialUser)
 
 	lockedUser := auth.User{Id: "locked"}

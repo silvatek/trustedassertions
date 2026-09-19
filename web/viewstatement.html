@@ -9,7 +9,17 @@
             </div>
 
             <div class="fieldprompt">Text:</div>
-            <div id="content" class="fieldvalue" disabled>{{.Detail.Content}}</div>   
+            <div id="content" class="fieldvalue" disabled>{{.Detail.Content}}</div>
+
+            {{if .LoggedIn}}
+            <div class="fieldprompt">Veracity:</div>
+            <div id="statement-trust"
+                 class="fieldvalue"
+                 hx-get="/web/statements/{{.Detail.Uri.Hash}}/trust"
+                 hx-trigger="load"
+                 hx-target="this"
+                 hx-swap="innerHTML"></div>
+            {{end}}
         </div>
 
         <h3>References</h3>
