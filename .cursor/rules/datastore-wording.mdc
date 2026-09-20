@@ -1,0 +1,10 @@
+---
+description: Prefer Datastore over Firestore in language
+alwaysApply: true
+---
+
+# Datastore wording
+
+- Call the storage layer the **Datastore** in conversation, comments, commit messages, and PRs.
+- Use **Firestore** only when the Firestore implementation is specifically in play (for example `FireStore` code, GCP setup, or contrasting it with the in-memory store).
+- Do not rename types or files that are actually Firestore-specific (`FireStore`, `firestore.go`).
